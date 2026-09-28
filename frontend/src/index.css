@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#0b1220] text-slate-100 min-h-screen overflow-x-hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Custom High-Visibility Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #070d18;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 6px;
+  border: 2px solid #070d18;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3b82f6;
+}
+
+/* Firefox scrollbar styling */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: #2563eb #070d18;
+}
+
+/* Smooth Hardware-Accelerated Main Scroll Container */
+main {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* GPU Hardware Layer Compositing for High Graphics Smooth Scrolling */
+.glass-card, .glass-card-hover {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Glassmorphism card effects - Optimized without expensive backdrop blur during scroll */
+.glass-card {
+  background: #101a2e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card-hover {
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
+}
+.glass-card-hover:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.25);
+}
+
+/* Seal Background Graphic */
+.bg-seal-pattern {
+  background-image: radial-gradient(circle at 80% 50%, rgba(37, 99, 235, 0.15), transparent 50%);
+}
+
+
