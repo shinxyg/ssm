@@ -1,20 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sun, Moon, Bell, ChevronLeft, ChevronRight, User, LogOut } from 'lucide-react';
+import { Sun, Moon, Bell, User, LogOut } from 'lucide-react';
 
 interface NavbarProps {
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
   activeSection: string;
   darkMode: boolean;
   setDarkMode: (dark: boolean) => void;
+  onNavigateToProfile?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
-  sidebarOpen, 
-  setSidebarOpen, 
   activeSection,
   darkMode,
-  setDarkMode
+  setDarkMode,
+  onNavigateToProfile
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
@@ -52,43 +50,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   return (
-    <header className={`sticky top-0 z-40 h-16 shrink-0 border-b pl-4 pr-2 flex items-center justify-between shadow-lg transition-colors duration-200 ${
+    <header className={`sticky top-0 z-40 h-16 shrink-0 border-b px-6 flex items-center justify-between shadow-sm transition-colors duration-200 ${
       darkMode 
         ? 'bg-[#0d172a] border-slate-800/80 text-white' 
         : 'bg-white border-slate-200 text-slate-900'
     }`}>
-      {/* Left Area: Seal Logo + GovServe Title + Arrow Toggle + Page Title (Fixed Height Axis) */}
-      <div className="flex items-center gap-3 h-full">
-        <div className="flex items-center gap-2.5 h-full">
-          <img
-            src="/Government Service Integrity Seal.png"
-            alt="Government Service Integrity Seal"
-            className="w-9 h-9 object-contain shrink-0"
-          />
-          {sidebarOpen && (
-            <div className="hidden sm:flex flex-col justify-center">
-              <h1 className={`font-extrabold text-base tracking-tight leading-none ${darkMode ? 'text-white' : 'text-slate-900'}`}>GovServe</h1>
-              <span className={`text-[10px] font-medium tracking-wide ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Citizen Portal</span>
-            </div>
-          )}
-        </div>
-
-        {/* Plain Arrow Toggle (No Circle, No Background, No Shift) */}
-        <button
-          type="button"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`p-1.5 transition-colors shrink-0 ${darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`}
-          title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
-        >
-          {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-        </button>
-
-        {/* Page Title aligned on Left Side (Fixed position) */}
-        <div className={`ml-1 pl-3 border-l flex items-center h-7 ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
-          <h2 className={`text-sm font-bold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-            {activeSection}
-          </h2>
-        </div>
+      {/* Left Area: Active Page / Section Title */}
+      <div className="flex items-center h-full">
+        <h2 className={`text-base font-extrabold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+          {activeSection}
+        </h2>
       </div>
 
       {/* Right Controls & User Profile */}
@@ -192,7 +163,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}>
               <button
                 type="button"
-                onClick={() => setShowProfileMenu(false)}
+                onClick={() => {
+                  setShowProfileMenu(false);
+                  if (onNavigateToProfile) onNavigateToProfile();
+                }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-xl transition-colors ${
                   darkMode 
                     ? 'text-slate-200 hover:text-white hover:bg-slate-800/80' 
@@ -224,5 +198,3 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
-
-

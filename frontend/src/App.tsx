@@ -10,6 +10,11 @@ import { TrainingProgramView } from './components/TrainingProgramView';
 import { TrackApplicationsModal } from './components/TrackApplicationsModal';
 import { EligibilityFinderModal } from './components/EligibilityFinderModal';
 import { ServiceDetailModal } from './components/ServiceDetailModal';
+import { MedicalAssistanceView } from './components/MedicalAssistanceView';
+import { FuneralAssistanceView } from './components/FuneralAssistanceView';
+import { EducationalAssistanceView } from './components/EducationalAssistanceView';
+import { PwdAssistanceView } from './components/PwdAssistanceView';
+import { UserProfileView } from './components/UserProfileView';
 
 import { initialServices, initialApplications } from './data/servicesData';
 import type { ServiceItem, ApplicationRecord } from './types';
@@ -35,6 +40,27 @@ export default function App() {
   };
 
   const handleApplyFromModule = (title: string, description: string) => {
+    const t = title.toLowerCase();
+    if (t.includes('medical')) {
+      setActiveTab('aics-medical');
+      return;
+    }
+    if (t.includes('burial') || t.includes('funeral')) {
+      setActiveTab('aics-funeral');
+      return;
+    }
+    if (t.includes('educational')) {
+      setActiveTab('aics-educational');
+      return;
+    }
+    if (t.includes('child welfare') || t.includes('childwelfare') || t.includes('child')) {
+      setActiveTab('childwelfare-form');
+      return;
+    }
+    if (t.includes('pwd')) {
+      setActiveTab('pwd-form');
+      return;
+    }
     const customService: ServiceItem = {
       id: `custom-${Date.now()}`,
       title,
@@ -43,7 +69,7 @@ export default function App() {
       requirements: [
         'Certificate of Indigency from Barangay',
         'Valid Government Photo ID (PhilSys / Comelec)',
-        'Supporting Medical / Sector Documents'
+        'Supporting Documents'
       ],
       processingTime: '2 - 3 Business Days',
       benefitAmount: 'Financial Aid Grant',
@@ -78,42 +104,47 @@ export default function App() {
   const sectionTitleMap: Record<string, string> = {
     'help-guide': 'Help & Service Guide',
     'aics': 'AICS Assistance',
+    'aics-medical': 'AICS Assistance',
+    'aics-funeral': 'AICS Assistance',
+    'aics-educational': 'Child Welfare Services',
     'pwd': 'PWD Services',
+    'pwd-form': 'PWD Services',
     'senior': 'Senior Citizen Services',
     'soloparent': 'Solo Parent Services',
     'childwelfare': 'Child Welfare Services',
-    'livelihood': 'Livelihood & Training — Livelihood Program',
-    'livelihood-grants': 'Livelihood & Training — Livelihood Program',
-    'skills-training': 'Livelihood & Training — Training Program',
+    'livelihood': 'Livelihood & Training',
+    'livelihood-grants': 'Livelihood & Training',
+    'skills-training': 'Livelihood & Training',
     'payout': 'Financial Aid Disbursement',
     'history': 'Application History',
+    'profile': 'User Profile',
   };
 
   return (
-    <div className={`h-screen max-h-screen overflow-hidden flex flex-col font-['Plus_Jakarta_Sans',sans-serif] transition-colors duration-200 ${
-      darkMode ? 'bg-[#0b1220] text-slate-100' : 'bg-slate-100 text-slate-900'
+    <div className={`h-screen max-h-screen overflow-hidden flex flex-row font-['Plus_Jakarta_Sans',sans-serif] transition-colors duration-200 ${
+      darkMode ? 'dark bg-[#0b1220] text-slate-100' : 'bg-slate-100 text-slate-900'
     }`}>
-      {/* Top Navbar (Fixed at top) */}
-      <Navbar
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        activeSection={sectionTitleMap[activeTab] || 'Help & Service Guide'}
+      {/* Left Sidebar (Full height from top to bottom) */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isOpen={sidebarOpen}
+        setIsOpen={setSidebarOpen}
         darkMode={darkMode}
-        setDarkMode={setDarkMode}
       />
 
-      <div className="flex-1 flex overflow-hidden h-[calc(100vh-64px)]">
-        {/* Left Sidebar (Fixed, does not scroll with main content) */}
-        <Sidebar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          isOpen={sidebarOpen}
-          setIsOpen={setSidebarOpen}
+      {/* Main Right Column: Top Header Navbar + Main Content */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Top Navbar */}
+        <Navbar
+          activeSection={sectionTitleMap[activeTab] || 'Help & Service Guide'}
           darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          onNavigateToProfile={() => setActiveTab('profile')}
         />
 
         {/* Main Content Area (Independent Viewport Scroll) */}
-        <main className="flex-1 h-full overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-8">
           {activeTab === 'help-guide' ? (
             /* Help & Service Guide Main Overview Page */
             <>
@@ -130,10 +161,63 @@ export default function App() {
 
               <ServiceCatalog
                 services={filteredServices}
-                onSelectService={(service) => setSelectedService(service)}
+                onSelectService={(service) => {
+                  const s = (service.id + ' ' + service.title).toLowerCase();
+                  if (s.includes('medical')) {
+                    setActiveTab('aics-medical');
+                  } else if (s.includes('funeral') || s.includes('burial')) {
+                    setActiveTab('aics-funeral');
+                  } else if (s.includes('educational')) {
+                    setActiveTab('aics-educational');
+                  } else if (s.includes('child welfare') || s.includes('childwelfare')) {
+                    setActiveTab('childwelfare-form');
+                  } else {
+                    setSelectedService(service);
+                  }
+                }}
                 filterTitle="Available Social Services Programs"
               />
             </>
+          ) : activeTab === 'aics-medical' ? (
+            /* Dedicated QC Medical Assistance 4-Step Form View */
+            <MedicalAssistanceView
+              onBack={() => setActiveTab('aics')}
+              onAddApplication={handleAddApplication}
+              darkMode={darkMode}
+            />
+          ) : activeTab === 'aics-funeral' ? (
+            /* Dedicated QC Funeral Assistance 4-Step Form View */
+            <FuneralAssistanceView
+              onBack={() => setActiveTab('aics')}
+              onAddApplication={handleAddApplication}
+              darkMode={darkMode}
+            />
+          ) : activeTab === 'aics-educational' ? (
+            /* Dedicated QC Educational Assistance 4-Step Form View */
+            <EducationalAssistanceView
+              mode="educational"
+              onBack={() => setActiveTab('childwelfare')}
+              onAddApplication={handleAddApplication}
+              darkMode={darkMode}
+            />
+          ) : activeTab === 'childwelfare-form' ? (
+            /* Dedicated QC Child Welfare Services 4-Step Form View */
+            <EducationalAssistanceView
+              mode="childwelfare"
+              onBack={() => setActiveTab('childwelfare')}
+              onAddApplication={handleAddApplication}
+              darkMode={darkMode}
+            />
+          ) : activeTab === 'pwd-form' ? (
+            /* Dedicated PWD Social Assistance 4-Step Form View */
+            <PwdAssistanceView
+              onBack={() => setActiveTab('pwd')}
+              onAddApplication={handleAddApplication}
+              darkMode={darkMode}
+            />
+          ) : activeTab === 'profile' ? (
+            /* Dedicated User Profile Content View */
+            <UserProfileView darkMode={darkMode} />
           ) : activeTab === 'livelihood' || activeTab === 'livelihood-grants' ? (
             /* Livelihood Program View */
             <LivelihoodProgramView
@@ -163,7 +247,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setIsTrackModalOpen(true)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow border border-blue-400/40"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl border border-blue-400/40"
                 >
                   Track Status
                 </button>

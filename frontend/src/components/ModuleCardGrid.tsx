@@ -19,13 +19,8 @@ export const ModuleCardGrid: React.FC<ModuleCardGridProps> = ({ activeTab, onApp
     switch (activeTab) {
       case 'aics':
         return {
-          maxCols: 'grid-cols-1 md:grid-cols-3',
+          maxCols: 'grid-cols-1 md:grid-cols-2 max-w-5xl mx-auto',
           cards: [
-            {
-              title: 'Educational Assistance - Children with Disability',
-              description:
-                'This program provides financial assistance to individuals with disabilities and qualified students to support educational expenses and tuition. The aid amount is P5,000 for each qualified beneficiary.',
-            },
             {
               title: 'Burial / Funeral Assistance',
               description:
@@ -149,16 +144,16 @@ export const ModuleCardGrid: React.FC<ModuleCardGridProps> = ({ activeTab, onApp
         {cards.map((card, idx) => (
           <div
             key={idx}
-            className={`rounded-2xl border shadow-xl overflow-hidden flex flex-col justify-between transition-all duration-300 group ${
+            className={`rounded-2xl border shadow-md overflow-hidden flex flex-col justify-between transition-all duration-300 group ${
               darkMode 
-                ? 'bg-[#0f1b35] border-blue-900/40 hover:border-blue-500/50' 
-                : 'bg-white border-slate-200 hover:border-blue-400 shadow-slate-200/50'
+                ? 'bg-[#0f1b35] border-blue-900/40 hover:border-blue-500/50 hover:shadow-2xl' 
+                : 'bg-white border-slate-300 hover:border-blue-500 shadow-slate-200/80 hover:shadow-xl'
             }`}
           >
             <div>
               {/* Top Banner Header of Card */}
               <div className={`border-b px-5 py-4 text-center ${
-                darkMode ? 'bg-[#1b345d] border-blue-800/40' : 'bg-blue-50 border-blue-100'
+                darkMode ? 'bg-[#1b345d] border-blue-800/40' : 'bg-blue-50/90 border-blue-200'
               }`}>
                 <h3 className={`text-sm sm:text-base font-extrabold leading-snug tracking-wide ${
                   darkMode ? 'text-white' : 'text-blue-950'
@@ -170,7 +165,7 @@ export const ModuleCardGrid: React.FC<ModuleCardGridProps> = ({ activeTab, onApp
               {/* Card Body Text */}
               <div className="p-6 text-center">
                 <p className={`text-xs sm:text-sm leading-relaxed font-medium ${
-                  darkMode ? 'text-slate-300' : 'text-slate-600'
+                  darkMode ? 'text-slate-300' : 'text-slate-700'
                 }`}>
                   {card.description}
                 </p>
@@ -183,7 +178,7 @@ export const ModuleCardGrid: React.FC<ModuleCardGridProps> = ({ activeTab, onApp
                 type="button"
                 onClick={() => onApply(card.title, card.description)}
                 className={`font-extrabold text-xs tracking-wider uppercase inline-flex items-center justify-center gap-1.5 hover:underline transition-colors ${
-                  darkMode ? 'text-cyan-400 group-hover:text-cyan-300' : 'text-blue-600 group-hover:text-blue-700'
+                  darkMode ? 'text-cyan-400 group-hover:text-cyan-300' : 'text-blue-600 group-hover:text-blue-800'
                 }`}
               >
                 APPLY NOW

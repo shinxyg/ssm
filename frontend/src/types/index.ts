@@ -18,4 +18,5 @@ export interface ApplicationRecord {
   status: 'Approved' | 'Under Review' | 'Pending Documents' | 'Ready for Payout';
   amountOrType: string;
   assignedSocialWorker: string;
+  qrCodeData?: string;
 }

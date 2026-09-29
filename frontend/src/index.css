@@ -71,4 +71,32 @@ main {
   background-image: radial-gradient(circle at 80% 50%, rgba(37, 99, 235, 0.15), transparent 50%);
 }
 
+/* Hide number input spinners (up/down arrows) across all browsers */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Ensure text typing cursor (caret) is always crisp and visible in Light and Dark modes */
+input, select, textarea {
+  caret-color: #0f172a !important;
+  cursor: text;
+}
+
+.dark input, .dark select, .dark textarea {
+  caret-color: #38bdf8 !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  caret-color: #2563eb !important;
+}
+
+.dark input:focus, .dark select:focus, .dark textarea:focus {
+  caret-color: #38bdf8 !important;
+}
+
 
