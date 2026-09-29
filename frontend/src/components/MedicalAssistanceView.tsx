@@ -832,10 +832,10 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     <input
                       type="text"
                       value={patientAge}
-                      onChange={(e) => setPatientAge(e.target.value)}
-                      placeholder="Age"
-                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                        darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                      readOnly
+                      placeholder="Auto-computed"
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold select-none cursor-not-allowed ${
+                        darkMode ? 'bg-slate-900/80 border border-slate-700 text-slate-400 placeholder-slate-500' : 'bg-slate-100 border border-slate-300 text-slate-500 placeholder-slate-400 shadow-sm'
                       }`}
                     />
                   </div>

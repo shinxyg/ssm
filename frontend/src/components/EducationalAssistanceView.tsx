@@ -752,9 +752,9 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                     <input
                       type="text"
                       value={childAge}
-                      onChange={(e) => setChildAge(e.target.value)}
-                      placeholder="Age"
-                      className={inputClass}
+                      readOnly
+                      placeholder="Auto-computed"
+                      className={`${inputClass} select-none cursor-not-allowed`}
                     />
                   </div>
 
@@ -824,9 +824,9 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   <input
                     type="text"
                     value={childAge}
-                    onChange={(e) => setChildAge(e.target.value)}
-                    placeholder="Age"
-                    className={inputClass}
+                    readOnly
+                    placeholder="Auto-computed"
+                    className={`${inputClass} select-none cursor-not-allowed`}
                   />
                 </div>
 
