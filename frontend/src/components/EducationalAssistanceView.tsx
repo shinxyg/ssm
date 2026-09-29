@@ -69,8 +69,8 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
   const [reqResidentQC, setReqResidentQC] = useState<boolean>(false);
   const [reqEducational, setReqEducational] = useState<boolean>(false);
   const [reqEnrolled, setReqEnrolled] = useState<boolean>(false);
-  const [selectedSector, setSelectedSector] = useState<string[]>(['Children & Youth']);
-  const [selectedServices, setSelectedServices] = useState<string[]>(['Child Protection']);
+  const [selectedSector, setSelectedSector] = useState<string[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [showReqModal, setShowReqModal] = useState<boolean>(false);
 
   const isStep1Complete = reqResidentQC && reqEducational && reqEnrolled && selectedSector.length > 0 && selectedServices.length > 0;
@@ -119,6 +119,14 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
   const [concernDescription, setConcernDescription] = useState<string>('');
   const [incidentDate, setIncidentDate] = useState<string>('');
   const [incidentLocation, setIncidentLocation] = useState<string>('');
+
+  // Auto-calculate applicant age from DOB
+  useEffect(() => {
+    if (applicantDob) {
+      const calcAge = calculateAgeFromDob(applicantDob);
+      if (calcAge) setApplicantAge(calcAge);
+    }
+  }, [applicantDob]);
 
   // Auto-calculate child age from DOB
   useEffect(() => {
@@ -594,8 +602,9 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   type="text"
                   value={applicantAge}
                   readOnly
+                  disabled
                   placeholder="Auto-computed"
-                  className={`${inputClass} select-none cursor-not-allowed`}
+                  className={`${inputClass} select-none cursor-not-allowed opacity-85`}
                 />
               </div>
 
@@ -753,8 +762,9 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                       type="text"
                       value={childAge}
                       readOnly
+                      disabled
                       placeholder="Auto-computed"
-                      className={`${inputClass} select-none cursor-not-allowed`}
+                      className={`${inputClass} select-none cursor-not-allowed opacity-85`}
                     />
                   </div>
 
@@ -825,8 +835,9 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                     type="text"
                     value={childAge}
                     readOnly
+                    disabled
                     placeholder="Auto-computed"
-                    className={`${inputClass} select-none cursor-not-allowed`}
+                    className={`${inputClass} select-none cursor-not-allowed opacity-85`}
                   />
                 </div>
 
