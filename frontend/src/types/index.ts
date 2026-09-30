@@ -19,4 +19,5 @@ export interface ApplicationRecord {
   amountOrType: string;
   assignedSocialWorker: string;
   qrCodeData?: string;
+  details?: Record<string, any>;
 }

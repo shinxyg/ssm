@@ -14,6 +14,7 @@ import { MedicalAssistanceView } from './components/MedicalAssistanceView';
 import { FuneralAssistanceView } from './components/FuneralAssistanceView';
 import { EducationalAssistanceView } from './components/EducationalAssistanceView';
 import { PwdAssistanceView } from './components/PwdAssistanceView';
+import { SeniorCitizenAssistanceView } from './components/SeniorCitizenAssistanceView';
 import { UserProfileView } from './components/UserProfileView';
 
 import { initialServices, initialApplications } from './data/servicesData';
@@ -59,6 +60,10 @@ export default function App() {
     }
     if (t.includes('pwd')) {
       setActiveTab('pwd-form');
+      return;
+    }
+    if (t.includes('senior')) {
+      setActiveTab('senior-form');
       return;
     }
     const customService: ServiceItem = {
@@ -110,6 +115,7 @@ export default function App() {
     'pwd': 'PWD Services',
     'pwd-form': 'PWD Services',
     'senior': 'Senior Citizen Services',
+    'senior-form': 'Senior Citizen Services',
     'soloparent': 'Solo Parent Services',
     'childwelfare': 'Child Welfare Services',
     'livelihood': 'Livelihood & Training',
@@ -212,6 +218,13 @@ export default function App() {
             /* Dedicated PWD Social Assistance 4-Step Form View */
             <PwdAssistanceView
               onBack={() => setActiveTab('pwd')}
+              onAddApplication={handleAddApplication}
+              darkMode={darkMode}
+            />
+          ) : activeTab === 'senior-form' ? (
+            /* Dedicated Senior Citizen Social Welfare Assistance 4-Step Form View */
+            <SeniorCitizenAssistanceView
+              onBack={() => setActiveTab('senior')}
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
             />

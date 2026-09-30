@@ -73,7 +73,9 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [showReqModal, setShowReqModal] = useState<boolean>(false);
 
-  const isStep1Complete = reqResidentQC && reqEducational && reqEnrolled && selectedSector.length > 0 && selectedServices.length > 0;
+  const isStep1Complete = mode === 'childwelfare'
+    ? reqResidentQC && reqEducational && reqEnrolled && selectedSector.length > 0 && selectedServices.length > 0
+    : reqResidentQC && reqEducational && reqEnrolled && selectedSector.length > 0;
 
   // Step 2 Form States - Applicant / Parent / Guardian Information
   const [applicantFirstName, setApplicantFirstName] = useState<string>('JEFFERSON');
@@ -263,7 +265,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
     : 'px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold tracking-wider uppercase border border-slate-300 transition-all shadow-sm';
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
       {/* Top Header & Navigation */}
       <div className="space-y-4">
         <h1 className={`text-xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
@@ -274,9 +276,9 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
           <button
             type="button"
             onClick={onBack}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all border shadow-sm ${
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all border ${
               darkMode
-                ? 'bg-slate-900/80 border-slate-800 text-blue-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-slate-900 border-slate-800 text-blue-400 hover:text-white hover:bg-slate-800'
                 : 'bg-white border-slate-200 text-blue-600 hover:bg-slate-50'
             }`}
           >
@@ -286,228 +288,254 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         </div>
       </div>
 
-      {/* Stepper Progress Bar (4 Steps) */}
-      <div className={`p-6 rounded-2xl border ${cardClass}`}>
-        {/* Step Numbers Line */}
-        <div className="relative flex justify-between items-center max-w-3xl mx-auto mb-6">
-          <div className={`absolute top-1/2 left-0 right-0 h-0.5 -translate-y-1/2 z-0 ${
-            darkMode ? 'bg-slate-800' : 'bg-slate-200'
-          }`} />
-
-          {[1, 2, 3, 4].map((stepNum) => {
-            const isPassed = currentStep > stepNum;
-            const isCurrent = currentStep === stepNum;
-            return (
-              <div key={stepNum} className="relative z-10 flex flex-col items-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (stepNum < currentStep || isEditingFromStep4) {
-                      setCurrentStep(stepNum);
-                    }
-                  }}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
-                    isCurrent
-                      ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-500/20'
-                      : isPassed
-                      ? 'bg-blue-600 text-white'
-                      : darkMode
-                      ? 'bg-slate-800 text-slate-500 border border-slate-700'
-                      : 'bg-slate-100 text-slate-500 border border-slate-300'
-                  }`}
-                >
-                  {isPassed ? <CheckCircle2 className="w-5 h-5 text-white" /> : stepNum}
-                </button>
+      {/* SINGLE UNIFIED MAIN CONTAINER CARD FOR ALL CONTENT */}
+      <div className={`rounded-2xl border overflow-hidden ${
+        darkMode ? 'bg-[#0b1426] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+      }`}>
+        {/* Banner Header - only show on Step 1 */}
+        {currentStep === 1 && (
+          <div className={`p-6 border-b flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
+            darkMode ? 'bg-[#0f1b33] border-slate-800' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5" />
               </div>
-            );
-          })}
-        </div>
-
-        {/* Tab Buttons matching reference screenshot */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {[
-            { step: 1, label: 'COMPLETE CHECKLIST' },
-            { step: 2, label: 'APPLICATION FORM' },
-            { step: 3, label: 'UPLOAD DOCUMENTS' },
-            { step: 4, label: 'REVIEW & SUBMIT' },
-          ].map((tab) => {
-            const isActive = currentStep === tab.step;
-            return (
-              <button
-                key={tab.step}
-                type="button"
-                onClick={() => {
-                  if (tab.step < currentStep || isEditingFromStep4) {
-                    setCurrentStep(tab.step);
-                  }
-                }}
-                className={`py-3 px-2 text-[11px] font-extrabold tracking-wider rounded-xl transition-all uppercase text-center border ${
-                  isActive
-                    ? 'bg-blue-600 text-white border-blue-500 shadow-md'
-                    : darkMode
-                    ? 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'
-                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* STEP 1: COMPLETE CHECKLIST */}
-      {currentStep === 1 && (
-        <div className={`p-6 rounded-2xl border space-y-6 ${cardClass}`}>
-          {/* Banner */}
-          <div className={bannerClass}>
-            <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-            <div>
-              <h3 className={bannerTitleClass}>
-                {mode === 'educational' ? 'EDUCATIONAL ASSISTANCE FOR INDIGENT CHILDREN & YOUTH — PRIMARY REQUIREMENTS' : 'CHILD WELFARE SERVICES — PRIMARY REQUIREMENTS'}
-              </h3>
-              <p className={bannerTextClass}>
-                Complete the primary qualification questions below and prepare the required documents to proceed with your application.
-              </p>
+              <div>
+                <h2 className={`text-base sm:text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                  {mode === 'educational' ? 'Educational Assistance — Primary Requirements' : 'Child Welfare Services — Primary Requirements'}
+                </h2>
+                <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Complete the primary qualification questions below and prepare the required documents to proceed with your application.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div>
-            <h2 className={`text-xs font-extrabold tracking-wider uppercase mb-4 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
-              SERVICE AND PRIMARY REQUIREMENTS
-            </h2>
-
-            <div className="space-y-4 py-1">
-              {[
-                {
-                  id: 'resident',
-                  state: reqResidentQC,
-                  setState: setReqResidentQC,
-                  text: 'Are you a legitimate resident of Quezon City? *',
-                },
-                {
-                  id: 'educational',
-                  state: reqEducational,
-                  setState: setReqEducational,
-                  text: mode === 'educational'
-                    ? 'Are you applying for educational assistance for an indigent child or youth? *'
-                    : 'Are you applying for welfare assistance for a child or youth? *',
-                },
-                {
-                  id: 'enrolled',
-                  state: reqEnrolled,
-                  setState: setReqEnrolled,
-                  text: mode === 'educational'
-                    ? 'Is the beneficiary currently enrolled or in need of educational assistance? *'
-                    : 'Is the beneficiary in need of child welfare support and social services? *',
-                },
-              ].map((item) => (
-                <label
-                  key={item.id}
-                  className="flex items-center gap-3 cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    checked={item.state}
-                    onChange={(e) => item.setState(e.target.checked)}
-                    className="w-4 h-4 accent-blue-600 rounded cursor-pointer shrink-0"
-                  />
-                  <span className={`text-xs font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>
-                    {item.text}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* SECTOR */}
-          <div>
-            <h3 className={`text-xs font-extrabold tracking-wider uppercase mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
-              SECTOR *
-            </h3>
-            <div className={`p-4 rounded-xl border space-y-3 ${
-              darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/80 border-slate-200'
-            }`}>
-              {['Children & Youth', "Solo Parent's Child/Beneficiary", 'Child with Disability (CWD)'].map((sec) => (
-                <label
-                  key={sec}
-                  className="flex items-center gap-3 cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedSector.includes(sec)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedSector((prev) => [...prev, sec]);
-                      } else {
-                        setSelectedSector((prev) => prev.filter((s) => s !== sec));
-                      }
-                    }}
-                    className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
-                  />
-                  <span className={`text-xs font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                    {sec}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* SERVICE REQUESTED */}
-          <div>
-            <h3 className={`text-xs font-extrabold tracking-wider uppercase mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
-              SERVICE REQUESTED <span className="text-[11px] font-normal text-slate-400">(Select all that apply)</span> *
-            </h3>
-            <div className={`p-4 rounded-xl border space-y-3 ${
-              darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/80 border-slate-200'
-            }`}>
-              {['Child Protection', 'Alternative Child Care', 'Rehabilitative Counseling'].map((srv) => (
-                <label
-                  key={srv}
-                  className="flex items-center gap-3 cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedServices.includes(srv)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedServices((prev) => [...prev, srv]);
-                      } else {
-                        setSelectedServices((prev) => prev.filter((s) => s !== srv));
-                      }
-                    }}
-                    className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
-                  />
-                  <span className={`text-xs font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                    {srv}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-4">
             <button
               type="button"
-              disabled={!isStep1Complete}
-              onClick={() => handleNextStep(2)}
-              className={`px-8 py-3 rounded-xl text-xs font-extrabold tracking-wider uppercase transition-all shadow-md ${
-                isStep1Complete
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                  : darkMode
-                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
-              }`}
+              onClick={() => setShowReqModal(true)}
+              className="px-4 py-2 border border-blue-500/40 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5"
             >
-              NEXT
+              <Info className="w-3.5 h-3.5" />
+              <span>View Requirements</span>
             </button>
           </div>
+        )}
+
+        {/* 4-Step Stepper Progress Header */}
+        <div className={`p-6 border-b ${darkMode ? 'bg-[#0c162b] border-slate-800' : 'bg-slate-100/70 border-slate-200'}`}>
+          {/* Step Numbers Line */}
+          <div className="relative flex justify-between items-center max-w-3xl mx-auto mb-6">
+            <div className={`absolute top-1/2 left-0 right-0 h-0.5 -translate-y-1/2 z-0 ${
+              darkMode ? 'bg-slate-800' : 'bg-slate-200'
+            }`} />
+
+            {[1, 2, 3, 4].map((stepNum) => {
+              const isPassed = currentStep > stepNum;
+              const isCurrent = currentStep === stepNum;
+              return (
+                <div key={stepNum} className="relative z-10 flex flex-col items-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (stepNum < currentStep || isEditingFromStep4) {
+                        setCurrentStep(stepNum);
+                      }
+                    }}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
+                      isCurrent
+                        ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-500/20'
+                        : isPassed
+                        ? 'bg-blue-600 text-white'
+                        : darkMode
+                        ? 'bg-slate-800 text-slate-500 border border-slate-700'
+                        : 'bg-slate-100 text-slate-500 border border-slate-300'
+                    }`}
+                  >
+                    {isPassed ? <CheckCircle2 className="w-5 h-5 text-white" /> : stepNum}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Tab Buttons */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-w-4xl mx-auto">
+            {[
+              { step: 1, label: 'COMPLETE CHECKLIST' },
+              { step: 2, label: 'APPLICATION FORM' },
+              { step: 3, label: 'UPLOAD DOCUMENTS' },
+              { step: 4, label: 'REVIEW & SUBMIT' },
+            ].map((tab) => {
+              const isActive = currentStep === tab.step;
+              return (
+                <button
+                  key={tab.step}
+                  type="button"
+                  onClick={() => {
+                    if (tab.step < currentStep || isEditingFromStep4) {
+                      setCurrentStep(tab.step);
+                    }
+                  }}
+                  className={`py-3 px-2 text-[11px] font-extrabold tracking-wider rounded-xl transition-all uppercase text-center border ${
+                    isActive
+                      ? 'bg-blue-600 text-white border-blue-500'
+                      : darkMode
+                      ? 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'
+                      : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      )}
+
+        {/* Step Body */}
+        <div className="p-6 sm:p-8">
+
+          {/* STEP 1: COMPLETE CHECKLIST */}
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <div>
+                <h2 className={`text-xs font-extrabold tracking-wider uppercase mb-4 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
+                  SERVICE AND PRIMARY REQUIREMENTS
+                </h2>
+
+                <div className="space-y-4 py-1">
+                  {[
+                    {
+                      id: 'resident',
+                      state: reqResidentQC,
+                      setState: setReqResidentQC,
+                      text: 'Are you a legitimate resident of Quezon City? *',
+                    },
+                    {
+                      id: 'educational',
+                      state: reqEducational,
+                      setState: setReqEducational,
+                      text: mode === 'educational'
+                        ? 'Are you applying for educational assistance for an indigent child or youth? *'
+                        : 'Are you applying for welfare assistance for a child or youth? *',
+                    },
+                    {
+                      id: 'enrolled',
+                      state: reqEnrolled,
+                      setState: setReqEnrolled,
+                      text: mode === 'educational'
+                        ? 'Is the beneficiary currently enrolled or in need of educational assistance? *'
+                        : 'Is the beneficiary in need of child welfare support and social services? *',
+                    },
+                  ].map((item) => (
+                    <label
+                      key={item.id}
+                      className="flex items-center gap-3 cursor-pointer select-none"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={item.state}
+                        onChange={(e) => item.setState(e.target.checked)}
+                        className="w-4 h-4 accent-blue-600 rounded cursor-pointer shrink-0"
+                      />
+                      <span className={`text-xs font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>
+                        {item.text}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* SECTOR */}
+              <div>
+                <h3 className={`text-xs font-extrabold tracking-wider uppercase mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
+                  SECTOR *
+                </h3>
+                <div className={`p-4 rounded-xl border space-y-3 ${
+                  darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/80 border-slate-200'
+                }`}>
+                  {['Children & Youth', "Solo Parent's Child/Beneficiary", 'Child with Disability (CWD)'].map((sec) => (
+                    <label
+                      key={sec}
+                      className="flex items-center gap-3 cursor-pointer select-none"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSector.includes(sec)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedSector((prev) => [...prev, sec]);
+                          } else {
+                            setSelectedSector((prev) => prev.filter((s) => s !== sec));
+                          }
+                        }}
+                        className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
+                      />
+                      <span className={`text-xs font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                        {sec}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* SERVICE REQUESTED (Child Welfare Only) */}
+              {mode === 'childwelfare' && (
+                <div>
+                  <h3 className={`text-xs font-extrabold tracking-wider uppercase mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
+                    SERVICE REQUESTED <span className="text-[11px] font-normal text-slate-400">(Select all that apply)</span> *
+                  </h3>
+                  <div className={`p-4 rounded-xl border space-y-3 ${
+                    darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/80 border-slate-200'
+                  }`}>
+                    {['Child Protection', 'Alternative Child Care', 'Rehabilitative Counseling', 'Educational Financial Aid'].map((srv) => (
+                      <label
+                        key={srv}
+                        className="flex items-center gap-3 cursor-pointer select-none"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedServices.includes(srv)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedServices((prev) => [...prev, srv]);
+                            } else {
+                              setSelectedServices((prev) => prev.filter((s) => s !== srv));
+                            }
+                          }}
+                          className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
+                        />
+                        <span className={`text-xs font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                          {srv}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-4">
+                <button
+                  type="button"
+                  disabled={!isStep1Complete}
+                  onClick={() => handleNextStep(2)}
+                  className={`px-8 py-3 rounded-xl text-xs font-extrabold tracking-wider uppercase transition-all ${
+                    isStep1Complete
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                      : darkMode
+                      ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+                  }`}
+                >
+                  NEXT
+                </button>
+              </div>
+            </div>
+          )}
 
       {/* STEP 2: APPLICATION FORM */}
       {currentStep === 2 && (
-        <div className={`p-6 rounded-2xl border space-y-6 ${cardClass}`}>
+        <div className="space-y-6">
           {/* Header Banner */}
           <div className={bannerClass}>
             <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
@@ -1068,7 +1096,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
 
       {/* STEP 3: UPLOAD DOCUMENTS */}
       {currentStep === 3 && (
-        <div className={`p-6 rounded-2xl border space-y-6 ${cardClass}`}>
+        <div className="space-y-6">
           <div>
             <h3 className={`text-xs font-extrabold tracking-wider uppercase mb-1 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
               D. REQUIRED DOCUMENTS
@@ -1260,7 +1288,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
 
       {/* STEP 4: REVIEW & SUBMIT */}
       {currentStep === 4 && (
-        <div className={`p-6 rounded-2xl border space-y-6 ${cardClass}`}>
+        <div className="space-y-6">
           <div>
             <h3 className={`text-xs font-extrabold tracking-wider uppercase mb-1 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
               REVIEW YOUR APPLICATION
@@ -1532,6 +1560,8 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
           </div>
         </div>
       )}
+        </div>
+      </div>
 
       {/* Camera Capture Modal */}
       {activeCameraDocKey && (

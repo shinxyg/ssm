@@ -254,7 +254,7 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Top Sub-Header Back Button */}
       <div>
         <button
@@ -272,8 +272,8 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
       </div>
 
       {/* Main Container Card */}
-      <div className={`rounded-2xl border shadow-2xl overflow-hidden ${
-        darkMode ? 'bg-[#0b1426] border-slate-800' : 'bg-white border-slate-200 shadow-slate-200/50'
+      <div className={`rounded-2xl border overflow-hidden ${
+        darkMode ? 'bg-[#0b1426] border-slate-800' : 'bg-white border-slate-200'
       }`}>
         
         {/* Banner Header - only show on Step 1 */}
@@ -480,10 +480,10 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
                   <select
                     value={selectedFuneralHome}
                     onChange={(e) => setSelectedFuneralHome(e.target.value)}
-                    className={`w-full px-4 py-3.5 rounded-xl border text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold outline-none focus:border-blue-500 transition-all ${
                       darkMode
-                        ? 'bg-[#0f1c38] border-slate-700 text-white focus:border-blue-500'
-                        : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500 shadow-sm'
+                        ? 'bg-slate-900 border-slate-700 text-white'
+                        : 'bg-slate-50 border-slate-300 text-slate-900'
                     }`}
                   >
                     <option value="">Choose a funeral home</option>

@@ -101,6 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
               activeTab === item.id ||
               (item.id === 'childwelfare' && activeTab === 'aics-educational') ||
               (item.id === 'pwd' && activeTab === 'pwd-form') ||
+              (item.id === 'senior' && activeTab === 'senior-form') ||
               (item.id === 'aics' && (activeTab === 'aics-medical' || activeTab === 'aics-funeral'));
             return (
               <button
@@ -111,7 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                   isOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
                 } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group ${
                   isActive
-                    ? 'bg-[#152747] text-white border-blue-500/30 shadow-md'
+                    ? 'bg-[#152747] text-white border-blue-500/30'
                     : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
                 }`}
                 title={item.label}
@@ -138,7 +139,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                 isOpen ? 'justify-between px-4 py-3' : 'justify-center p-3'
               } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group ${
                 activeTab.startsWith('livelihood')
-                  ? 'bg-[#152747] text-white border-blue-500/30 shadow-md'
+                  ? 'bg-[#152747] text-white border-blue-500/30'
                   : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
               }`}
               title="Livelihood & Training"
@@ -187,7 +188,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
               isOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
             } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group ${
               activeTab === 'payout'
-                ? 'bg-[#152747] text-white border-blue-500/30 shadow-md'
+                ? 'bg-[#152747] text-white border-blue-500/30'
                 : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
             }`}
             title="Financial Aid Disbursement"
@@ -215,7 +216,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
               isOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
             } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group ${
               activeTab === 'history'
-                ? 'bg-[#152747] text-white border-blue-500/30 shadow-md'
+                ? 'bg-[#152747] text-white border-blue-500/30'
                 : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
             }`}
             title="Application History"

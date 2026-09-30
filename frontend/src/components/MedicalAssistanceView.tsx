@@ -264,7 +264,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Top Sub-Header Back Button */}
       <div>
         <button
@@ -282,8 +282,8 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
       </div>
 
       {/* Main Container Card */}
-      <div className={`rounded-2xl border shadow-2xl overflow-hidden ${
-        darkMode ? 'bg-[#0b1426] border-slate-800' : 'bg-white border-slate-200 shadow-slate-200/50'
+      <div className={`rounded-2xl border overflow-hidden ${
+        darkMode ? 'bg-[#0b1426] border-slate-800' : 'bg-white border-slate-200'
       }`}>
         
         {/* Banner Header - only show on Step 1 */}

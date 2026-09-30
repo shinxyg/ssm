@@ -79,6 +79,7 @@ input[type=number]::-webkit-outer-spin-button {
 }
 input[type=number] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* Ensure text typing cursor (caret) is always crisp and visible in Light and Dark modes */

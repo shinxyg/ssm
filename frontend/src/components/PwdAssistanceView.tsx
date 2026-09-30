@@ -223,20 +223,20 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
 
   // Shared Theme Styling Tokens for High-Contrast Readability
   const cardClass = darkMode 
-    ? 'bg-[#0f1b35] border-blue-900/40 text-white shadow-xl' 
-    : 'bg-white border-slate-200 text-slate-900 shadow-md';
+    ? 'bg-[#0f1b35] border-slate-800 text-white' 
+    : 'bg-white border-slate-200 text-slate-900';
 
   const labelClass = darkMode 
     ? 'text-slate-300 font-semibold text-xs mb-1 block' 
     : 'text-slate-700 font-bold text-xs mb-1 block';
 
   const inputClass = darkMode 
-    ? 'w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold border bg-slate-900/80 border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none' 
-    : 'w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold border bg-slate-50/80 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none shadow-sm';
+    ? 'w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold border bg-slate-900 border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none' 
+    : 'w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold border bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none';
 
   const bannerClass = darkMode 
     ? 'p-4 rounded-xl bg-blue-950/50 border border-blue-800/60 flex items-start gap-3' 
-    : 'p-4 rounded-xl bg-blue-50/90 border border-blue-200 flex items-start gap-3 shadow-sm';
+    : 'p-4 rounded-xl bg-blue-50 border border-blue-200 flex items-start gap-3';
 
   const bannerTitleClass = darkMode 
     ? 'text-xs font-extrabold text-blue-300 uppercase tracking-wider' 
@@ -252,10 +252,10 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
 
   const backBtnClass = darkMode 
     ? 'px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-extrabold tracking-wider uppercase border border-slate-700 transition-all' 
-    : 'px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold tracking-wider uppercase border border-slate-300 transition-all shadow-sm';
+    : 'px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold tracking-wider uppercase border border-slate-300 transition-all';
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
       {/* Top Header & Navigation */}
       <div className="space-y-4">
         <h1 className={`text-xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
@@ -266,9 +266,9 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
           <button
             type="button"
             onClick={onBack}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all border shadow-sm ${
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all border ${
               darkMode
-                ? 'bg-slate-900/80 border-slate-800 text-blue-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-slate-900 border-slate-800 text-blue-400 hover:text-white hover:bg-slate-800'
                 : 'bg-white border-slate-200 text-blue-600 hover:bg-slate-50'
             }`}
           >
@@ -278,79 +278,81 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
         </div>
       </div>
 
-      {/* Stepper Progress Bar (4 Steps) */}
-      <div className={`p-6 rounded-2xl border ${cardClass}`}>
-        {/* Step Numbers Line */}
-        <div className="relative flex justify-between items-center max-w-3xl mx-auto mb-6">
-          <div className={`absolute top-1/2 left-0 right-0 h-0.5 -translate-y-1/2 z-0 ${
-            darkMode ? 'bg-slate-800' : 'bg-slate-200'
-          }`} />
+      {/* SINGLE UNIFIED MAIN CONTAINER CARD FOR ALL PWD CONTENT */}
+      <div className={`p-6 sm:p-8 rounded-3xl border space-y-6 ${cardClass}`}>
+        {/* Stepper Progress Bar (4 Steps) */}
+        <div className="pb-6 border-b border-slate-800/80 space-y-4">
+          {/* Step Numbers Line */}
+          <div className="relative flex justify-between items-center max-w-3xl mx-auto mb-2 px-4">
+            <div className={`absolute top-1/2 left-8 right-8 h-0.5 -translate-y-1/2 z-0 ${
+              darkMode ? 'bg-slate-800' : 'bg-slate-200'
+            }`} />
 
-          {[1, 2, 3, 4].map((stepNum) => {
-            const isPassed = currentStep > stepNum;
-            const isCurrent = currentStep === stepNum;
-            return (
-              <div key={stepNum} className="relative z-10 flex flex-col items-center">
+            {[1, 2, 3, 4].map((stepNum) => {
+              const isPassed = currentStep > stepNum;
+              const isCurrent = currentStep === stepNum;
+              return (
+                <div key={stepNum} className="relative z-10 flex flex-col items-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (stepNum < currentStep || isEditingFromStep4) {
+                        setCurrentStep(stepNum);
+                      }
+                    }}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
+                      isCurrent
+                        ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-500/20 scale-110'
+                        : isPassed
+                        ? 'bg-blue-600 text-white'
+                        : darkMode
+                        ? 'bg-slate-900 text-slate-500 border border-slate-800'
+                        : 'bg-slate-100 text-slate-500 border border-slate-300'
+                    }`}
+                  >
+                    {isPassed ? <CheckCircle2 className="w-5 h-5 text-white" /> : stepNum}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Tab Buttons matching reference screenshot */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {[
+              { step: 1, label: 'COMPLETE CHECKLIST' },
+              { step: 2, label: 'PERSONAL INFORMATION' },
+              { step: 3, label: 'UPLOAD DOCUMENTS' },
+              { step: 4, label: 'REVIEW & SUBMIT' },
+            ].map((tab) => {
+              const isActive = currentStep === tab.step;
+              return (
                 <button
+                  key={tab.step}
                   type="button"
                   onClick={() => {
-                    if (stepNum < currentStep || isEditingFromStep4) {
-                      setCurrentStep(stepNum);
+                    if (tab.step < currentStep || isEditingFromStep4) {
+                      setCurrentStep(tab.step);
                     }
                   }}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
-                    isCurrent
-                      ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-500/20'
-                      : isPassed
-                      ? 'bg-blue-600 text-white'
+                  className={`py-2.5 px-2 text-[11px] font-extrabold tracking-wider rounded-xl transition-all uppercase text-center border ${
+                    isActive
+                      ? 'bg-blue-600 text-white border-blue-500 shadow-md font-black'
                       : darkMode
-                      ? 'bg-slate-800 text-slate-500 border border-slate-700'
-                      : 'bg-slate-100 text-slate-500 border border-slate-300'
+                      ? 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'
+                      : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
                   }`}
                 >
-                  {isPassed ? <CheckCircle2 className="w-5 h-5 text-white" /> : stepNum}
+                  {tab.label}
                 </button>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        {/* Tab Buttons matching reference screenshot */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {[
-            { step: 1, label: 'COMPLETE CHECKLIST' },
-            { step: 2, label: 'PERSONAL INFORMATION' },
-            { step: 3, label: 'UPLOAD DOCUMENTS' },
-            { step: 4, label: 'REVIEW & SUBMIT' },
-          ].map((tab) => {
-            const isActive = currentStep === tab.step;
-            return (
-              <button
-                key={tab.step}
-                type="button"
-                onClick={() => {
-                  if (tab.step < currentStep || isEditingFromStep4) {
-                    setCurrentStep(tab.step);
-                  }
-                }}
-                className={`py-3 px-2 text-[11px] font-extrabold tracking-wider rounded-xl transition-all uppercase text-center border ${
-                  isActive
-                    ? 'bg-blue-600 text-white border-blue-500 shadow-md'
-                    : darkMode
-                    ? 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200'
-                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* STEP 1: SERVICE AND PRIMARY REQUIREMENTS (Matching Screenshots 1, 2, 3) */}
-      {currentStep === 1 && (
-        <div className={`p-6 rounded-2xl border space-y-6 ${cardClass}`}>
+        {/* STEP 1: SERVICE AND PRIMARY REQUIREMENTS (Matching Screenshots 1, 2, 3) */}
+        {currentStep === 1 && (
+          <div className="space-y-6 pt-2">
           <div>
             <h2 className={`text-xs font-extrabold tracking-wider uppercase mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
               SERVICE AND PRIMARY REQUIREMENTS
@@ -442,14 +444,14 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end pt-4 border-t border-slate-800">
             <button
               type="button"
               disabled={!pwdIdNumber || !swaCategory}
               onClick={() => handleNextStep(2)}
-              className={`px-8 py-3 rounded-xl text-xs font-extrabold tracking-wider uppercase transition-all shadow-md ${
+              className={`px-8 py-2.5 rounded-xl text-xs font-extrabold tracking-wider uppercase transition-all shadow-md ${
                 pwdIdNumber && swaCategory
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer'
                   : darkMode
                   ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
                   : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
@@ -463,7 +465,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
 
       {/* STEP 2: PERSONAL INFORMATION & SECTIONS 1-6 (MATCHING SCREENSHOTS 1, 2, 3, 4) */}
       {currentStep === 2 && (
-        <div className={`p-6 rounded-2xl border space-y-8 ${cardClass}`}>
+        <div className="space-y-6 pt-2">
           {/* Reminder Banner */}
           <div className={bannerClass}>
             <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
@@ -835,7 +837,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
 
       {/* STEP 3: UPLOAD DOCUMENTS */}
       {currentStep === 3 && (
-        <div className={`p-6 rounded-2xl border space-y-6 ${cardClass}`}>
+        <div className="space-y-6 pt-2">
           <div className="space-y-6">
             {[
               {
@@ -996,7 +998,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
 
       {/* STEP 4: REVIEW & SUBMIT */}
       {currentStep === 4 && (
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmitApplication(); }} className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-200">
+        <div className="space-y-6 pt-2">
           <div className="space-y-1 mb-4">
             <h3 className={`text-base sm:text-lg font-extrabold tracking-wide uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
               REVIEW YOUR APPLICATION
@@ -1298,14 +1300,16 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
             </button>
 
             <button
-              type="submit"
-              className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold tracking-wider uppercase transition-all"
+              type="button"
+              onClick={handleSubmitApplication}
+              className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold tracking-wider uppercase transition-all shadow-lg shadow-blue-600/30"
             >
               SUBMIT APPLICATION
             </button>
           </div>
-        </form>
+        </div>
       )}
+      </div>
 
       {/* Full Image Preview Modal */}
       {previewImageModal && (
