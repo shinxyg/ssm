@@ -1,21 +1,22 @@
 import { useState, useMemo } from 'react';
-import { Navbar } from './components/Navbar';
-import { Sidebar } from './components/Sidebar';
-import { HeroBanner } from './components/HeroBanner';
-import { HowItWorks } from './components/HowItWorks';
-import { ServiceCatalog } from './components/ServiceCatalog';
-import { ModuleCardGrid } from './components/ModuleCardGrid';
-import { LivelihoodProgramView } from './components/LivelihoodProgramView';
-import { TrainingProgramView } from './components/TrainingProgramView';
-import { TrackApplicationsModal } from './components/TrackApplicationsModal';
-import { EligibilityFinderModal } from './components/EligibilityFinderModal';
-import { ServiceDetailModal } from './components/ServiceDetailModal';
-import { MedicalAssistanceView } from './components/MedicalAssistanceView';
-import { FuneralAssistanceView } from './components/FuneralAssistanceView';
-import { EducationalAssistanceView } from './components/EducationalAssistanceView';
-import { PwdAssistanceView } from './components/PwdAssistanceView';
-import { SeniorCitizenAssistanceView } from './components/SeniorCitizenAssistanceView';
-import { UserProfileView } from './components/UserProfileView';
+import { Navbar } from './components/layout/Navbar';
+import { Sidebar } from './components/layout/Sidebar';
+import { HeroBanner } from './components/user/HeroBanner';
+import { HowItWorks } from './components/user/HowItWorks';
+import { ServiceCatalog } from './components/user/ServiceCatalog';
+import { ModuleCardGrid } from './components/user/ModuleCardGrid';
+import { LivelihoodProgramView } from './components/user/LivelihoodProgramView';
+import { TrainingProgramView } from './components/user/TrainingProgramView';
+import { TrackApplicationsModal } from './components/modals/TrackApplicationsModal';
+import { EligibilityFinderModal } from './components/modals/EligibilityFinderModal';
+import { ServiceDetailModal } from './components/modals/ServiceDetailModal';
+import { MedicalAssistanceView } from './components/user/MedicalAssistanceView';
+import { FuneralAssistanceView } from './components/user/FuneralAssistanceView';
+import { EducationalAssistanceView } from './components/user/EducationalAssistanceView';
+import { PwdAssistanceView } from './components/user/PwdAssistanceView';
+import { SeniorCitizenAssistanceView } from './components/user/SeniorCitizenAssistanceView';
+import { SoloParentAssistanceView } from './components/user/SoloParentAssistanceView';
+import { UserProfileView } from './components/user/UserProfileView';
 
 import { initialServices, initialApplications } from './data/servicesData';
 import type { ServiceItem, ApplicationRecord } from './types';
@@ -42,6 +43,14 @@ export default function App() {
 
   const handleApplyFromModule = (title: string, description: string) => {
     const t = title.toLowerCase();
+    if (t.includes('solo parent') || t.includes('soloparent')) {
+      if (t.includes('educational')) {
+        setActiveTab('soloparent-edu-form');
+      } else {
+        setActiveTab('soloparent-form');
+      }
+      return;
+    }
     if (t.includes('medical')) {
       setActiveTab('aics-medical');
       return;
@@ -117,6 +126,9 @@ export default function App() {
     'senior': 'Senior Citizen Services',
     'senior-form': 'Senior Citizen Services',
     'soloparent': 'Solo Parent Services',
+    'soloparent-form': 'Solo Parent Services',
+    'soloparent-financial-form': 'Solo Parent Services',
+    'soloparent-edu-form': 'Solo Parent Services',
     'childwelfare': 'Child Welfare Services',
     'livelihood': 'Livelihood & Training',
     'livelihood-grants': 'Livelihood & Training',
@@ -161,22 +173,38 @@ export default function App() {
                 setActiveFilter={setActiveFilter}
                 onOpenTrackModal={() => setIsTrackModalOpen(true)}
                 onOpenEligibilityModal={() => setIsEligibilityModalOpen(true)}
+                darkMode={darkMode}
               />
 
-              <HowItWorks />
+              <HowItWorks darkMode={darkMode} />
 
               <ServiceCatalog
                 services={filteredServices}
+                darkMode={darkMode}
                 onSelectService={(service) => {
                   const s = (service.id + ' ' + service.title).toLowerCase();
-                  if (s.includes('medical')) {
+                  if (s.includes('medical') || s.includes('hospital')) {
                     setActiveTab('aics-medical');
                   } else if (s.includes('funeral') || s.includes('burial')) {
                     setActiveTab('aics-funeral');
-                  } else if (s.includes('educational')) {
+                  } else if (s.includes('aics') && (s.includes('educational') || s.includes('education'))) {
                     setActiveTab('aics-educational');
-                  } else if (s.includes('child welfare') || s.includes('childwelfare')) {
+                  } else if (s.includes('solo parent') || s.includes('soloparent')) {
+                    if (s.includes('educational') || s.includes('edu')) {
+                      setActiveTab('soloparent-edu-form');
+                    } else {
+                      setActiveTab('soloparent-form');
+                    }
+                  } else if (s.includes('child welfare') || s.includes('childwelfare') || s.includes('child')) {
                     setActiveTab('childwelfare-form');
+                  } else if (s.includes('pwd')) {
+                    setActiveTab('pwd-form');
+                  } else if (s.includes('senior')) {
+                    setActiveTab('senior-form');
+                  } else if (s.includes('skills') || s.includes('training')) {
+                    setActiveTab('skills-training');
+                  } else if (s.includes('livelihood')) {
+                    setActiveTab('livelihood');
                   } else {
                     setSelectedService(service);
                   }
@@ -228,6 +256,21 @@ export default function App() {
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
             />
+          ) : activeTab === 'soloparent-form' || activeTab === 'soloparent-financial-form' ? (
+            /* Dedicated Solo Parent Financial Subsidy 4-Step Form View */
+            <SoloParentAssistanceView
+              onBack={() => setActiveTab('soloparent')}
+              onAddApplication={handleAddApplication}
+              darkMode={darkMode}
+            />
+          ) : activeTab === 'soloparent-edu-form' ? (
+            /* Dedicated QC Solo Parent Educational Assistance 4-Step Form View */
+            <EducationalAssistanceView
+              mode="soloparent"
+              onBack={() => setActiveTab('soloparent')}
+              onAddApplication={handleAddApplication}
+              darkMode={darkMode}
+            />
           ) : activeTab === 'profile' ? (
             /* Dedicated User Profile Content View */
             <UserProfileView darkMode={darkMode} />
@@ -241,6 +284,7 @@ export default function App() {
             /* Training Program View */
             <TrainingProgramView
               onApplyCourse={(courseTitle) => handleApplyFromModule(courseTitle, `Free skills and vocational training course for ${courseTitle}.`)}
+              onAddApplication={handleAddApplication}
               darkMode={darkMode}
             />
           ) : activeTab === 'history' ? (
@@ -333,6 +377,7 @@ export default function App() {
         isOpen={isTrackModalOpen}
         onClose={() => setIsTrackModalOpen(false)}
         applications={applications}
+        darkMode={darkMode}
       />
 
       <EligibilityFinderModal
@@ -342,12 +387,14 @@ export default function App() {
           setActiveFilter(category);
           setActiveTab('help-guide');
         }}
+        darkMode={darkMode}
       />
 
       <ServiceDetailModal
         service={selectedService}
         onClose={() => setSelectedService(null)}
         onAddApplication={handleAddApplication}
+        darkMode={darkMode}
       />
     </div>
   );

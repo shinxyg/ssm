@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import type { ServiceItem, ApplicationRecord } from '../types';
+import type { ServiceItem, ApplicationRecord } from '../../types';
 import { X, CheckCircle2, Upload, FileText, Send, ShieldCheck } from 'lucide-react';
 
 interface ServiceDetailModalProps {
   service: ServiceItem | null;
   onClose: () => void;
   onAddApplication: (app: ApplicationRecord) => void;
+  darkMode?: boolean;
 }
 
 export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
   service,
   onClose,
   onAddApplication,
+  darkMode = true,
 }) => {
   const [tab, setTab] = useState<'info' | 'apply'>('info');
   const [fullName, setFullName] = useState<string>('JEFFERSON LEE');
@@ -48,21 +50,29 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-      <div className="relative w-full max-w-2xl bg-[#0e172a] border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className={`relative w-full max-w-2xl border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] ${
+        darkMode ? 'bg-[#0e172a] border-slate-700' : 'bg-white border-slate-300'
+      }`}>
         {/* Header */}
-        <div className="px-6 py-4 bg-[#111d38] border-b border-slate-700/80 flex justify-between items-center">
+        <div className={`px-6 py-4 border-b flex justify-between items-center ${
+          darkMode ? 'bg-[#111d38] border-slate-700/80' : 'bg-slate-100 border-slate-200'
+        }`}>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 text-blue-400 flex items-center justify-center">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              darkMode ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400' : 'bg-blue-100 border border-blue-300 text-blue-600'
+            }`}>
               <FileText className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold text-white">{service.title}</h3>
-              <p className="text-[11px] text-slate-400">Processing Time: {service.processingTime}</p>
+              <h3 className={`text-base font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{service.title}</h3>
+              <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Processing Time: {service.processingTime}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+            className={`p-1 rounded-lg transition-colors ${
+              darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200'
+            }`}
           >
             <X className="w-5 h-5" />
           </button>
@@ -70,14 +80,16 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
 
         {/* Tab Selector */}
         {!submittedRef && (
-          <div className="flex border-b border-slate-800 bg-[#0d162a]">
+          <div className={`flex border-b ${
+            darkMode ? 'border-slate-800 bg-[#0d162a]' : 'border-slate-200 bg-slate-50'
+          }`}>
             <button
               type="button"
               onClick={() => setTab('info')}
               className={`flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-colors ${
                 tab === 'info'
-                  ? 'border-blue-500 text-blue-400 bg-blue-950/20'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
+                  ? darkMode ? 'border-blue-500 text-blue-400 bg-blue-950/20' : 'border-blue-600 text-blue-600 bg-blue-50'
+                  : darkMode ? 'border-transparent text-slate-400 hover:text-slate-200' : 'border-transparent text-slate-500 hover:text-slate-900'
               }`}
             >
               1. Guidelines & Requirements
@@ -87,8 +99,8 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
               onClick={() => setTab('apply')}
               className={`flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-colors ${
                 tab === 'apply'
-                  ? 'border-blue-500 text-blue-400 bg-blue-950/20'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
+                  ? darkMode ? 'border-blue-500 text-blue-400 bg-blue-950/20' : 'border-blue-600 text-blue-600 bg-blue-50'
+                  : darkMode ? 'border-transparent text-slate-400 hover:text-slate-200' : 'border-transparent text-slate-500 hover:text-slate-900'
               }`}
             >
               2. Online Application Form
@@ -104,15 +116,17 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                 <CheckCircle2 className="w-10 h-10" />
               </div>
               <div>
-                <h4 className="text-lg font-extrabold text-white">Application Successfully Submitted!</h4>
-                <p className="text-xs text-slate-300 mt-1 max-w-md mx-auto">
-                  Your application for <strong className="text-blue-300">{service.title}</strong> has been transmitted to City Social Welfare and Development Office.
+                <h4 className={`text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Application Successfully Submitted!</h4>
+                <p className={`text-xs mt-1 max-w-md mx-auto ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                  Your application for <strong className="text-blue-500">{service.title}</strong> has been transmitted to City Social Welfare and Development Office.
                 </p>
               </div>
 
-              <div className="p-4 bg-slate-900 border border-slate-700/80 rounded-xl max-w-sm mx-auto font-mono">
-                <span className="text-[10px] text-slate-400 block uppercase">Reference Control Number</span>
-                <span className="text-lg font-bold text-amber-400">{submittedRef}</span>
+              <div className={`p-4 border rounded-xl max-w-sm mx-auto font-mono ${
+                darkMode ? 'bg-slate-900 border-slate-700/80' : 'bg-slate-50 border-slate-300'
+              }`}>
+                <span className={`text-[10px] block uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Reference Control Number</span>
+                <span className="text-lg font-bold text-amber-500">{submittedRef}</span>
               </div>
 
               <button
@@ -124,17 +138,19 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
             </div>
           ) : tab === 'info' ? (
             <div className="space-y-4">
-              <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl">
-                <h5 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-1">
+              <div className={`p-4 border rounded-xl ${
+                darkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-50 border-slate-200'
+              }`}>
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-1 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
                   Program Overview
                 </h5>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                   {service.description}
                 </p>
                 {service.benefitAmount && (
-                  <div className="mt-3 text-xs font-semibold text-amber-400 flex items-center gap-2">
+                  <div className="mt-3 text-xs font-semibold text-amber-500 flex items-center gap-2">
                     <span>Est. Benefit Grant:</span>
-                    <span className="bg-amber-400/10 px-2.5 py-0.5 rounded border border-amber-400/30">
+                    <span className="bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/30">
                       {service.benefitAmount}
                     </span>
                   </div>
@@ -143,16 +159,18 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
 
               {/* Mandatory Checklist */}
               <div>
-                <h5 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-2">
+                <h5 className={`text-xs font-bold uppercase tracking-wider mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
                   Mandatory Requirements Checklist
                 </h5>
                 <div className="space-y-2">
                   {service.requirements.map((req, idx) => (
                     <div
                       key={idx}
-                      className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center gap-3 text-xs text-slate-200"
+                      className={`p-3 border rounded-xl flex items-center gap-3 text-xs ${
+                        darkMode ? 'bg-slate-900/60 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
                     >
-                      <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
                       <span>{req}</span>
                     </div>
                   ))}
@@ -171,64 +189,78 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
             </div>
           ) : (
             <form onSubmit={handleSubmitApplication} className="space-y-4">
-              <div className="p-3 bg-blue-950/40 border border-blue-800/40 rounded-xl flex items-center gap-2 text-xs text-blue-300">
-                <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
+              <div className={`p-3 border rounded-xl flex items-center gap-2 text-xs ${
+                darkMode ? 'bg-blue-950/40 border-blue-800/40 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-800'
+              }`}>
+                <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />
                 <span>Verified Citizen details pulled automatically from PhilSys Data System.</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-300 block mb-1">Full Citizen Name</label>
+                  <label className={`text-[11px] font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Full Citizen Name</label>
                   <input
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
+                    className={`w-full px-3 py-2 border rounded-xl text-xs ${
+                      darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                    }`}
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold text-slate-300 block mb-1">Mobile Contact No.</label>
+                  <label className={`text-[11px] font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Mobile Contact No.</label>
                   <input
                     type="text"
                     value={contactNo}
                     onChange={(e) => setContactNo(e.target.value)}
                     required
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
+                    className={`w-full px-3 py-2 border rounded-xl text-xs ${
+                      darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                    }`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-300 block mb-1">Barangay & District Address</label>
+                <label className={`text-[11px] font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Barangay & District Address</label>
                 <input
                   type="text"
                   value={barangay}
                   onChange={(e) => setBarangay(e.target.value)}
                   required
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
+                  className={`w-full px-3 py-2 border rounded-xl text-xs ${
+                    darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
                 />
               </div>
 
               {/* Upload Document Section */}
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-slate-300 block">
+                <label className={`text-[11px] font-bold block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                   Upload Scanned Requirements (IDs, Certificate of Indigency, Medical Abstract)
                 </label>
-                <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl cursor-pointer bg-slate-900/50 hover:bg-slate-900 transition-colors">
+                <label className={`flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                  darkMode 
+                    ? 'border-slate-700 hover:border-blue-500 bg-slate-900/50 hover:bg-slate-900' 
+                    : 'border-slate-300 hover:border-blue-500 bg-slate-50 hover:bg-slate-100'
+                }`}>
                   <Upload className="w-6 h-6 text-slate-400 mb-1" />
-                  <span className="text-xs text-slate-300 font-semibold">Click to select files to upload</span>
-                  <span className="text-[10px] text-slate-500">Supports JPG, PNG, PDF (Max 10MB)</span>
+                  <span className={`text-xs font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Click to select files to upload</span>
+                  <span className={`text-[10px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Supports JPG, PNG, PDF (Max 10MB)</span>
                   <input type="file" onChange={handleFileUpload} className="hidden" />
                 </label>
 
                 {uploadedFiles.length > 0 && (
                   <div className="space-y-1 mt-2">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase">Attached Files:</span>
+                    <span className={`text-[10px] font-bold uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Attached Files:</span>
                     {uploadedFiles.map((file, idx) => (
-                      <div key={idx} className="p-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-emerald-400 flex items-center justify-between">
+                      <div key={idx} className={`p-2 border rounded-lg text-xs flex items-center justify-between ${
+                        darkMode ? 'bg-slate-900 border-slate-800 text-emerald-400' : 'bg-slate-50 border-slate-200 text-emerald-600'
+                      }`}>
                         <span className="truncate">{file}</span>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                       </div>
                     ))}
                   </div>
@@ -239,7 +271,9 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setTab('info')}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700"
+                  className={`px-4 py-2 font-semibold text-xs rounded-xl border ${
+                    darkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                  }`}
                 >
                   Back to Info
                 </button>

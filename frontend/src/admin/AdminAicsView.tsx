@@ -9,7 +9,7 @@ import {
   X,
   Check
 } from 'lucide-react';
-import type { ApplicationRecord } from '../../types';
+import type { ApplicationRecord } from '../types';
 
 interface AdminAicsViewProps {
   darkMode?: boolean;

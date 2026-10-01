@@ -1,46 +1,45 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   ArrowLeft, 
   FileText, 
   CheckCircle2, 
   Upload, 
-  ChevronRight, 
   ShieldCheck, 
-  AlertCircle,
-  Building2,
-  Stethoscope,
   QrCode,
-  Download,
   Info,
   X,
+  Cross,
   Camera,
   Pencil,
   ChevronUp,
   ChevronDown
 } from 'lucide-react';
-import type { ApplicationRecord } from '../types';
+import type { ApplicationRecord } from '../../types';
 
-interface MedicalAssistanceViewProps {
+interface FuneralAssistanceViewProps {
   onBack: () => void;
   onAddApplication: (app: ApplicationRecord) => void;
   darkMode?: boolean;
 }
 
-// Utility to calculate age from Date of Birth string
-const calculateAgeFromDob = (dobString: string): string => {
+// Utility to calculate age from Date of Birth and optional Date of Death string
+const calculateDeceasedAge = (dobString: string, dodString?: string): string => {
   if (!dobString) return '';
   const birthDate = new Date(dobString);
   if (isNaN(birthDate.getTime())) return '';
-  const today = new Date();
-  let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+
+  const endDate = (dodString && dodString.trim() !== '') ? new Date(dodString) : new Date();
+  if (isNaN(endDate.getTime())) return '';
+
+  let calculatedAge = endDate.getFullYear() - birthDate.getFullYear();
+  const monthDiff = endDate.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && endDate.getDate() < birthDate.getDate())) {
     calculatedAge--;
   }
   return calculatedAge >= 0 ? String(calculatedAge) : '';
 };
 
-export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
+export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
   onBack,
   onAddApplication,
   darkMode = true,
@@ -63,100 +62,115 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
     setCurrentStep(targetStep);
   };
 
-  // Step 1 Form States
-  const [assistanceType, setAssistanceType] = useState<string>('');
-  const [hospitalFacility, setHospitalFacility] = useState<string>('');
-  const [medicalCondition, setMedicalCondition] = useState<string>('');
+  // Step 1 Form States (Eligibility Questions)
+  const [isDeceasedQCResident, setIsDeceasedQCResident] = useState<string>('Yes');
+  const [relationToDeceased, setRelationToDeceased] = useState<string>(''); // 'Child' | 'Parent' | 'Sibling' | 'Spouse' | 'Others'
+  const [selectedFuneralHome, setSelectedFuneralHome] = useState<string>('');
   const [showReqModal, setShowReqModal] = useState<boolean>(false);
 
-  // Step 2 Form States (Matching QCID Screenshots 1 & 2)
-  const [qcId, setQcId] = useState<string>('');
-  const [firstName, setFirstName] = useState<string>('');
-  const [middleName, setMiddleName] = useState<string>('');
-  const [lastName, setLastName] = useState<string>('');
+  // Step 2 Form States - Applicant Information (Prefilled & Disabled Verified Profile)
+  const [qcId, setQcId] = useState<string>('110000262304143');
+  const [firstName, setFirstName] = useState<string>('JEFFERSON');
+  const [middleName, setMiddleName] = useState<string>('FERNANDO');
+  const [lastName, setLastName] = useState<string>('LEE');
   const [suffix, setSuffix] = useState<string>('');
   const [nationality, setNationality] = useState<string>('FILIPINO');
-  const [dob, setDob] = useState<string>('');
-  const [age, setAge] = useState<string>('');
+  const [dob, setDob] = useState<string>('2004-09-27');
+  const [age, setAge] = useState<string>('22');
   const [gender, setGender] = useState<string>('Male');
   const [civilStatus, setCivilStatus] = useState<string>('Single');
-  const [houseNo, setHouseNo] = useState<string>('');
-  const [street, setStreet] = useState<string>('');
-  const [barangay, setBarangay] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
+  const [houseNo, setHouseNo] = useState<string>('176');
+  const [street, setStreet] = useState<string>('23');
+  const [barangay, setBarangay] = useState<string>('Bagong Silangan');
+  const [phone, setPhone] = useState<string>('09155582122');
 
-  // Patient States
-  const [isApplicantPatient, setIsApplicantPatient] = useState<boolean>(false);
-  const [isSameAddress, setIsSameAddress] = useState<boolean>(false);
+  // Step 2 Form States - Deceased Information
+  const [deceasedFirstName, setDeceasedFirstName] = useState<string>('');
+  const [deceasedMiddleName, setDeceasedMiddleName] = useState<string>('');
+  const [deceasedLastName, setDeceasedLastName] = useState<string>('');
+  const [deceasedSuffix, setDeceasedSuffix] = useState<string>('');
+  const [deceasedGender, setDeceasedGender] = useState<string>('');
+  const [deceasedDob, setDeceasedDob] = useState<string>('');
+  const [deceasedDateOfDeath, setDeceasedDateOfDeath] = useState<string>('');
+  const [deceasedAge, setDeceasedAge] = useState<string>('');
+  const [deceasedCremationOrBurial, setDeceasedCremationOrBurial] = useState<string>('');
+  const [burialLocationSite, setBurialLocationSite] = useState<string>('');
+  const [otherBurialLocation, setOtherBurialLocation] = useState<string>('');
+  const [cremationLocationSite, setCremationLocationSite] = useState<string>('');
+  const [otherCremationLocation, setOtherCremationLocation] = useState<string>('');
+  const [deceasedPlaceOfDeath, setDeceasedPlaceOfDeath] = useState<string>('');
+  const [deceasedDateOfBurial, setDeceasedDateOfBurial] = useState<string>('');
 
-  const [patientRelation, setPatientRelation] = useState<string>('Piliin');
-  const [patientFirstName, setPatientFirstName] = useState<string>('');
-  const [patientMiddleName, setPatientMiddleName] = useState<string>('');
-  const [patientLastName, setPatientLastName] = useState<string>('');
-  const [patientSuffix, setPatientSuffix] = useState<string>('');
-  const [patientGender, setPatientGender] = useState<string>('Please choose');
-  const [patientDob, setPatientDob] = useState<string>('');
-  const [patientAge, setPatientAge] = useState<string>('');
-
-  const [patientHouseNo, setPatientHouseNo] = useState<string>('');
-  const [patientStreet, setPatientStreet] = useState<string>('');
-  const [patientBarangay, setPatientBarangay] = useState<string>('');
+  const [sameAsApplicantAddress, setSameAsApplicantAddress] = useState<boolean>(false);
+  const [deceasedHouseNo, setDeceasedHouseNo] = useState<string>('');
+  const [deceasedStreet, setDeceasedStreet] = useState<string>('');
+  const [deceasedBarangay, setDeceasedBarangay] = useState<string>('');
 
   // Auto-calculate applicant age from DOB
-  useEffect(() => {
+  React.useEffect(() => {
     if (dob) {
-      const calcAge = calculateAgeFromDob(dob);
+      const calcAge = calculateDeceasedAge(dob);
       if (calcAge) setAge(calcAge);
     }
   }, [dob]);
 
-  // Auto-calculate patient age from patient DOB
-  useEffect(() => {
-    if (patientDob) {
-      const calcAge = calculateAgeFromDob(patientDob);
-      if (calcAge) setPatientAge(calcAge);
+  // Auto-calculate deceased age from Date of Birth and Date of Death
+  React.useEffect(() => {
+    if (!deceasedDob && !deceasedDateOfDeath) {
+      setDeceasedAge('');
+      return;
     }
-  }, [patientDob]);
+    const calcAge = calculateDeceasedAge(deceasedDob, deceasedDateOfDeath);
+    setDeceasedAge(calcAge);
+  }, [deceasedDob, deceasedDateOfDeath]);
 
-  const handleToggleApplicantPatient = (checked: boolean) => {
-    setIsApplicantPatient(checked);
-    if (checked) {
-      setPatientRelation('Sarili');
-      setPatientFirstName(firstName);
-      setPatientMiddleName(middleName);
-      setPatientLastName(lastName);
-      setPatientSuffix(suffix);
-      setPatientGender(gender);
-      setPatientDob(dob);
-      setPatientAge(age);
-      setIsSameAddress(true);
-      setPatientHouseNo(houseNo);
-      setPatientStreet(street);
-      setPatientBarangay(barangay);
+  // Auto sync address when "Same as applicant's address" is checked
+  React.useEffect(() => {
+    if (sameAsApplicantAddress) {
+      setDeceasedHouseNo(houseNo);
+      setDeceasedStreet(street);
+      setDeceasedBarangay(barangay);
     }
-  };
+  }, [sameAsApplicantAddress, houseNo, street, barangay]);
 
-  const handleToggleSameAddress = (checked: boolean) => {
-    setIsSameAddress(checked);
-    if (checked) {
-      setPatientHouseNo(houseNo);
-      setPatientStreet(street);
-      setPatientBarangay(barangay);
-    }
-  };
-
-  // Auto-fill address reactively whenever isSameAddress is active
-  useEffect(() => {
-    if (isSameAddress) {
-      setPatientHouseNo(houseNo);
-      setPatientStreet(street);
-      setPatientBarangay(barangay);
-    }
-  }, [isSameAddress, houseNo, street, barangay]);
-
-  // Step 3 Form States & Camera Modal State
+  // Step 3 Form States
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File }>({});
-  const [previewImageModal, setPreviewImageModal] = useState<{ title: string; url: string } | null>(null);
+
+  // Step 4 Form States
+  const [isCertified, setIsCertified] = useState<boolean>(false);
+  const [submittedRef, setSubmittedRef] = useState<string | null>(null);
+
+  // Accredited Partner Funeral Homes List (matching screenshot 3)
+  const funeralHomesList = [
+    'Nieto Funeral Services',
+    'St. Fiacre Funeral Service',
+    'Vivs Funeral Homes',
+    'Rizalde Funeral Services',
+    'Kaagapay Mo Karamay Funeral Homes Co.',
+    'Bonita Memorial Homes',
+    'St. James Memorial Chapel',
+    'Amber Green Funeral Services',
+    'Dayao Funeral Home Incorporated',
+    'La Funeraria Paz, Inc.',
+    'Wyn Funeral Services',
+    'St. Ignatius Funeral Homes Inc.',
+    'Aijel Funeral Services',
+    'A & J Biglang-awa Funeral Homes',
+    'Precious JP Funeral Services',
+    'D. Imperial Funeral Services',
+    'Ka Andres Memorial Chapel',
+    'Memory Funeral Service',
+    'Cinco Estrellas Memorial Chapels Inc.',
+    'Others'
+  ];
+
+  // Validation: Next button in Step 1 MUST only enable when relation and funeral home are selected!
+  const isStep1Complete = Boolean(
+    relationToDeceased !== '' && 
+    selectedFuneralHome !== ''
+  );
+
+  // Camera Modal State & Handlers
   const [activeCameraKey, setActiveCameraKey] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -207,30 +221,6 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
     }
   };
 
-  // Step 4 Form States
-  const [isCertified, setIsCertified] = useState<boolean>(false);
-  const [submittedRef, setSubmittedRef] = useState<string | null>(null);
-
-  // 2 Types of Medical Assistance Options (matching exact UI reference)
-  const assistanceTypeOptions = [
-    { value: 'Medicines / Medical Supplies', label: 'Medicines / Medical Supplies' },
-    { value: 'Medical Bill Assistance', label: 'Medical Bill Assistance' },
-  ];
-
-  // Accredited Hospitals List (matching screenshot 4)
-  const accreditedHospitals = [
-    'Quezon City General Hospital (QCGH)',
-    'Lung Center of the Philippines',
-    'National Children\'s Hospital',
-    'National Kidney and Transplant Institute (NKTI)',
-    'Heart Center of the Philippines',
-    'East Avenue Medical Center',
-    'Philippine Children\'s Medical Center (PCMC)',
-    'Quirino Memorial Medical Center (QMMC)',
-    'St. Luke\'s Medical Center – Quezon City',
-    'Other Accredited Health Facility'
-  ];
-
   const handleFileUpload = (reqKey: string, e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -248,14 +238,14 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newRefNo = `QC-AICS-2026-MED-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newRefNo = `QC-AICS-2026-FUN-${Math.floor(1000 + Math.random() * 9000)}`;
     const newApp: ApplicationRecord = {
       referenceNo: newRefNo,
-      serviceName: `QC Medical Assistance — ${assistanceType || 'Bill Aid'}`,
+      serviceName: `QC Funeral Assistance — Guarantee Letter (${selectedFuneralHome})`,
       category: 'AICS',
       dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       status: 'Under Review',
-      amountOrType: 'Guarantee Letter / Financial Subsidy',
+      amountOrType: 'P25,000 Guarantee Voucher / Funeral Aid',
       assignedSocialWorker: 'Social Worker Maria Santos, RSW (QC CSWDO)',
     };
 
@@ -298,7 +288,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className={`text-base sm:text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    Requirements for Application of QC Medical Assistance
+                    Requirements for Application of QC Funeral Assistance
                   </h2>
                   <span className="px-2.5 py-0.5 bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 text-[11px] font-mono rounded-full font-semibold">
                     newApplication
@@ -341,7 +331,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     key={stepNum}
                     type="button"
                     onClick={() => {
-                      if (stepNum < currentStep || (stepNum === 2 && assistanceType)) {
+                      if (stepNum < currentStep || (stepNum === 2 && isStep1Complete)) {
                         setCurrentStep(stepNum);
                       }
                     }}
@@ -374,7 +364,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   key={step.num}
                   type="button"
                   onClick={() => {
-                    if (step.num < currentStep || (step.num === 2 && assistanceType)) {
+                    if (step.num < currentStep || (step.num === 2 && isStep1Complete)) {
                       setCurrentStep(step.num);
                     }
                   }}
@@ -404,22 +394,22 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
               </div>
 
               <div>
-                <h3 className="text-xl font-extrabold text-white">Application Successfully Submitted!</h3>
+                <h3 className="text-xl font-extrabold text-white">Funeral Assistance Application Submitted!</h3>
                 <p className="text-xs text-slate-300 mt-2 leading-relaxed">
-                  Your medical assistance request for <strong className="text-blue-400">{assistanceType}</strong> at <strong className="text-white">{hospitalFacility || 'Accredited Facility'}</strong> has been queued for Quezon City Social Welfare review.
+                  Your funeral assistance request for <strong className="text-blue-400">{`${deceasedFirstName} ${deceasedLastName}`.trim() || 'the deceased resident'}</strong> under partner funeral home <strong className="text-white">{selectedFuneralHome}</strong> has been transmitted to QC CSWDO.
                 </p>
               </div>
 
               <div className="p-5 bg-slate-900/90 border border-slate-700/90 rounded-2xl space-y-2">
-                <span className="text-[11px] text-slate-400 uppercase font-bold tracking-wider block">Official Control Reference Number</span>
+                <span className="text-[11px] text-slate-400 uppercase font-bold tracking-wider block">Official Guarantee Reference Control Number</span>
                 <span className="text-2xl font-black font-mono text-amber-400 tracking-widest">{submittedRef}</span>
               </div>
 
               <div className="p-4 bg-blue-950/40 border border-blue-800/60 rounded-xl flex items-center gap-3 text-left">
                 <QrCode className="w-10 h-10 text-blue-400 shrink-0" />
                 <div className="text-xs">
-                  <span className="font-bold text-white block">Digital Guarantee Voucher Ready</span>
-                  <span className="text-slate-300">Present this reference number or QR voucher at CSWDO Window / Partner Hospital Social Work Desk.</span>
+                  <span className="font-bold text-white block">Certificate of Guarantee Issued</span>
+                  <span className="text-slate-300">Present this reference control voucher to {selectedFuneralHome} to cover service package up to Php 25,000.</span>
                 </div>
               </div>
 
@@ -434,87 +424,89 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
               </div>
             </div>
           ) : currentStep === 1 ? (
-            /* STEP 1: COMPLETE CHECKLIST */
+            /* STEP 1: COMPLETE CHECKLIST (MATCHING USER SCREENSHOTS 1, 2, 3) */
             <div className="space-y-6 max-w-3xl mx-auto">
-              <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-blue-400 block flex items-center gap-2">
-                  <Stethoscope className="w-4 h-4 text-blue-500" />
-                  CLICK THE TYPE OF ASSISTANCE
-                </label>
-
-                {/* Dropdown 1: Assistance Type */}
-                <select
-                  value={assistanceType}
-                  onChange={(e) => setAssistanceType(e.target.value)}
-                  className={`w-full px-4 py-3.5 rounded-xl border text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                    darkMode
-                      ? 'bg-[#0f1c38] border-slate-700 text-white focus:border-blue-500'
-                      : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500'
-                  }`}
-                >
-                  <option value="">Select Type of Assistance</option>
-                  {assistanceTypeOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+              
+              {/* Top Primary Requirements Notice Box */}
+              <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+                darkMode ? 'bg-[#0e1e3b] border-blue-900/60 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-900'
+              }`}>
+                <Info className={`w-5 h-5 shrink-0 mt-0.5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                <div>
+                  <h4 className={`text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-blue-300' : 'text-blue-900'}`}>
+                    FUNERAL ASSISTANCE — PRIMARY REQUIREMENTS
+                  </h4>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                    Complete the primary qualification questions below and prepare the required documents to proceed with your application.
+                  </p>
+                </div>
               </div>
 
-              {/* Conditional Fields: Hospital & Diagnosis appear for Medical Bill Assistance */}
-              {assistanceType === 'Medical Bill Assistance' && (
-                <div className="space-y-5 pt-2 animate-in fade-in duration-300">
-                  {/* Field 1: Accredited Partner Hospital */}
-                  <div className="space-y-2">
-                    <label className={`text-xs font-bold uppercase tracking-wide block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                      Accredited Partner Hospital / Healthcare Facility *
-                    </label>
-                    <select
-                      value={hospitalFacility}
-                      onChange={(e) => setHospitalFacility(e.target.value)}
-                      className={`w-full px-4 py-3.5 rounded-xl border text-xs sm:text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                        darkMode
-                          ? 'bg-[#0f1c38] border-slate-700 text-white focus:border-blue-500'
-                          : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500'
-                      }`}
-                    >
-                      <option value="">Select Accredited Partner Hospital / Healthcare Facility</option>
-                      {accreditedHospitals.map((hosp) => (
-                        <option key={hosp} value={hosp}>
-                          {hosp}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+              {/* ELIGIBILITY SECTION */}
+              <div className="space-y-6 pt-2">
+                <h3 className={`text-sm font-extrabold uppercase tracking-wider ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                  ELIGIBILITY
+                </h3>
 
-                  {/* Field 2: Medical Condition / Diagnosis */}
+                {/* Question 1: What is your relation to the deceased? */}
+                <div className="space-y-2.5">
+                  <label className={`text-xs font-bold block ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                    What is your relation to the deceased? *
+                  </label>
                   <div className="space-y-2">
-                    <label className={`text-xs font-bold uppercase tracking-wide block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                      Medical Condition / Diagnosis *
-                    </label>
-                    <input
-                      type="text"
-                      value={medicalCondition}
-                      onChange={(e) => setMedicalCondition(e.target.value)}
-                      placeholder="e.g. Dialysis / Chemotherapy / Confinement / Surgery"
-                      className={`w-full px-4 py-3.5 rounded-xl border text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                        darkMode
-                          ? 'bg-[#0f1c38] border-slate-700 text-white focus:border-blue-500 placeholder-slate-500'
-                          : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500 placeholder-slate-400'
-                      }`}
-                    />
+                    {['Child', 'Parent', 'Sibling', 'Spouse', 'Others'].map((rel) => (
+                      <label key={rel} className={`flex items-center gap-2 text-xs cursor-pointer ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                        <input
+                          type="radio"
+                          name="relationDeceased"
+                          value={rel}
+                          checked={relationToDeceased === rel}
+                          onChange={(e) => setRelationToDeceased(e.target.value)}
+                          className={`w-4 h-4 text-blue-600 focus:ring-blue-500 ${
+                            darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'
+                          }`}
+                        />
+                        <span>{rel}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
-              )}
+
+                {/* Question 2: Choose a Funeral Home Dropdown */}
+                <div className="space-y-2">
+                  <label className={`text-xs font-bold block ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                    If you already have a funeral home, select which funeral home provided the service *
+                  </label>
+                  <select
+                    value={selectedFuneralHome}
+                    onChange={(e) => setSelectedFuneralHome(e.target.value)}
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold outline-none focus:border-blue-500 transition-all ${
+                      darkMode
+                        ? 'bg-slate-900 border-slate-700 text-white'
+                        : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
+                  >
+                    <option value="">Choose a funeral home</option>
+                    {funeralHomesList.map((home) => (
+                      <option key={home} value={home}>
+                        {home}
+                      </option>
+                    ))}
+                  </select>
+                  <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Please choose an accredited partner funeral home. If your chosen funeral home is not listed, select 'Others'.
+                  </p>
+                </div>
+              </div>
 
               {/* Bottom Action Bar */}
               <div className={`pt-6 border-t flex justify-end ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
                 <button
                   type="button"
-                  disabled={!assistanceType}
+                  disabled={!isStep1Complete}
                   onClick={() => handleNextStep(2)}
                   className={`px-8 py-3 rounded-xl font-extrabold text-xs tracking-wider uppercase transition-all ${
-                    assistanceType
+                    isStep1Complete
                       ? 'bg-blue-600 hover:bg-blue-500 text-white hover:scale-[1.02]'
                       : darkMode
                       ? 'bg-[#18243c] text-slate-500 cursor-not-allowed border border-slate-800'
@@ -526,35 +518,35 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
               </div>
             </div>
           ) : currentStep === 2 ? (
-            /* STEP 2: PERSONAL INFORMATION (Matching exact QCID Screenshots 1 & 2) */
+            /* STEP 2: PERSONAL INFORMATION (Matching exact QCID Screenshots 1, 2 & 3) */
             <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-200">
               
               {/* IMPORTANT REMINDER Box */}
               <div className={`p-4 rounded-xl border flex items-start gap-3 ${
                 darkMode ? 'bg-[#0e1d3d] border-blue-800/60 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-900'
               }`}>
-                <Info className={`w-5 h-5 shrink-0 mt-0.5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className={`text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-blue-300' : 'text-blue-900'}`}>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-blue-300">
                     IMPORTANT REMINDER
                   </h4>
-                  <p className={`text-xs mt-1 leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <p className="text-xs text-slate-300 mt-1 leading-relaxed">
                     Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service.
                   </p>
                 </div>
               </div>
 
-              {/* Applicant Fields Grid (Matching Screenshot 1) */}
+              {/* APPLICANT INFORMATION GRID (Prefilled & Disabled Verified Profile) */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                 <div>
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>First name *</label>
                   <input
                     type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="First name"
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                    readOnly
+                    disabled
+                    value={firstName || 'JEFFERSON'}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   />
                 </div>
@@ -562,11 +554,11 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Middle name</label>
                   <input
                     type="text"
-                    value={middleName}
-                    onChange={(e) => setMiddleName(e.target.value)}
-                    placeholder="Middle name"
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                    readOnly
+                    disabled
+                    value={middleName || 'FERNANDO'}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   />
                 </div>
@@ -575,11 +567,11 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Last name *</label>
                   <input
                     type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Last name"
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                    readOnly
+                    disabled
+                    value={lastName || 'LEE'}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   />
                 </div>
@@ -587,11 +579,12 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Suffix (Jr., Sr., III, etc.)</label>
                   <input
                     type="text"
-                    value={suffix}
-                    onChange={(e) => setSuffix(e.target.value)}
+                    readOnly
+                    disabled
                     placeholder="Suffix (Jr., Sr., III, etc.)"
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                    value={suffix}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300 placeholder-slate-600' : 'bg-slate-100 border border-slate-300 text-slate-800 placeholder-slate-400'
                     }`}
                   />
                 </div>
@@ -599,11 +592,11 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Nationality *</label>
                   <input
                     type="text"
-                    value={nationality}
-                    onChange={(e) => setNationality(e.target.value)}
-                    placeholder="FILIPINO"
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                    readOnly
+                    disabled
+                    value={nationality || 'FILIPINO'}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   />
                 </div>
@@ -611,11 +604,12 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                 <div>
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Date of birth *</label>
                   <input
-                    type="date"
-                    value={dob}
-                    onChange={(e) => setDob(e.target.value)}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
+                    type="text"
+                    readOnly
+                    disabled
+                    value="27/09/2004"
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   />
                 </div>
@@ -623,21 +617,21 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Age *</label>
                   <input
                     type="text"
-                    value={age}
                     readOnly
-                    placeholder="Auto-computed"
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38]/60 border border-slate-700 text-cyan-400 placeholder-slate-500' : 'bg-slate-100 border border-slate-300 text-blue-700 placeholder-slate-400 shadow-sm'
+                    disabled
+                    value={age || '22'}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-blue-400' : 'bg-slate-100 border border-slate-300 text-blue-700'
                     }`}
                   />
                 </div>
                 <div>
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Gender *</label>
                   <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    className={`w-full px-3 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
+                    disabled
+                    value={gender || 'Male'}
+                    className={`w-full px-3 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   >
                     <option value="Male">Male</option>
@@ -648,10 +642,10 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                 <div>
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Civil status *</label>
                   <select
-                    value={civilStatus}
-                    onChange={(e) => setCivilStatus(e.target.value)}
-                    className={`w-full px-3 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
+                    disabled
+                    value={civilStatus || 'Single'}
+                    className={`w-full px-3 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   >
                     <option value="Single">Single</option>
@@ -664,11 +658,11 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>House/Building number *</label>
                   <input
                     type="text"
-                    value={houseNo}
-                    onChange={(e) => setHouseNo(e.target.value)}
-                    placeholder="176"
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                    readOnly
+                    disabled
+                    value={houseNo || '176'}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   />
                 </div>
@@ -676,11 +670,11 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Street name *</label>
                   <input
                     type="text"
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    placeholder="23"
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                    readOnly
+                    disabled
+                    value={street || '23'}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   />
                 </div>
@@ -689,11 +683,11 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Barangay *</label>
                   <input
                     type="text"
-                    value={barangay}
-                    onChange={(e) => setBarangay(e.target.value)}
-                    placeholder="Bagong Silangan"
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                    readOnly
+                    disabled
+                    value={barangay || 'Bagong Silangan'}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   />
                 </div>
@@ -701,63 +695,29 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Phone number *</label>
                   <input
                     type="text"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="09155582122"
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                    readOnly
+                    disabled
+                    value={phone || '09155582122'}
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
+                      darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   />
                 </div>
               </div>
 
-              {/* Checkbox: I am the patient applying for myself */}
-              <label className={`flex items-center gap-2.5 p-3 border rounded-xl cursor-pointer ${
-                darkMode ? 'bg-[#0d172e] border-slate-800' : 'bg-slate-50 border-slate-200'
-              }`}>
-                <input
-                  type="checkbox"
-                  checked={isApplicantPatient}
-                  onChange={(e) => handleToggleApplicantPatient(e.target.checked)}
-                  className={`w-4 h-4 text-blue-600 rounded ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                />
-                <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                  I am the patient applying for myself
-                </span>
-              </label>
-
-              {/* Patient Information Section (Matching Screenshot 2) */}
-              <div className={`space-y-4 pt-2 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-                <h3 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                  Impormasyon ng Pasyente (Kukutaan ng Gamot)
+              {/* DECEASED INFORMATION SECTION (Matching Screenshot 3) */}
+              <div className={`pt-6 border-t space-y-4 ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                <h3 className={`text-sm font-extrabold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                  Deceased Information
                 </h3>
-
-                <div className="space-y-2">
-                  <label className={`text-xs font-bold block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Relasyon sa Pasyente *</label>
-                  <select
-                    value={patientRelation}
-                    onChange={(e) => setPatientRelation(e.target.value)}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
-                    }`}
-                  >
-                    <option value="Piliin">Piliin</option>
-                    <option value="Sarili">Sarili (Patient is Applicant)</option>
-                    <option value="Asawa">Asawa</option>
-                    <option value="Anak">Anak</option>
-                    <option value="Magulang">Magulang</option>
-                    <option value="Kapatid">Kapatid</option>
-                    <option value="Iba pa">Iba pa</option>
-                  </select>
-                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                   <div>
                     <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>First name *</label>
                     <input
                       type="text"
-                      value={patientFirstName}
-                      onChange={(e) => setPatientFirstName(e.target.value)}
+                      value={deceasedFirstName}
+                      onChange={(e) => setDeceasedFirstName(e.target.value)}
                       placeholder="First name"
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
@@ -768,8 +728,8 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Middle name</label>
                     <input
                       type="text"
-                      value={patientMiddleName}
-                      onChange={(e) => setPatientMiddleName(e.target.value)}
+                      value={deceasedMiddleName}
+                      onChange={(e) => setDeceasedMiddleName(e.target.value)}
                       placeholder="Middle name"
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
@@ -780,8 +740,8 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Last name *</label>
                     <input
                       type="text"
-                      value={patientLastName}
-                      onChange={(e) => setPatientLastName(e.target.value)}
+                      value={deceasedLastName}
+                      onChange={(e) => setDeceasedLastName(e.target.value)}
                       placeholder="Last name"
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
@@ -793,8 +753,8 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Suffix (Jr., Sr., III, etc.)</label>
                     <input
                       type="text"
-                      value={patientSuffix}
-                      onChange={(e) => setPatientSuffix(e.target.value)}
+                      value={deceasedSuffix}
+                      onChange={(e) => setDeceasedSuffix(e.target.value)}
                       placeholder="Suffix (Jr., Sr., III, etc.)"
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
@@ -804,13 +764,13 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <div>
                     <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Gender *</label>
                     <select
-                      value={patientGender}
-                      onChange={(e) => setPatientGender(e.target.value)}
+                      value={deceasedGender}
+                      onChange={(e) => setDeceasedGender(e.target.value)}
                       className={`w-full px-3 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
                       }`}
                     >
-                      <option value="Please choose">Please choose</option>
+                      <option value="">Please choose</option>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
                     </select>
@@ -819,51 +779,177 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Date of birth *</label>
                     <input
                       type="date"
-                      value={patientDob}
-                      onChange={(e) => setPatientDob(e.target.value)}
-                      className={`w-full px-3 py-2.5 rounded-xl text-xs ${
+                      value={deceasedDob}
+                      onChange={(e) => setDeceasedDob(e.target.value)}
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
                       }`}
                     />
                   </div>
 
                   <div>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Date of death *</label>
+                    <input
+                      type="date"
+                      value={deceasedDateOfDeath}
+                      onChange={(e) => setDeceasedDateOfDeath(e.target.value)}
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
+                        darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
+                      }`}
+                    />
+                  </div>
+                  <div>
                     <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Age *</label>
                     <input
                       type="text"
-                      value={patientAge}
+                      value={deceasedAge}
                       readOnly
-                      placeholder="Auto-computed"
-                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold select-none cursor-not-allowed ${
-                        darkMode ? 'bg-slate-900/80 border border-slate-700 text-slate-400 placeholder-slate-500' : 'bg-slate-100 border border-slate-300 text-slate-500 placeholder-slate-400 shadow-sm'
+                      placeholder="Auto-computed from DOB & Death"
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold select-none ${
+                        darkMode 
+                          ? 'bg-slate-900/60 border border-slate-700 text-cyan-400 placeholder-slate-500' 
+                          : 'bg-slate-100 border border-slate-300 text-blue-700 placeholder-slate-400 shadow-sm'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Cremation or burial *</label>
+                    <select
+                      value={deceasedCremationOrBurial}
+                      onChange={(e) => {
+                        setDeceasedCremationOrBurial(e.target.value);
+                        setBurialLocationSite('');
+                        setOtherBurialLocation('');
+                        setCremationLocationSite('');
+                        setOtherCremationLocation('');
+                      }}
+                      className={`w-full px-3 py-2.5 rounded-xl text-xs ${
+                        darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
+                      }`}
+                    >
+                      <option value="">Please choose</option>
+                      <option value="Burial">Burial</option>
+                      <option value="Cremation">Cremation</option>
+                    </select>
+                  </div>
+
+                  {/* Conditional Burial Site Fields */}
+                  {deceasedCremationOrBurial === 'Burial' && (
+                    <>
+                      <div>
+                        <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Where will it be buried *</label>
+                        <select
+                          value={burialLocationSite}
+                          onChange={(e) => setBurialLocationSite(e.target.value)}
+                          className={`w-full px-3 py-2.5 rounded-xl text-xs ${
+                            darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
+                          }`}
+                        >
+                          <option value="">Select burial site...</option>
+                          <option value="Bagbag Public Cemetery">Bagbag Public Cemetery</option>
+                          <option value="Novaliches Public Cemetery">Novaliches Public Cemetery</option>
+                          <option value="Others (Specify)">Others (Specify)</option>
+                        </select>
+                      </div>
+
+                      {burialLocationSite === 'Others (Specify)' && (
+                        <div>
+                          <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Specify the burial location *</label>
+                          <input
+                            type="text"
+                            value={otherBurialLocation}
+                            onChange={(e) => setOtherBurialLocation(e.target.value)}
+                            placeholder="Name of cemetery/place"
+                            className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
+                              darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                            }`}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Conditional Cremation Site Fields */}
+                  {deceasedCremationOrBurial === 'Cremation' && (
+                    <>
+                      <div>
+                        <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Where will it be cremated *</label>
+                        <select
+                          value={cremationLocationSite}
+                          onChange={(e) => setCremationLocationSite(e.target.value)}
+                          className={`w-full px-3 py-2.5 rounded-xl text-xs ${
+                            darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
+                          }`}
+                        >
+                          <option value="">Select cremation site...</option>
+                          <option value="Baesa Crematorium">Baesa Crematorium</option>
+                          <option value="Others (Specify)">Others (Specify)</option>
+                        </select>
+                      </div>
+
+                      {cremationLocationSite === 'Others (Specify)' && (
+                        <div>
+                          <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Specify the cremation location *</label>
+                          <input
+                            type="text"
+                            value={otherCremationLocation}
+                            onChange={(e) => setOtherCremationLocation(e.target.value)}
+                            placeholder="Name of crematorium/place"
+                            className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
+                              darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                            }`}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className="md:col-span-2">
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Place of death *</label>
+                    <input
+                      type="text"
+                      value={deceasedPlaceOfDeath}
+                      onChange={(e) => setDeceasedPlaceOfDeath(e.target.value)}
+                      placeholder="Place of death"
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
+                        darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Date of burial</label>
+                    <input
+                      type="date"
+                      value={deceasedDateOfBurial}
+                      onChange={(e) => setDeceasedDateOfBurial(e.target.value)}
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
+                        darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
                       }`}
                     />
                   </div>
                 </div>
 
-                {/* Checkbox: Same as applicant's address */}
-                <label className={`flex items-center gap-2.5 p-3 border rounded-xl cursor-pointer ${
-                  darkMode ? 'bg-[#0d172e] border-slate-800' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <input
-                    type="checkbox"
-                    checked={isSameAddress}
-                    onChange={(e) => handleToggleSameAddress(e.target.checked)}
-                    className={`w-4 h-4 text-blue-600 rounded ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
-                  />
-                  <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                    Same as applicant's address
-                  </span>
-                </label>
+                {/* Same as Applicant Address Checkbox */}
+                <div className="pt-2">
+                  <label className={`flex items-center gap-2 cursor-pointer text-xs font-medium ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                    <input
+                      type="checkbox"
+                      checked={sameAsApplicantAddress}
+                      onChange={(e) => setSameAsApplicantAddress(e.target.checked)}
+                      className={`w-4 h-4 text-blue-600 rounded ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
+                    />
+                    <span>Same as applicant's address</span>
+                  </label>
+                </div>
 
-                {/* Patient Address Fields */}
+                {/* Deceased Address Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                   <div>
                     <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>House/Building number *</label>
                     <input
                       type="text"
-                      value={patientHouseNo}
-                      onChange={(e) => setPatientHouseNo(e.target.value)}
+                      value={deceasedHouseNo}
+                      onChange={(e) => setDeceasedHouseNo(e.target.value)}
                       placeholder="House/Building number"
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
@@ -874,8 +960,8 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Street name *</label>
                     <input
                       type="text"
-                      value={patientStreet}
-                      onChange={(e) => setPatientStreet(e.target.value)}
+                      value={deceasedStreet}
+                      onChange={(e) => setDeceasedStreet(e.target.value)}
                       placeholder="Street name"
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
@@ -886,8 +972,8 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Barangay *</label>
                     <input
                       type="text"
-                      value={patientBarangay}
-                      onChange={(e) => setPatientBarangay(e.target.value)}
+                      value={deceasedBarangay}
+                      onChange={(e) => setDeceasedBarangay(e.target.value)}
                       placeholder="Barangay"
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
@@ -897,7 +983,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                 </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* Bottom Navigation Buttons */}
               <div className={`pt-6 border-t flex justify-between ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
                 <button
                   type="button"
@@ -911,7 +997,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                 <button
                   type="button"
                   onClick={() => handleNextStep(3)}
-                  className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl uppercase"
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider rounded-xl uppercase transition-all"
                 >
                   NEXT
                 </button>
@@ -932,16 +1018,12 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
 
               <div className="space-y-4">
                 {[
-                  { key: 'med_cert', title: 'MEDICAL CERTIFICATE / CLINICAL ABSTRACT *' },
-                  { 
-                    key: 'reseta', 
-                    title: (assistanceType.toLowerCase().includes('bill') || assistanceType.toLowerCase().includes('hospital'))
-                      ? 'HOSPITAL BILL / SOA *' 
-                      : 'RESETA NG GAMOT *' 
-                  },
-                  { key: 'indigency', title: 'BARANGAY CERTIFICATE OF INDIGENCY *' },
-                  { key: 'qcid_patient', title: 'QC ID NG PASYENTE *' },
-                  { key: 'authorization', title: 'AUTHORIZATION / PERSONAL LETTER *' },
+                  { key: 'referral_form', title: 'REFERRAL FORM MULA SA BARANGAY, HOSPITAL O FUNERAL *' },
+                  { key: 'death_cert', title: 'CERTIFIED TRUE COPY NG DEATH CERTIFICATE *' },
+                  { key: 'funeral_contract', title: 'NOTARIZED FUNERAL CONTRACT (ORIHINAL NA KOPYA; NAKATALA ANG MGA SERBISYO AT HALAGA) *' },
+                  { key: 'indigency', title: 'CERTIFICATE OF INDIGENCY (ORIHINAL NA KOPYA; PARA SA FUNERAL/BURIAL ASSISTANCE) *' },
+                  { key: 'government_id', title: 'ANUMANG BALIDONG GOVERNMENT ID (MAS MAINAM KUNG QC ID) *' },
+                  { key: 'deceased_id', title: 'PHOTOCOPY NG BALIDONG ID NG NAMATAY, MAS MAINAM KUNG QCID *' },
                 ].map((doc) => {
                   const uploaded = uploadedFiles[doc.key];
                   const previewUrl = uploaded ? URL.createObjectURL(uploaded) : null;
@@ -998,20 +1080,13 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       {/* Uploaded Card Thumbnail Preview */}
                       {uploaded && previewUrl && (
                         <div className="pt-2">
-                          <div 
-                            onClick={() => setPreviewImageModal({ title: doc.title, url: previewUrl })}
-                            className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group cursor-pointer hover:border-blue-500/80 transition-all ${
-                              darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
-                            }`}
-                            title="Click to view photo"
-                          >
+                          <div className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group ${
+                            darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
+                          }`}>
                             {/* Floating X Delete Button */}
                             <button
                               type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveFile(doc.key);
-                              }}
+                              onClick={() => handleRemoveFile(doc.key)}
                               className="absolute -top-2 -right-2 w-6 h-6 bg-slate-700 hover:bg-red-600 text-white rounded-full flex items-center justify-center border border-slate-600 shadow-md transition-all cursor-pointer z-10"
                               title="Remove photo"
                             >
@@ -1025,12 +1100,12 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                               <img
                                 src={previewUrl}
                                 alt={uploaded.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                className="w-full h-full object-cover"
                               />
                             </div>
 
                             {/* Truncated Filename */}
-                            <span className={`text-[10px] font-bold text-center truncate max-w-full mt-2 block px-1 group-hover:text-blue-400 ${
+                            <span className={`text-[10px] font-bold text-center truncate max-w-full mt-2 block px-1 ${
                               darkMode ? 'text-slate-200' : 'text-slate-800'
                             }`}>
                               {uploaded.name}
@@ -1103,15 +1178,13 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                        Type of Assistance: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{assistanceType || 'Medicines / Medical Supplies (Tulong sa Gamot / Reseta)'}</span>
+                        Relation to Deceased: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{relationToDeceased || 'N/A'}</span>
                       </span>
                     </div>
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                        Kinakailangang Dokumento: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                          Medical Certificate / Abstract at {(assistanceType.toLowerCase().includes('bill') || assistanceType.toLowerCase().includes('hospital')) ? 'Hospital Bill / SOA' : 'Reseta ng Gamot'}
-                        </span>
+                        Chosen Funeral Home: <span className="text-amber-500 font-extrabold">{selectedFuneralHome || 'La Funeraria Paz, Inc.'}</span>
                       </span>
                     </div>
                   </div>
@@ -1134,11 +1207,23 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     </button>
                   </div>
                   <div className="p-5 space-y-6">
-                    {/* Applicant Information Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs">
+                    {/* Applicant Information Grid (Broken down fields) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FULL NAME</span>
-                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{firstName} {middleName} {lastName} {suffix}</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FIRST NAME</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{firstName || 'JEFFERSON'}</span>
+                      </div>
+                      <div>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>MIDDLE NAME</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{middleName || 'FERNANDO'}</span>
+                      </div>
+                      <div>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>LAST NAME</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{lastName || 'LEE'}</span>
+                      </div>
+                      <div>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SUFFIX</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{suffix || 'N/A'}</span>
                       </div>
                       <div>
                         <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>NATIONALITY</span>
@@ -1146,7 +1231,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       </div>
                       <div>
                         <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>DATE OF BIRTH</span>
-                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{dob || '2004-09-27'}</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{dob || '27/09/2004'}</span>
                       </div>
                       <div>
                         <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>AGE</span>
@@ -1154,15 +1239,23 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       </div>
                       <div>
                         <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>GENDER</span>
-                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{gender || 'Lalaki'}</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{gender || 'Male'}</span>
                       </div>
                       <div>
                         <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CIVIL STATUS</span>
                         <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{civilStatus || 'Single'}</span>
                       </div>
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>COMPLETE ADDRESS</span>
-                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{houseNo} {street} Brgy. {barangay} Quezon City</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>HOUSE / BUILDING NUMBER</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{houseNo || '176'}</span>
+                      </div>
+                      <div>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>STREET NAME</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{street || '23'}</span>
+                      </div>
+                      <div>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>BARANGAY</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{barangay || 'Bagong Silangan'}</span>
                       </div>
                       <div>
                         <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PHONE NUMBER</span>
@@ -1170,35 +1263,87 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Patient Information Sub-section */}
+                    {/* Deceased Information Sub-section */}
                     <div className={`pt-4 border-t space-y-4 ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
                       <h5 className={`text-xs font-extrabold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                        Impormasyon ng Pasyente (Kukuhan ng Gamot)
+                        Impormasyon ng Sumakabilang-Buhay (Deceased Details)
                       </h5>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
                         <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>RELASYON SA PASYENTE</span>
-                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{patientRelation || 'Sarili'}</span>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>RELASYON SA SUMAKABILANG-BUHAY</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{relationToDeceased || 'Child'}</span>
                         </div>
                         <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FULL NAME</span>
-                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{patientFirstName || firstName} {patientMiddleName || middleName} {patientLastName || lastName}</span>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FIRST NAME</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedFirstName || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>MIDDLE NAME</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedMiddleName || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>LAST NAME</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedLastName || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SUFFIX</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedSuffix || 'N/A'}</span>
                         </div>
                         <div>
                           <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>GENDER</span>
-                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{patientGender || gender || 'Lalaki'}</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedGender || 'N/A'}</span>
                         </div>
                         <div>
                           <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>DATE OF BIRTH</span>
-                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{patientDob || dob || '2004-09-27'}</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedDob || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>DATE OF DEATH</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedDateOfDeath || 'N/A'}</span>
                         </div>
                         <div>
                           <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>AGE</span>
-                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{patientAge || age || '22'}</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedAge || 'N/A'}</span>
                         </div>
                         <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>COMPLETE ADDRESS</span>
-                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{patientHouseNo || houseNo} {patientStreet || street} Brgy. {patientBarangay || barangay} Quezon City</span>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CREMATION OR BURIAL</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedCremationOrBurial || 'N/A'}</span>
+                        </div>
+                        {deceasedCremationOrBurial === 'Burial' && (
+                          <div>
+                            <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>BURIAL LOCATION</span>
+                            <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                              {burialLocationSite === 'Others (Specify)' ? otherBurialLocation : burialLocationSite || 'N/A'}
+                            </span>
+                          </div>
+                        )}
+                        {deceasedCremationOrBurial === 'Cremation' && (
+                          <div>
+                            <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CREMATION LOCATION</span>
+                            <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                              {cremationLocationSite === 'Others (Specify)' ? otherCremationLocation : cremationLocationSite || 'N/A'}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PLACE OF DEATH</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedPlaceOfDeath || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>DATE OF BURIAL</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedDateOfBurial || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>HOUSE / BUILDING NUMBER</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedHouseNo || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>STREET NAME</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedStreet || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>BARANGAY</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedBarangay || 'N/A'}</span>
                         </div>
                       </div>
                     </div>
@@ -1214,7 +1359,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleEditStepFromReview(3)}
+                      onClick={() => setCurrentStep(3)}
                       className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -1223,16 +1368,12 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   </div>
                   <div className="p-5 space-y-4">
                     {[
-                      { key: 'med_cert', title: 'MEDICAL CERTIFICATE / CLINICAL ABSTRACT *' },
-                      { 
-                        key: 'reseta', 
-                        title: (assistanceType.toLowerCase().includes('bill') || assistanceType.toLowerCase().includes('hospital'))
-                          ? 'HOSPITAL BILL / SOA *' 
-                          : 'RESETA NG GAMOT *' 
-                      },
-                      { key: 'indigency', title: 'BARANGAY CERTIFICATE OF INDIGENCY *' },
-                      { key: 'qcid_patient', title: 'QC ID NG PASYENTE *' },
-                      { key: 'authorization', title: 'AUTHORIZATION / PERSONAL LETTER *' },
+                      { key: 'referral_form', title: 'REFERRAL FORM MULA SA BARANGAY, HOSPITAL O FUNERAL *' },
+                      { key: 'death_cert', title: 'CERTIFIED TRUE COPY NG DEATH CERTIFICATE *' },
+                      { key: 'funeral_contract', title: 'NOTARIZED FUNERAL CONTRACT (ORIHINAL NA KOPYA; NAKATALA ANG MGA SERBISYO AT HALAGA) *' },
+                      { key: 'indigency', title: 'CERTIFICATE OF INDIGENCY (ORIHINAL NA KOPYA; PARA SA FUNERAL/BURIAL ASSISTANCE) *' },
+                      { key: 'government_id', title: 'ANUMANG BALIDONG GOVERNMENT ID (MAS MAINAM KUNG QC ID) *' },
+                      { key: 'deceased_id', title: 'PHOTOCOPY NG BALIDONG ID NG NAMATAY, MAS MAINAM KUNG QCID *' },
                     ].map((doc) => {
                       const file = uploadedFiles[doc.key];
                       const previewUrl = file ? URL.createObjectURL(file) : null;
@@ -1246,19 +1387,15 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                           </div>
                           {previewUrl ? (
                             <div className="pt-1">
-                              <div 
-                                onClick={() => setPreviewImageModal({ title: doc.title, url: previewUrl })}
-                                className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg group cursor-pointer hover:border-blue-500/80 transition-all ${
-                                  darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
-                                }`}
-                                title="Click to view full photo"
-                              >
+                              <div className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg ${
+                                darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
+                              }`}>
                                 <div className={`w-20 h-20 rounded-xl overflow-hidden border shrink-0 ${
                                   darkMode ? 'border-slate-700 bg-slate-950' : 'border-slate-200 bg-slate-100'
                                 }`}>
-                                  <img src={previewUrl} alt={file.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                  <img src={previewUrl} alt={file.name} className="w-full h-full object-cover" />
                                 </div>
-                                <span className={`text-[10px] font-bold text-center truncate max-w-full mt-2 block px-1 group-hover:text-blue-400 ${
+                                <span className={`text-[10px] font-bold text-center truncate max-w-full mt-2 block px-1 ${
                                   darkMode ? 'text-slate-200' : 'text-slate-800'
                                 }`}>
                                   {file.name}
@@ -1297,7 +1434,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   type="submit"
                   className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-xl hover:scale-[1.02] transition-all"
                 >
-                  SUBMIT APPLICATION
+                  SUBMIT
                 </button>
               </div>
             </form>
@@ -1314,7 +1451,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
             <div className={`flex justify-between items-center border-b pb-3 ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
               <h3 className={`text-sm font-extrabold flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                 <FileText className="w-4 h-4 text-blue-500" />
-                QC Medical Assistance Guidelines & Requirements
+                QC Funeral Assistance Guidelines & Requirements
               </h3>
               <button onClick={() => setShowReqModal(false)} className={`${darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-slate-700'}`}>
                 <X className="w-5 h-5" />
@@ -1323,16 +1460,16 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
             
             <div className={`space-y-3 text-xs max-h-[60vh] overflow-y-auto pr-2 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
               <p className="leading-relaxed">
-                The QC Crisis Assistance (AICS) Medical Program offers financial aid and Certificates of Guarantee to indigent residents seeking hospital care, laboratory procedures, and maintenance medicines.
+                The Funeral and Burial Assistance Program under Ordinance 2865 S-2019 provides financial aid through a Certificate of Guarantee to accredited partner funeral homes, covering service packages up to Php 25,000.
               </p>
               <div className="space-y-2 pt-2">
                 <span className={`font-bold uppercase tracking-wider block ${darkMode ? 'text-white' : 'text-slate-900'}`}>Standard Requirements:</span>
                 <ul className={`list-disc list-inside space-y-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                  <li>Official Medical Abstract / Clinical Summary (Issued within 3 months)</li>
-                  <li>Original Hospital Statement of Account (SOA) or Pharmacy Prescription</li>
+                  <li>Registered Death Certificate (Signed by City Civil Registrar or Physician)</li>
+                  <li>Official Funeral Contract / Statement of Account from Funeral Home</li>
                   <li>Barangay Certificate of Indigency of Applicant</li>
-                  <li>Valid Government Photo ID (PhilSys ID, Comelec, Senior ID, PWD ID)</li>
-                  <li>Authorization Letter (if applicant is not the patient)</li>
+                  <li>Valid Government Photo ID of Applicant</li>
+                  <li>Proof of relationship to deceased (Birth/Marriage Certificate)</li>
                 </ul>
               </div>
             </div>
@@ -1344,52 +1481,6 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                 className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl"
               >
                 Close Guidelines
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Full Image Preview Modal */}
-      {previewImageModal && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setPreviewImageModal(null)}
-        >
-          <div 
-            className={`max-w-3xl w-full rounded-2xl border p-4 sm:p-6 space-y-4 shadow-2xl relative ${
-              darkMode ? 'bg-[#0b1329] border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
-            }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center border-b pb-3 border-slate-700/60">
-              <h3 className="text-sm font-extrabold uppercase tracking-wide truncate max-w-md">
-                {previewImageModal.title}
-              </h3>
-              <button 
-                type="button" 
-                onClick={() => setPreviewImageModal(null)}
-                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="relative max-h-[75vh] flex items-center justify-center overflow-hidden rounded-xl bg-black/40 border border-slate-800 p-2">
-              <img 
-                src={previewImageModal.url} 
-                alt={previewImageModal.title} 
-                className="max-h-[70vh] w-auto object-contain rounded-lg shadow-lg"
-              />
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setPreviewImageModal(null)}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold uppercase transition-all"
-              >
-                Close
               </button>
             </div>
           </div>

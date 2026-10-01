@@ -14,7 +14,7 @@ import {
   ChevronUp,
   ChevronRight
 } from 'lucide-react';
-import type { ApplicationRecord } from '../types';
+import type { ApplicationRecord } from '../../types';
 
 interface PwdAssistanceViewProps {
   onBack: () => void;
@@ -73,22 +73,22 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
     }
   };
 
-  // Step 2 Form States - Section 1: Personal Information
-  const [qcId, setQcId] = useState<string>('');
-  const [firstName, setFirstName] = useState<string>('');
-  const [middleName, setMiddleName] = useState<string>('');
-  const [lastName, setLastName] = useState<string>('');
+  // Step 2 Form States - Section 1: Personal Information (Prefilled & Disabled Verified Profile)
+  const [qcId, setQcId] = useState<string>('110000262304143');
+  const [firstName, setFirstName] = useState<string>('JEFFERSON');
+  const [middleName, setMiddleName] = useState<string>('FERNANDO');
+  const [lastName, setLastName] = useState<string>('LEE');
   const [suffix, setSuffix] = useState<string>('');
   const [nationality, setNationality] = useState<string>('FILIPINO');
-  const [dob, setDob] = useState<string>('');
-  const [age, setAge] = useState<string>('');
+  const [dob, setDob] = useState<string>('2004-09-27');
+  const [age, setAge] = useState<string>('22');
   const [gender, setGender] = useState<string>('Male');
   const [civilStatus, setCivilStatus] = useState<string>('Single');
-  const [houseNo, setHouseNo] = useState<string>('');
-  const [street, setStreet] = useState<string>('');
-  const [barangay, setBarangay] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
+  const [houseNo, setHouseNo] = useState<string>('176');
+  const [street, setStreet] = useState<string>('23');
+  const [barangay, setBarangay] = useState<string>('Bagong Silangan');
+  const [phone, setPhone] = useState<string>('09155582122');
+  const [email, setEmail] = useState<string>('jeffersonlee1234@gmail.com');
 
   // Section 2: OCCUPATION / EMPLOYMENT
   const [employmentStatus, setEmploymentStatus] = useState<string>('Unemployed / Jobless');
@@ -479,67 +479,141 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
             </div>
           </div>
 
-          {/* 1. PERSONAL INFORMATION */}
+          {/* 1. PERSONAL INFORMATION (Prefilled & Disabled Verified Profile) */}
           <div className="space-y-4">
             <div>
               <h3 className={subHeaderClass}>
-                1. PERSONAL INFORMATION
+                1. APPLICANT INFORMATION
               </h3>
               <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Primary applicant information retrieved from QCID / Profile
+                All Applicant Information fields are disabled / read-only because they have been verified from your Citizen Profile.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className={labelClass}>Full Name *</label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              <div>
+                <label className={labelClass}>First name *</label>
                 <input
                   type="text"
-                  value={`${firstName} ${middleName} ${lastName}`.trim() || 'JEFFERSON FERNANDO LEE'}
-                  onChange={(e) => {
-                    const parts = e.target.value.split(' ');
-                    setFirstName(parts[0] || '');
-                    setMiddleName(parts.slice(1, -1).join(' ') || '');
-                    setLastName(parts.length > 1 ? parts[parts.length - 1] : '');
-                  }}
-                  placeholder="JEFFERSON FERNANDO LEE"
-                  className={inputClass}
+                  readOnly
+                  disabled
+                  value={firstName || 'JEFFERSON'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
                 />
               </div>
 
               <div>
-                <label className={labelClass}>Contact Number *</label>
+                <label className={labelClass}>Middle name</label>
                 <input
                   type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="09155582122"
-                  className={inputClass}
+                  readOnly
+                  disabled
+                  value={middleName || 'FERNANDO'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
                 />
               </div>
 
               <div>
-                <label className={labelClass}>Email Address *</label>
+                <label className={labelClass}>Last name *</label>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="jeffersonlee1234@gmail.com"
-                  className={inputClass}
+                  type="text"
+                  readOnly
+                  disabled
+                  value={lastName || 'LEE'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
                 />
               </div>
 
               <div>
-                <label className={labelClass}>Complete Address *</label>
+                <label className={labelClass}>Suffix (Jr., Sr., III, etc.)</label>
                 <input
                   type="text"
-                  value={`${houseNo} ${street}`.trim() || '176 23'}
-                  onChange={(e) => {
-                    setHouseNo(e.target.value);
-                    setStreet('');
-                  }}
-                  placeholder="176 23"
-                  className={inputClass}
+                  readOnly
+                  disabled
+                  placeholder="Suffix (Jr., Sr., III, etc.)"
+                  value={suffix}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Nationality *</label>
+                <input
+                  type="text"
+                  readOnly
+                  disabled
+                  value={nationality || 'FILIPINO'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Date of birth *</label>
+                <input
+                  type="text"
+                  readOnly
+                  disabled
+                  value="27/09/2004"
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Age *</label>
+                <input
+                  type="text"
+                  readOnly
+                  disabled
+                  value={age || '22'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 font-bold text-blue-400`}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Gender *</label>
+                <select
+                  disabled
+                  value={gender || 'Male'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass}>Civil status *</label>
+                <select
+                  disabled
+                  value={civilStatus || 'Single'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
+                >
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Widowed">Widowed</option>
+                  <option value="Separated">Separated</option>
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass}>House/Building number *</label>
+                <input
+                  type="text"
+                  readOnly
+                  disabled
+                  value={houseNo || '176'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Street name *</label>
+                <input
+                  type="text"
+                  readOnly
+                  disabled
+                  value={street || '23'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
                 />
               </div>
 
@@ -547,10 +621,32 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 <label className={labelClass}>Barangay *</label>
                 <input
                   type="text"
-                  value={barangay}
-                  onChange={(e) => setBarangay(e.target.value)}
-                  placeholder="Bagong Silangan"
-                  className={inputClass}
+                  readOnly
+                  disabled
+                  value={barangay || 'Bagong Silangan'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Phone number *</label>
+                <input
+                  type="text"
+                  readOnly
+                  disabled
+                  value={phone || '09155582122'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Existing PWD ID Number *</label>
+                <input
+                  type="text"
+                  readOnly
+                  disabled
+                  value={pwdIdNumber ? (pwdIdNumber.startsWith('PWD-') ? pwdIdNumber : `PWD-${pwdIdNumber}`) : 'PWD-13-7404-000-0012345'}
+                  className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90 font-mono`}
                 />
               </div>
             </div>
@@ -1304,7 +1400,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               onClick={handleSubmitApplication}
               className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold tracking-wider uppercase transition-all shadow-lg shadow-blue-600/30"
             >
-              SUBMIT APPLICATION
+              SUBMIT
             </button>
           </div>
         </div>

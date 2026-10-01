@@ -20,7 +20,7 @@ import {
   Eye,
   AlertCircle
 } from 'lucide-react';
-import type { ApplicationRecord } from '../types';
+import type { ApplicationRecord } from '../../types';
 
 interface SeniorCitizenAssistanceViewProps {
   onBack: () => void;
@@ -97,21 +97,21 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
     }
   };
 
-  // STEP 2 States — 1. Personal Information
-  const [qcId, setQcId] = useState<string>('');
-  const [firstName, setFirstName] = useState<string>('');
-  const [middleName, setMiddleName] = useState<string>('');
-  const [lastName, setLastName] = useState<string>('');
+  // STEP 2 States — 1. Personal Information (Prefilled & Disabled Verified Profile)
+  const [qcId, setQcId] = useState<string>('110000262304143');
+  const [firstName, setFirstName] = useState<string>('JEFFERSON');
+  const [middleName, setMiddleName] = useState<string>('FERNANDO');
+  const [lastName, setLastName] = useState<string>('LEE');
   const [suffix, setSuffix] = useState<string>('');
   const [nationality, setNationality] = useState<string>('FILIPINO');
-  const [dob, setDob] = useState<string>('');
-  const [age, setAge] = useState<string>('');
-  const [gender, setGender] = useState<string>('');
-  const [civilStatus, setCivilStatus] = useState<string>('');
-  const [houseNo, setHouseNo] = useState<string>('');
-  const [street, setStreet] = useState<string>('');
-  const [barangay, setBarangay] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
+  const [dob, setDob] = useState<string>('2004-09-27');
+  const [age, setAge] = useState<string>('22');
+  const [gender, setGender] = useState<string>('Male');
+  const [civilStatus, setCivilStatus] = useState<string>('Single');
+  const [houseNo, setHouseNo] = useState<string>('176');
+  const [street, setStreet] = useState<string>('23');
+  const [barangay, setBarangay] = useState<string>('Bagong Silangan');
+  const [phone, setPhone] = useState<string>('09155582122');
   const [seniorIdDetails, setSeniorIdDetails] = useState<string>('');
 
   // STEP 2 States — 2. Occupation / Financial Information
@@ -154,9 +154,50 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
   const [docIndigency, setDocIndigency] = useState<{ name: string; url?: string } | null>(null);
   const [docOtherSupport, setDocOtherSupport] = useState<{ name: string; url?: string } | null>(null);
 
-  // File preview modal
-  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
-  const [previewFileName, setPreviewFileName] = useState<string>('');
+  // Step 4 Collapsible Accordion State
+  const [collapsedSections, setCollapsedSections] = useState<{ [key: string]: boolean }>({});
+  const toggleSection = (key: string) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
+
+  // Image Preview Modal State
+  const [previewImageModal, setPreviewImageModal] = useState<{ title: string; url: string } | null>(null);
+
+  // Camera Capture Modal State
+  const [activeCameraDocKey, setActiveCameraDocKey] = useState<string | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Camera functions
+  const openCameraModal = async (docKey: string) => {
+    setActiveCameraDocKey(docKey);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.warn("Camera access failed or unavailable, using simulation mode", err);
+    }
+  };
+
+  const closeCameraModal = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+    }
+    setCameraStream(null);
+    setActiveCameraDocKey(null);
+  };
+
+  const handleCapturePhoto = () => {
+    const fakePhotoUrl = `https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80`;
+    const photoDoc = { name: `camera_capture_${Date.now()}.jpg`, url: fakePhotoUrl };
+
+    if (activeCameraDocKey === 'seniorId') setDocSeniorId(photoDoc);
+    if (activeCameraDocKey === 'indigency') setDocIndigency(photoDoc);
+    if (activeCameraDocKey === 'otherSupport') setDocOtherSupport(photoDoc);
+
+    closeCameraModal();
+  };
 
   // Submission success state
   const [submittedAppRecord, setSubmittedAppRecord] = useState<ApplicationRecord | null>(null);
@@ -289,59 +330,76 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
         </div>
 
         {/* 2. STEP PROGRESS BAR SECTION */}
-        <div className={`pb-6 border-b space-y-4 ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
-          {/* Connected Circle Numbers Row */}
-          <div className="relative flex items-center justify-between max-w-xl mx-auto px-4">
-            <div className={`absolute left-8 right-8 top-1/2 -translate-y-1/2 h-0.5 -z-0 ${
+        <div className={`p-6 rounded-2xl border mb-6 ${darkMode ? 'bg-[#0c162b] border-slate-800' : 'bg-slate-100/70 border-slate-200'}`}>
+          {/* Step Numbers Connected Line */}
+          <div className="relative flex justify-between items-center max-w-3xl mx-auto mb-6">
+            <div className={`absolute top-1/2 left-4 right-4 h-0.5 -translate-y-1/2 z-0 ${
               darkMode ? 'bg-slate-800' : 'bg-slate-200'
             }`} />
-            {[1, 2, 3, 4].map((num) => {
-              const isActive = currentStep === num;
-              const isCompleted = currentStep > num;
+
+            {[1, 2, 3, 4].map((stepNum) => {
+              const isPassed = currentStep > stepNum;
+              const isCurrent = currentStep === stepNum;
               return (
-                <div
-                  key={num}
-                  className={`relative z-10 w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
-                    isActive
-                      ? 'bg-blue-600 text-white'
-                      : isCompleted
-                      ? darkMode ? 'bg-blue-950 text-blue-300 border border-blue-800' : 'bg-blue-100 text-blue-700 border border-blue-300'
-                      : darkMode ? 'bg-slate-900 text-slate-500 border border-slate-800' : 'bg-slate-100 text-slate-500 border border-slate-300'
-                  }`}
-                >
-                  {isCompleted ? '✓' : num}
+                <div key={stepNum} className="relative z-10 flex flex-col items-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (stepNum < currentStep || isEditingFromStep4) {
+                        setCurrentStep(stepNum);
+                      }
+                    }}
+                    disabled={!isPassed && !isCurrent && !isEditingFromStep4}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
+                      isCurrent
+                        ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-500/20'
+                        : isPassed
+                        ? 'bg-blue-600 text-white cursor-pointer'
+                        : darkMode
+                        ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                        : 'bg-slate-100 text-slate-500 border border-slate-300 cursor-not-allowed'
+                    }`}
+                  >
+                    {isPassed ? <CheckCircle2 className="w-5 h-5 text-white" /> : stepNum}
+                  </button>
                 </div>
               );
             })}
           </div>
 
-          {/* Text Labels Row */}
-          <div className="grid grid-cols-4 gap-2 text-center text-[11px] font-extrabold uppercase tracking-wider">
+          {/* Tab Buttons Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-w-4xl mx-auto">
             {[
               { num: 1, label: 'COMPLETE CHECKLIST' },
               { num: 2, label: 'PERSONAL INFORMATION' },
               { num: 3, label: 'UPLOAD DOCUMENTS' },
               { num: 4, label: 'REVIEW & SUBMIT' },
-            ].map((s) => {
-              const isActive = currentStep === s.num;
-              const isCompleted = currentStep > s.num;
+            ].map((tab) => {
+              const isActive = currentStep === tab.num;
+              const isPassed = currentStep > tab.num;
               return (
                 <button
-                  key={s.num}
+                  key={tab.num}
                   type="button"
                   onClick={() => {
-                    if (isCompleted) setCurrentStep(s.num);
+                    if (isPassed || isEditingFromStep4) {
+                      setCurrentStep(tab.num);
+                    }
                   }}
-                  disabled={!isCompleted && currentStep !== s.num}
-                  className={`py-2 px-2 rounded-xl transition-all ${
+                  disabled={!isPassed && !isActive && !isEditingFromStep4}
+                  className={`py-3 px-2 text-[11px] font-extrabold tracking-wider rounded-xl transition-all uppercase text-center border ${
                     isActive
-                      ? 'bg-blue-600 text-white font-black'
-                      : isCompleted
-                      ? darkMode ? 'text-blue-400 hover:text-blue-300 cursor-pointer' : 'text-blue-600 hover:text-blue-700 cursor-pointer'
-                      : darkMode ? 'text-slate-500 cursor-not-allowed' : 'text-slate-400 cursor-not-allowed'
+                      ? 'bg-blue-600 text-white border-blue-500 shadow-md'
+                      : isPassed || isEditingFromStep4
+                      ? darkMode
+                        ? 'bg-slate-900/80 text-blue-400 border-slate-800 hover:text-white hover:bg-slate-800 cursor-pointer'
+                        : 'bg-slate-50 text-blue-600 border-slate-200 hover:bg-slate-100 cursor-pointer'
+                      : darkMode
+                      ? 'bg-slate-900/40 text-slate-500 border-slate-800/60 cursor-not-allowed'
+                      : 'bg-slate-100/50 text-slate-400 border-slate-200/60 cursor-not-allowed'
                   }`}
                 >
-                  <span className="truncate block">{s.label}</span>
+                  <span className="truncate block">{tab.label}</span>
                 </button>
               );
             })}
@@ -396,17 +454,17 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
               </ul>
             </div>
 
-            {/* 2. Senior Citizen / QCitizen ID Verification Section SECOND */}
+            {/* 2. Senior Citizen ID Verification Section SECOND */}
             <div className={`pt-4 border-t space-y-4 ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
               <h3 className={`text-base font-extrabold flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                 <ShieldCheck className="w-5 h-5 text-blue-500" />
-                Senior Citizen / QCitizen ID Verification
+                Senior Citizen ID Verification
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div className="md:col-span-2 space-y-1.5">
                   <label className={`text-xs font-bold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                    Senior Citizen ID No. / QCitizen ID Card Number *
+                    Senior Citizen ID *
                   </label>
                   <input
                     type="text"
@@ -493,10 +551,10 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
               </div>
             </div>
 
-            {/* SECTION 1: PERSONAL INFORMATION */}
+            {/* SECTION 1: PERSONAL INFORMATION (Prefilled & Disabled Verified Profile) */}
             <div className="space-y-6">
               <div className="flex items-center gap-2 text-sm font-extrabold text-blue-500 uppercase tracking-wider">
-                <span>Personal Information</span>
+                <span>Personal Information (Verified Citizen Profile - Read Only)</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
@@ -504,10 +562,10 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   <label className={labelClass}>First name *</label>
                   <input
                     type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="First name"
-                    className={inputClass}
+                    readOnly
+                    disabled
+                    value={firstName || 'JEFFERSON'}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   />
                 </div>
 
@@ -515,10 +573,10 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   <label className={labelClass}>Middle name</label>
                   <input
                     type="text"
-                    value={middleName}
-                    onChange={(e) => setMiddleName(e.target.value)}
-                    placeholder="Middle name"
-                    className={inputClass}
+                    readOnly
+                    disabled
+                    value={middleName || 'FERNANDO'}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   />
                 </div>
 
@@ -526,10 +584,10 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   <label className={labelClass}>Last name *</label>
                   <input
                     type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Last name"
-                    className={inputClass}
+                    readOnly
+                    disabled
+                    value={lastName || 'LEE'}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   />
                 </div>
 
@@ -537,10 +595,11 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   <label className={labelClass}>Suffix (Jr., Sr., III, etc.)</label>
                   <input
                     type="text"
-                    value={suffix}
-                    onChange={(e) => setSuffix(e.target.value)}
+                    readOnly
+                    disabled
                     placeholder="Suffix (Jr., Sr., III, etc.)"
-                    className={inputClass}
+                    value={suffix}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   />
                 </div>
 
@@ -548,20 +607,21 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   <label className={labelClass}>Nationality *</label>
                   <input
                     type="text"
-                    value={nationality}
-                    onChange={(e) => setNationality(e.target.value)}
-                    placeholder="FILIPINO"
-                    className={inputClass}
+                    readOnly
+                    disabled
+                    value={nationality || 'FILIPINO'}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   />
                 </div>
 
                 <div>
                   <label className={labelClass}>Date of birth *</label>
                   <input
-                    type="date"
-                    value={dob}
-                    onChange={(e) => setDob(e.target.value)}
-                    className={inputClass}
+                    type="text"
+                    readOnly
+                    disabled
+                    value="27/09/2004"
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   />
                 </div>
 
@@ -569,23 +629,20 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   <label className={labelClass}>Age *</label>
                   <input
                     type="text"
-                    value={age}
                     readOnly
-                    placeholder="Auto-computed"
-                    className={`w-full px-3.5 py-2 rounded-xl text-xs font-bold border focus:outline-none ${
-                      darkMode ? 'bg-slate-950 border-slate-800 text-blue-400' : 'bg-slate-100 border-slate-300 text-blue-700'
-                    }`}
+                    disabled
+                    value={age || '22'}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 font-bold text-blue-400`}
                   />
                 </div>
 
                 <div>
                   <label className={labelClass}>Gender *</label>
                   <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    className={inputClass}
+                    disabled
+                    value={gender || 'Male'}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   >
-                    <option value="">Select Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                   </select>
@@ -594,11 +651,10 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                 <div>
                   <label className={labelClass}>Civil status *</label>
                   <select
-                    value={civilStatus}
-                    onChange={(e) => setCivilStatus(e.target.value)}
-                    className={inputClass}
+                    disabled
+                    value={civilStatus || 'Single'}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   >
-                    <option value="">Select Civil Status</option>
                     <option value="Single">Single</option>
                     <option value="Married">Married</option>
                     <option value="Widowed">Widowed</option>
@@ -610,10 +666,10 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   <label className={labelClass}>House/Building number *</label>
                   <input
                     type="text"
-                    value={houseNo}
-                    onChange={(e) => setHouseNo(e.target.value)}
-                    placeholder="176"
-                    className={inputClass}
+                    readOnly
+                    disabled
+                    value={houseNo || '176'}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   />
                 </div>
 
@@ -621,10 +677,10 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   <label className={labelClass}>Street name *</label>
                   <input
                     type="text"
-                    value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    placeholder="23"
-                    className={inputClass}
+                    readOnly
+                    disabled
+                    value={street || '23'}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   />
                 </div>
 
@@ -632,10 +688,10 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   <label className={labelClass}>Barangay *</label>
                   <input
                     type="text"
-                    value={barangay}
-                    onChange={(e) => setBarangay(e.target.value)}
-                    placeholder="Bagong Silangan"
-                    className={inputClass}
+                    readOnly
+                    disabled
+                    value={barangay || 'Bagong Silangan'}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   />
                 </div>
 
@@ -643,21 +699,21 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   <label className={labelClass}>Phone number *</label>
                   <input
                     type="text"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="09155582122"
-                    className={inputClass}
+                    readOnly
+                    disabled
+                    value={phone || '09155582122'}
+                    className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                   />
                 </div>
 
-                <div className="md:col-span-3">
-                  <label className={labelClass}>QCitizen ID / Senior Citizen ID Details *</label>
+                <div>
+                  <label className={labelClass}>Senior Citizen ID *</label>
                   <input
                     type="text"
-                    value={seniorIdDetails || qcId || seniorIdNumber}
-                    onChange={(e) => setSeniorIdDetails(e.target.value)}
-                    placeholder="Enter OSCA Senior ID No. or QCitizen ID details"
-                    className={inputClass}
+                    readOnly
+                    disabled
+                    value={seniorIdNumber || qcId || 'QC-SR-2026-88192'}
+                    className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90 font-mono`}
                   />
                 </div>
               </div>
@@ -1021,425 +1077,394 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
       {/* ========================================================================= */}
       {currentStep === 3 && (
         <div className="space-y-6 pt-2">
-          <h2 className={`text-xl font-black tracking-tight border-b ${dividerClass} pb-4 mb-6 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-            Step 3: Documentary Requirements / Uploads
-          </h2>
-
-            <p className={`text-xs mb-6 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Para sa Senior SWA: Pakiupload ang malinaw na larawan o PDF ng mga sumusunod na dokumento.
+          <div>
+            <h2 className={`text-xl font-black tracking-tight mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+              File upload
+            </h2>
+            <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              Make sure to upload the appropriate documents for each category and verify that all details—such as your full name (first, middle, and last name) and address—match the information on your QC ID.<br />
+              Upload clear and legible copies of the required documents (JPG, JPEG, PNG, WEBP, or PDF).
             </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Card 1: QCitizen / Senior ID */}
-              <div className={`p-5 rounded-2xl border space-y-4 flex flex-col justify-between ${subCardClass}`}>
-                <div>
-                  <div className={`flex items-center gap-2 text-sm font-extrabold mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    <ShieldCheck className="w-4 h-4 text-blue-500" />
-                    <span>1. Senior Citizen / QCitizen ID *</span>
-                  </div>
-                  <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Front and back copy of Senior Citizen Card / QCitizen ID.
-                  </p>
-                </div>
-
-                {docSeniorId ? (
-                  <div className={`p-3 rounded-xl border flex items-center justify-between ${
-                    darkMode ? 'bg-slate-950 border-blue-500/40' : 'bg-white border-blue-300'
-                  }`}>
-                    <div className="truncate text-xs font-bold text-blue-500">{docSeniorId.name}</div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {docSeniorId.url && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPreviewFileUrl(docSeniorId.url || null);
-                            setPreviewFileName(docSeniorId.name);
-                          }}
-                          className={`p-1 ${darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`}
-                          title="Preview"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setDocSeniorId(null)}
-                        className="p-1 text-rose-500 hover:text-rose-400"
-                        title="Remove"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <label className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                    darkMode 
-                      ? 'border-slate-700 hover:border-blue-500 bg-slate-950/40 hover:bg-slate-950' 
-                      : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
-                  }`}>
-                    <Upload className="w-6 h-6 text-blue-500" />
-                    <span className={`text-xs font-bold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Click to Upload ID</span>
-                    <span className={`text-[10px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>JPG, PNG, or PDF</span>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => handleFileUpload(e, setDocSeniorId)}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
-
-              {/* Card 2: Certificate of Indigency */}
-              <div className={`p-5 rounded-2xl border space-y-4 flex flex-col justify-between ${subCardClass}`}>
-                <div>
-                  <div className={`flex items-center gap-2 text-sm font-extrabold mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    <FileText className="w-4 h-4 text-blue-500" />
-                    <span>2. Certificate of Indigency *</span>
-                  </div>
-                  <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    With purpose specified: <em>"For Social Welfare Assistance"</em>.
-                  </p>
-                </div>
-
-                {docIndigency ? (
-                  <div className={`p-3 rounded-xl border flex items-center justify-between ${
-                    darkMode ? 'bg-slate-950 border-blue-500/40' : 'bg-white border-blue-300'
-                  }`}>
-                    <div className="truncate text-xs font-bold text-blue-500">{docIndigency.name}</div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {docIndigency.url && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPreviewFileUrl(docIndigency.url || null);
-                            setPreviewFileName(docIndigency.name);
-                          }}
-                          className={`p-1 ${darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`}
-                          title="Preview"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setDocIndigency(null)}
-                        className="p-1 text-rose-500 hover:text-rose-400"
-                        title="Remove"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <label className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                    darkMode 
-                      ? 'border-slate-700 hover:border-blue-500 bg-slate-950/40 hover:bg-slate-950' 
-                      : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
-                  }`}>
-                    <Upload className="w-6 h-6 text-blue-500" />
-                    <span className={`text-xs font-bold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Click to Upload Certificate</span>
-                    <span className={`text-[10px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>JPG, PNG, or PDF</span>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => handleFileUpload(e, setDocIndigency)}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
-
-              {/* Card 3: Other Supporting Documents */}
-              <div className={`p-5 rounded-2xl border space-y-4 flex flex-col justify-between ${subCardClass}`}>
-                <div>
-                  <div className={`flex items-center gap-2 text-sm font-extrabold mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    <FileText className="w-4 h-4 text-blue-500" />
-                    <span>3. Other Supporting Documents</span>
-                  </div>
-                  <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Medical prescriptions, billings, or other relevant documents if applicable.
-                  </p>
-                </div>
-
-                {docOtherSupport ? (
-                  <div className={`p-3 rounded-xl border flex items-center justify-between ${
-                    darkMode ? 'bg-slate-950 border-blue-500/40' : 'bg-white border-blue-300'
-                  }`}>
-                    <div className="truncate text-xs font-bold text-blue-500">{docOtherSupport.name}</div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {docOtherSupport.url && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPreviewFileUrl(docOtherSupport.url || null);
-                            setPreviewFileName(docOtherSupport.name);
-                          }}
-                          className={`p-1 ${darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`}
-                          title="Preview"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setDocOtherSupport(null)}
-                        className="p-1 text-rose-500 hover:text-rose-400"
-                        title="Remove"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <label className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                    darkMode 
-                      ? 'border-slate-700 hover:border-blue-500 bg-slate-950/40 hover:bg-slate-950' 
-                      : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
-                  }`}>
-                    <Upload className="w-6 h-6 text-blue-500" />
-                    <span className={`text-xs font-bold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Click to Upload Document</span>
-                    <span className={`text-[10px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Optional</span>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => handleFileUpload(e, setDocOtherSupport)}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
-            </div>
-
-            <div className={`flex justify-between pt-4 border-t ${dividerClass}`}>
-              <button
-                type="button"
-                onClick={() => setCurrentStep(2)}
-                className={`py-3 px-6 text-xs font-bold rounded-xl border transition-all ${
-                  darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                BACK
-              </button>
-              <button
-                type="button"
-                onClick={() => handleNextStep(4)}
-                className="py-3 px-8 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all flex items-center gap-2"
-              >
-                <span>NEXT</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
           </div>
-        )}
+
+          <div className="space-y-4">
+            {[
+              { key: 'seniorId', title: 'SENIOR CITIZEN / QCITIZEN ID *', doc: docSeniorId, setDoc: setDocSeniorId },
+              { key: 'indigency', title: 'BARANGAY CERTIFICATE OF INDIGENCY *', doc: docIndigency, setDoc: setDocIndigency },
+              { key: 'otherSupport', title: 'OTHER SUPPORTING DOCUMENTS (OPTIONAL)', doc: docOtherSupport, setDoc: setDocOtherSupport },
+            ].map((item) => {
+              const uploaded = item.doc;
+              return (
+                <div
+                  key={item.key}
+                  className={`p-5 rounded-2xl flex flex-col space-y-3 transition-all ${
+                    uploaded
+                      ? darkMode
+                        ? 'bg-[#0d1c3a]/70 border-2 border-emerald-500/50 shadow-lg shadow-emerald-950/20'
+                        : 'bg-emerald-50/80 border-2 border-emerald-500/60 shadow-md shadow-emerald-100'
+                      : darkMode
+                      ? 'bg-[#0e1933]/50 border border-slate-800/80 hover:bg-[#0e1933]/70'
+                      : 'bg-slate-50/70 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-extrabold tracking-wide block uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        {item.title}
+                      </span>
+                      {uploaded && (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-500/20 shrink-0" />
+                      )}
+                    </div>
+                    <span className={`text-[11px] block mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Allowed file types: JPG, JPEG, PNG, WEBP (or capture using Camera)
+                    </span>
+                  </div>
+
+                  {/* Action buttons matching Medical Assistance */}
+                  <div className="flex flex-wrap items-center gap-3 pt-1">
+                    <label className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold cursor-pointer inline-flex items-center gap-2 transition-all shadow-md">
+                      <Upload className="w-4 h-4" />
+                      <span>UPLOAD PHOTO</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            const file = e.target.files[0];
+                            item.setDoc({ name: file.name, url: URL.createObjectURL(file) });
+                          }
+                        }}
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => openCameraModal(item.key)}
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold cursor-pointer inline-flex items-center gap-2 transition-all shadow-md"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <span>TAKE PHOTO (CAMERA)</span>
+                    </button>
+                  </div>
+
+                  {/* Uploaded Card Thumbnail Preview */}
+                  {uploaded && (
+                    <div className="pt-2">
+                      <div 
+                        onClick={() => setPreviewImageModal({ title: item.title, url: uploaded.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80' })}
+                        className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group cursor-pointer hover:border-blue-500/80 transition-all ${
+                          darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
+                        }`}
+                        title="Click to view photo"
+                      >
+                        {/* Floating X Delete Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            item.setDoc(null);
+                          }}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-slate-700 hover:bg-red-600 text-white rounded-full flex items-center justify-center border border-slate-600 shadow-md transition-all cursor-pointer z-10"
+                          title="Remove photo"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Square Thumbnail Image */}
+                        <div className={`w-20 h-20 rounded-xl overflow-hidden border shrink-0 ${
+                          darkMode ? 'border-slate-700 bg-slate-950' : 'border-slate-200 bg-slate-100'
+                        }`}>
+                          <img
+                            src={uploaded.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80'}
+                            alt={uploaded.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        </div>
+
+                        {/* Truncated Filename */}
+                        <span className={`text-[10px] font-bold text-center truncate max-w-full mt-2 block px-1 group-hover:text-blue-400 ${
+                          darkMode ? 'text-slate-200' : 'text-slate-800'
+                        }`}>
+                          {uploaded.name}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className={`flex justify-between pt-4 border-t ${dividerClass}`}>
+            <button
+              type="button"
+              onClick={() => setCurrentStep(2)}
+              className={`py-3 px-6 text-xs font-bold rounded-xl border transition-all ${
+                darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              BACK
+            </button>
+            <button
+              type="button"
+              onClick={() => handleNextStep(4)}
+              className="py-3 px-8 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all flex items-center gap-2"
+            >
+              <span>NEXT</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* STEP 4: REVIEW & SUBMIT APPLICATION SUMMARY                               */}
       {/* ========================================================================= */}
       {currentStep === 4 && (
         <div className="space-y-6 pt-2">
-          <h2 className={`text-xl font-black tracking-tight border-b ${dividerClass} pb-4 mb-6 flex items-center justify-between ${
+          <h2 className={`text-xl font-black tracking-tight border-b ${dividerClass} pb-4 mb-6 ${
             darkMode ? 'text-white' : 'text-slate-900'
           }`}>
-            <span>Step 4: Review & Finalize Application</span>
-            <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
-              darkMode ? 'text-amber-400 bg-amber-950/60 border-amber-800' : 'text-amber-700 bg-amber-50 border-amber-300'
-            }`}>
-              Draft Mode — Please check carefully
-            </span>
+            Step 4: Review & Finalize Application
           </h2>
 
-            {/* SUMMARY CARDS */}
-            <div className="space-y-6">
-              {/* Personal Info Summary */}
-              <div className={`p-5 rounded-2xl border space-y-3 ${subCardClass}`}>
-                <div className={`flex items-center justify-between border-b ${dividerClass} pb-2`}>
-                  <h4 className="text-xs font-extrabold text-blue-500 uppercase tracking-wider">
-                    1. Personal Information & Senior ID
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => handleEditStepFromReview(2)}
-                    className="text-xs font-bold text-blue-500 hover:underline flex items-center gap-1"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    <span>Edit</span>
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                  <div>
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FULL NAME</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{firstName || 'Maria'} {middleName} {lastName || 'Dela Cruz'} {suffix}</strong>
-                  </div>
-                  <div>
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>AGE / GENDER</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{age || '65'} yrs old ({gender})</strong>
-                  </div>
-                  <div>
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CIVIL STATUS</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{civilStatus}</strong>
-                  </div>
-                  <div>
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CONTACT NUMBER</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{phone || '09171234567'}</strong>
-                  </div>
-                  <div className="col-span-2">
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>COMPLETE ADDRESS</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{street || 'Sample Street'}, {barangay || 'Barangay Central'}, Quezon City</strong>
-                  </div>
-                  <div className="col-span-2">
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SENIOR ID / QCID DETAILS</span>
-                    <strong className="text-emerald-500 font-mono">{seniorIdDetails || seniorIdNumber || 'QC-SR-2026-88192'}</strong>
-                  </div>
-                </div>
+          {/* SUMMARY CARDS */}
+          <div className="space-y-4">
+            {/* Unified Personal & Application Information Card */}
+            <div className={`border rounded-2xl overflow-hidden ${darkMode ? 'bg-[#0e1933]/60 border-slate-800' : 'bg-slate-50/80 border-slate-200 shadow-sm'}`}>
+              <div className={`p-4 flex items-center justify-between border-b ${darkMode ? 'bg-[#101c38] border-slate-800/80' : 'bg-slate-100 border-slate-200'}`}>
+                <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Personal & Application Information</h4>
+                <button
+                  type="button"
+                  onClick={() => handleEditStepFromReview(2)}
+                  className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span>EDIT</span>
+                </button>
               </div>
 
-              {/* Financial & Expenses Summary */}
-              <div className={`p-5 rounded-2xl border space-y-3 ${subCardClass}`}>
-                <div className={`flex items-center justify-between border-b ${dividerClass} pb-2`}>
-                  <h4 className="text-xs font-extrabold text-blue-500 uppercase tracking-wider">
-                    2. Occupation, Income & Household Expenses
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => handleEditStepFromReview(2)}
-                    className="text-xs font-bold text-blue-500 hover:underline flex items-center gap-1"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    <span>Edit</span>
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                  <div>
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>EMPLOYMENT STATUS</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{employmentStatus}</strong>
-                  </div>
-                  <div>
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>OCCUPATION</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{occupation || 'N/A'}</strong>
-                  </div>
-                  <div>
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>APPROX. MONTHLY INCOME</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{approxMonthlyIncome}</strong>
-                  </div>
-                  <div>
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>MONTHLY EXPENSES</span>
-                    <strong className="text-amber-500">{totalMonthlyExpenses}</strong>
-                  </div>
-                  <div className="col-span-2">
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PENSIONS / BENEFITS RECEIVED</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>
-                      {pensionsReceived === 'Other' ? (otherPensionDetails || 'Other') : (pensionsReceived || 'None')}
-                    </strong>
-                  </div>
-                  <div className="col-span-2">
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>OTHER BENEFITS RECORDED</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>
-                      {otherBenefitsReceived === 'Other' ? (customOtherBenefit || 'Other') : (otherBenefitsReceived || 'None')}
-                    </strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Living Situation Summary */}
-              <div className={`p-5 rounded-2xl border space-y-3 ${subCardClass}`}>
-                <div className={`flex items-center justify-between border-b ${dividerClass} pb-2`}>
-                  <h4 className="text-xs font-extrabold text-blue-500 uppercase tracking-wider">
-                    3. Living Situation & Financial Support
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => handleEditStepFromReview(2)}
-                    className="text-xs font-bold text-blue-500 hover:underline flex items-center gap-1"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    <span>Edit</span>
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                  <div>
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>LIVING ARRANGEMENT</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{livingArrangement === 'Other' ? customLivingArrangement : livingArrangement}</strong>
-                  </div>
-                  <div>
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FINANCIAL SUPPORT SOURCE</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{financialSupportSource === 'Other' ? customFinancialSupport : financialSupportSource}</strong>
-                  </div>
-                  <div>
-                    <span className={`block text-[10px] font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>REASON FOR REQUEST</span>
-                    <strong className={darkMode ? 'text-white' : 'text-slate-900'}>{reasonForAssistance === 'Other' ? customReasonForAssistance : reasonForAssistance}</strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Uploads Summary */}
-              <div className={`p-5 rounded-2xl border space-y-3 ${subCardClass}`}>
-                <div className={`flex items-center justify-between border-b ${dividerClass} pb-2`}>
-                  <h4 className="text-xs font-extrabold text-blue-500 uppercase tracking-wider">
-                    4. Uploaded Requirements
-                  </h4>
-                  <button
-                    type="button"
-                    onClick={() => handleEditStepFromReview(3)}
-                    className="text-xs font-bold text-blue-500 hover:underline flex items-center gap-1"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    <span>Edit</span>
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                  <div className={`p-2.5 rounded-xl border flex items-center gap-2 ${
-                    darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
-                  }`}>
-                    <CheckCircle2 className={`w-4 h-4 ${docSeniorId ? 'text-emerald-500' : 'text-slate-400'}`} />
+              <div className="p-5 space-y-6">
+                {/* 1. Personal Information */}
+                <div>
+                  <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
+                    1. PERSONAL INFORMATION
+                  </h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
                     <div>
-                      <span className={`text-[10px] block font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SENIOR ID</span>
-                      <span className={`font-bold text-[11px] truncate block ${darkMode ? 'text-white' : 'text-slate-900'}`}>{docSeniorId?.name || 'Attached / Verified'}</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FIRST NAME</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{firstName || 'JEFFERSON'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>MIDDLE NAME</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{middleName || 'FERNANDO'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>LAST NAME</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{lastName || 'LEE'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SUFFIX</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{suffix || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>NATIONALITY</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{nationality || 'FILIPINO'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>DATE OF BIRTH</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{dob || '2004-09-27'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>AGE</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{age || '22'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>GENDER</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{gender || 'Male'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CIVIL STATUS</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{civilStatus || 'Single'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>HOUSE / BUILDING NUMBER</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{houseNo || '176'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>STREET NAME</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{street || '23'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>BARANGAY</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{barangay || 'Bagong Silangan'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PHONE NUMBER</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{phone || '09155582122'}</span>
+                    </div>
+                    <div className="col-span-1 sm:col-span-3">
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SENIOR CITIZEN ID</span>
+                      <span className="font-bold font-mono text-emerald-400">{seniorIdDetails || seniorIdNumber || qcId || 'QC-SR-2026-88192'}</span>
                     </div>
                   </div>
-                  <div className={`p-2.5 rounded-xl border flex items-center gap-2 ${
-                    darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
-                  }`}>
-                    <CheckCircle2 className={`w-4 h-4 ${docIndigency ? 'text-emerald-500' : 'text-slate-400'}`} />
+                </div>
+
+                {/* 2. Occupation, Income & Household Expenses */}
+                <div className={`pt-4 border-t ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                  <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
+                    2. OCCUPATION, INCOME & HOUSEHOLD EXPENSES
+                  </h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs">
                     <div>
-                      <span className={`text-[10px] block font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>INDIGENCY CERT.</span>
-                      <span className={`font-bold text-[11px] truncate block ${darkMode ? 'text-white' : 'text-slate-900'}`}>{docIndigency?.name || 'Attached / Verified'}</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>EMPLOYMENT STATUS</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{employmentStatus || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>OCCUPATION</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{occupation || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>APPROX. MONTHLY INCOME</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{approxMonthlyIncome || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>MONTHLY EXPENSES</span>
+                      <span className="font-bold text-amber-500">{totalMonthlyExpenses || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PENSIONS / BENEFITS RECEIVED</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        {pensionsReceived === 'Other' ? (otherPensionDetails || 'Other') : (pensionsReceived || 'None')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>OTHER BENEFITS RECORDED</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        {otherBenefitsReceived === 'Other' ? (customOtherBenefit || 'Other') : (otherBenefitsReceived || 'None')}
+                      </span>
                     </div>
                   </div>
-                  <div className={`p-2.5 rounded-xl border flex items-center gap-2 ${
-                    darkMode ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'
-                  }`}>
-                    <CheckCircle2 className={`w-4 h-4 ${docOtherSupport ? 'text-emerald-500' : 'text-slate-400'}`} />
+                </div>
+
+                {/* 3. Living Situation & Financial Support */}
+                <div className={`pt-4 border-t ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                  <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
+                    3. LIVING SITUATION & FINANCIAL SUPPORT
+                  </h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
                     <div>
-                      <span className={`text-[10px] block font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>OTHER SUPPORTING DOC</span>
-                      <span className={`font-bold text-[11px] truncate block ${darkMode ? 'text-white' : 'text-slate-900'}`}>{docOtherSupport?.name || 'None / Optional'}</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>LIVING ARRANGEMENT</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{livingArrangement === 'Other' ? customLivingArrangement : (livingArrangement || 'N/A')}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FINANCIAL SUPPORT SOURCE</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{financialSupportSource === 'Other' ? customFinancialSupport : (financialSupportSource || 'N/A')}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>REASON FOR REQUEST</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{reasonForAssistance === 'Other' ? customReasonForAssistance : (reasonForAssistance || 'N/A')}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className={`flex justify-between pt-4 border-t ${dividerClass}`}>
-              <button
-                type="button"
-                onClick={() => setCurrentStep(3)}
-                className={`py-3 px-6 text-xs font-bold rounded-xl border transition-all ${
-                  darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
-                }`}
+            {/* 4. Required Documents Section Card */}
+            <div className={`border rounded-2xl overflow-hidden ${darkMode ? 'bg-[#0e1933]/60 border-slate-800' : 'bg-slate-50/80 border-slate-200 shadow-sm'}`}>
+              <div 
+                onClick={() => toggleSection('documents')}
+                className={`p-4 flex items-center justify-between cursor-pointer border-b ${darkMode ? 'bg-[#101c38] border-slate-800/80' : 'bg-slate-100 border-slate-200'}`}
               >
-                BACK
-              </button>
-              <button
-                type="button"
-                onClick={handleFinalSubmit}
-                className="py-3.5 px-10 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all flex items-center gap-2"
-              >
-                <CheckCircle2 className="w-5 h-5" />
-                <span>Submit Application Now</span>
-              </button>
+                <div className="flex items-center gap-2">
+                  {collapsedSections['documents'] ? (
+                    <ChevronRight className={`w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  ) : (
+                    <ChevronUp className={`w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+                  )}
+                  <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Required documents</h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleEditStepFromReview(3); }}
+                  className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span>EDIT</span>
+                </button>
+              </div>
+
+              {!collapsedSections['documents'] && (
+                <div className="p-5 space-y-4">
+                  {[
+                    { key: 'senior_id', title: 'SENIOR CITIZEN / QCITIZEN ID *', doc: docSeniorId },
+                    { key: 'indigency', title: 'CERTIFICATE OF INDIGENCY (ORIHINAL NA KOPYA) *', doc: docIndigency },
+                    { key: 'other', title: 'OTHER SUPPORTING DOCUMENTS (OPTIONAL)', doc: docOtherSupport },
+                  ].map((item) => {
+                    const file = item.doc;
+                    return (
+                      <div key={item.key} className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-extrabold uppercase tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                            {item.title}
+                          </span>
+                          {file && <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-500/20" />}
+                        </div>
+                        {file ? (
+                          <div className="pt-1">
+                            <div 
+                              onClick={() => setPreviewImageModal({ title: item.title, url: file.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80' })}
+                              className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg cursor-pointer hover:border-blue-500/80 transition-all ${
+                                darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
+                              }`}
+                            >
+                              <div className={`w-20 h-20 rounded-xl overflow-hidden border shrink-0 ${
+                                darkMode ? 'border-slate-700 bg-slate-950' : 'border-slate-200 bg-slate-100'
+                              }`}>
+                                <img src={file.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80'} alt={file.name} className="w-full h-full object-cover" />
+                              </div>
+                              <span className={`text-[10px] font-bold text-center truncate max-w-full mt-2 block px-1 ${
+                                darkMode ? 'text-slate-200' : 'text-slate-800'
+                              }`}>
+                                {file.name}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className={`text-xs italic block ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                            No photo uploaded
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
-        )}
+
+          <div className={`flex justify-between pt-4 border-t ${dividerClass}`}>
+            <button
+              type="button"
+              onClick={() => setCurrentStep(3)}
+              className={`py-3 px-6 text-xs font-bold rounded-xl border transition-all ${
+                darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              BACK
+            </button>
+            <button
+              type="button"
+              onClick={handleFinalSubmit}
+              className="py-3.5 px-10 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all shadow-lg shadow-blue-950/20"
+            >
+              SUBMIT
+            </button>
+          </div>
+        </div>
+      )}
       </div>
 
       {/* ========================================================================= */}
@@ -1539,45 +1564,6 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL: DOCUMENT PREVIEW                                                   */}
-      {/* ========================================================================= */}
-      {previewFileUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
-          <div className={`w-full max-w-2xl border rounded-2xl p-6 space-y-4 ${
-            darkMode ? 'bg-[#0e172a] border-slate-800' : 'bg-white border-slate-200'
-          }`}>
-            <div className={`flex justify-between items-center border-b ${dividerClass} pb-3`}>
-              <h3 className={`text-base font-extrabold truncate ${darkMode ? 'text-white' : 'text-slate-900'}`}>{previewFileName}</h3>
-              <button
-                type="button"
-                onClick={() => setPreviewFileUrl(null)}
-                className={`p-1 ${darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className={`max-h-[60vh] overflow-auto flex items-center justify-center p-4 rounded-xl border ${
-              darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-200'
-            }`}>
-              <img src={previewFileUrl} alt="Document Preview" className="max-w-full max-h-[50vh] object-contain rounded" />
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setPreviewFileUrl(null)}
-                className={`px-5 py-2 font-bold text-xs rounded-xl ${
-                  darkMode ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
-                }`}
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* MODAL: APPLICATION SUBMISSION SUCCESS & QR Payout Voucher                 */}
@@ -1708,6 +1694,93 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                 className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl"
               >
                 Naintindihan Ko
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Camera Capture Modal */}
+      {activeCameraDocKey && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className={`max-w-md w-full rounded-2xl border p-6 space-y-4 shadow-2xl ${
+            darkMode ? 'bg-[#0f1b35] border-blue-900/60 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-extrabold flex items-center gap-2">
+                <Camera className="w-4 h-4 text-cyan-500" />
+                Capture Document Photo
+              </h3>
+              <button type="button" onClick={closeCameraModal} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 flex items-center justify-center">
+              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+              <div className="absolute inset-4 border-2 border-dashed border-cyan-400/60 rounded-lg pointer-events-none" />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={closeCameraModal}
+                className="flex-1 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-300 rounded-xl text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCapturePhoto}
+                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md"
+              >
+                Take Photo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Image Preview Modal */}
+      {previewImageModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setPreviewImageModal(null)}
+        >
+          <div 
+            className={`max-w-3xl w-full rounded-2xl border p-4 sm:p-6 space-y-4 shadow-2xl relative ${
+              darkMode ? 'bg-[#0b1329] border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center border-b pb-3 border-slate-700/60">
+              <h3 className="text-sm font-extrabold uppercase tracking-wide truncate max-w-md">
+                {previewImageModal.title}
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setPreviewImageModal(null)}
+                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="relative max-h-[75vh] flex items-center justify-center overflow-hidden rounded-xl bg-black/40 border border-slate-800 p-2">
+              <img 
+                src={previewImageModal.url} 
+                alt={previewImageModal.title} 
+                className="max-h-[70vh] w-auto object-contain rounded-lg shadow-lg"
+              />
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setPreviewImageModal(null)}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold"
+              >
+                Close Preview
               </button>
             </div>
           </div>

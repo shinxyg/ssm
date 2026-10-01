@@ -102,6 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
               (item.id === 'childwelfare' && activeTab === 'aics-educational') ||
               (item.id === 'pwd' && activeTab === 'pwd-form') ||
               (item.id === 'senior' && activeTab === 'senior-form') ||
+              (item.id === 'soloparent' && (activeTab === 'soloparent-form' || activeTab === 'soloparent-financial-form' || activeTab === 'soloparent-edu-form')) ||
               (item.id === 'aics' && (activeTab === 'aics-medical' || activeTab === 'aics-funeral'));
             return (
               <button

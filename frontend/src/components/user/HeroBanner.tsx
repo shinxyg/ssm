@@ -1,6 +1,5 @@
 import React from 'react';
 import { Search, FileText, Sparkles, HeartHandshake } from 'lucide-react';
-import { GovernmentSealSvg } from './GovernmentSealSvg';
 
 interface HeroBannerProps {
   searchQuery: string;
@@ -9,6 +8,7 @@ interface HeroBannerProps {
   setActiveFilter: (filter: string) => void;
   onOpenTrackModal: () => void;
   onOpenEligibilityModal: () => void;
+  darkMode?: boolean;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
@@ -18,17 +18,22 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   setActiveFilter,
   onOpenTrackModal,
   onOpenEligibilityModal,
+  darkMode = true,
 }) => {
   const filterPills = [
     { id: 'all', label: 'All Services' },
     { id: 'aics', label: 'AICS Crisis Aid (6 Types)' },
     { id: 'pwd_senior', label: 'PWD & Senior Citizens' },
     { id: 'solo_child', label: 'Solo Parent & Child Welfare' },
-    { id: 'livelihood_payout', label: 'Livelihood & Payouts' },
+    { id: 'livelihood_payout', label: 'Livelihood & Training' },
   ];
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#101b3b] via-[#14234b] to-[#0d162d] border border-blue-500/20 shadow-2xl p-6 lg:p-8">
+    <div className={`relative overflow-hidden rounded-2xl border shadow-2xl p-6 lg:p-8 transition-all duration-300 ${
+      darkMode 
+        ? 'bg-gradient-to-r from-[#101b3b] via-[#14234b] to-[#0d162d] border-blue-500/20' 
+        : 'bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 border-blue-400/30'
+    }`}>
       {/* Background Seal Graphic Overlay */}
       <div className="absolute -right-8 -top-8 opacity-25 pointer-events-none select-none hidden md:block">
         <img
@@ -41,7 +46,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       {/* Top Flex Row: Badge & Track Applications Button */}
       <div className="relative z-10 flex flex-wrap justify-between items-center gap-4 mb-4">
         {/* Badge Pill */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/40 border border-blue-500/30 text-blue-300 text-xs font-semibold backdrop-blur-md">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/50 border border-blue-400/30 text-blue-200 text-xs font-semibold backdrop-blur-md">
           <Sparkles className="w-3.5 h-3.5 text-blue-400" />
           <span>Gov Serves Social Services Portal • Help & Service Guide</span>
         </div>
@@ -61,10 +66,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight mb-2">
           Welcome, JEFFERSON LEE!
         </h2>
-        <p className="text-slate-300 text-xs sm:text-sm leading-relaxed font-normal">
-          Learn about available financial aid programs (AICS), special sector benefits (PWD,
-          Senior Citizen, Solo Parent), child welfare, livelihood grants, and document requirements
-          before applying.
+        <p className="text-slate-200 text-xs sm:text-sm leading-relaxed font-normal">
+          Explore available financial aid programs (AICS Medical, Funeral, Educational), special sector benefits (PWD,
+          Senior Citizen, Solo Parent), child welfare support, and livelihood training grants before filing your digital application.
         </p>
       </div>
 
@@ -78,7 +82,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search services, requirements, or benefits (e.g. Medical, Senior Booklet, PWD ID, Funer"
+            placeholder="Search services, requirements, or benefits (e.g. Medical, Senior Booklet, PWD ID, Funeral, Livelihood)..."
             className="w-full pl-10 pr-4 py-3 bg-[#0d162a]/90 border border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:border-blue-500 shadow-inner backdrop-blur-md transition-all"
           />
           {searchQuery && (
@@ -102,8 +106,8 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               onClick={() => setActiveFilter(pill.id)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
                 isActive
-                  ? 'bg-slate-900 text-white border border-slate-700 shadow-md'
-                  : 'bg-slate-800/60 hover:bg-slate-800 text-slate-300 border border-slate-700/40'
+                  ? 'bg-blue-600 text-white border border-blue-400 shadow-md'
+                  : 'bg-slate-900/80 hover:bg-slate-900 text-slate-200 border border-slate-700/60'
               }`}
             >
               {pill.label}
