@@ -29,17 +29,50 @@ interface DisbursementSource {
   color: string;
 }
 
-export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMode = true }) => {
+interface ReportsAnalyticsViewProps {
+  darkMode?: boolean;
+  applications?: any[];
+}
+
+export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({ 
+  darkMode = true,
+  applications = []
+}) => {
   const [timeRange, setTimeRange] = useState<string>('Last 6 Months');
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [hoveredBar, setHoveredBar] = useState<string | null>(null);
 
-  const totalApplications = 1;
-  const approvalRate = 0;
-  const approvedCount = 0;
-  const decidedCount = 1;
-  const pendingReviewCount = 0;
-  const totalDisbursed = 4500;
+  const totalApplications = applications.length;
+  const approvedCount = applications.filter(a => a.status === 'Approved' || a.status === 'Ready for Payout').length;
+  const rejectedCount = applications.filter(a => a.status === 'Rejected' || a.status === 'Disqualified').length;
+  const pendingReviewCount = applications.filter(a => a.status === 'Under Review' || a.status === 'Pending').length;
+  const decidedCount = approvedCount + rejectedCount;
+  const approvalRate = decidedCount > 0 ? Math.round((approvedCount / decidedCount) * 100) : 0;
+  
+  // Calculate total disbursed from approved/payout applications
+  const totalDisbursed = applications
+    .filter(a => a.status === 'Approved' || a.status === 'Ready for Payout')
+    .reduce((sum, a) => {
+      const match = a.amountOrType?.match(/\d[\d,]*/);
+      return sum + (match ? parseInt(match[0].replace(/,/g, ''), 10) : 0);
+    }, 0);
+
+  // Group by program
+  const getProgStats = (catName: string) => {
+    const progApps = applications.filter(a => (a.category || '').toLowerCase().includes(catName.toLowerCase()));
+    const total = progApps.length;
+    const pending = progApps.filter(a => a.status === 'Under Review' || a.status === 'Pending').length;
+    const approved = progApps.filter(a => a.status === 'Approved' || a.status === 'Ready for Payout').length;
+    const rejected = progApps.filter(a => a.status === 'Rejected' || a.status === 'Disqualified').length;
+    const sharePercent = totalApplications > 0 ? Math.round((total / totalApplications) * 100) : 0;
+    const approvalPercent = (approved + rejected) > 0 ? Math.round((approved / (approved + rejected)) * 100) : 0;
+    return { pending, approved, rejected, total, sharePercent, approvalPercent };
+  };
+
+  const aicsStats = getProgStats('aics');
+  const pwdSeniorStats = getProgStats('pwd');
+  const soloChildStats = getProgStats('solo');
+  const livelihoodStats = getProgStats('livelihood');
 
   const programData: ProgramStats[] = [
     {
@@ -49,12 +82,7 @@ export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMod
       bgColor: 'bg-blue-500/10 hover:bg-blue-500/20',
       borderColor: 'border-blue-500/30',
       dotColor: '#3b82f6',
-      pending: 0,
-      approved: 0,
-      rejected: 0,
-      total: 0,
-      sharePercent: 0,
-      approvalPercent: 0,
+      ...aicsStats
     },
     {
       id: 'pwd_senior',
@@ -63,12 +91,7 @@ export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMod
       bgColor: 'bg-purple-500/10 hover:bg-purple-500/20',
       borderColor: 'border-purple-500/30',
       dotColor: '#a855f7',
-      pending: 0,
-      approved: 0,
-      rejected: 0,
-      total: 0,
-      sharePercent: 0,
-      approvalPercent: 0,
+      ...pwdSeniorStats
     },
     {
       id: 'solo_child',
@@ -77,12 +100,7 @@ export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMod
       bgColor: 'bg-pink-500/10 hover:bg-pink-500/20',
       borderColor: 'border-pink-500/30',
       dotColor: '#f43f5e',
-      pending: 0,
-      approved: 0,
-      rejected: 0,
-      total: 0,
-      sharePercent: 0,
-      approvalPercent: 0,
+      ...soloChildStats
     },
     {
       id: 'livelihood',
@@ -91,20 +109,15 @@ export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMod
       bgColor: 'bg-emerald-500/10 hover:bg-emerald-500/20',
       borderColor: 'border-emerald-500/30',
       dotColor: '#10b981',
-      pending: 0,
-      approved: 0,
-      rejected: 1,
-      total: 1,
-      sharePercent: 100,
-      approvalPercent: 0,
+      ...livelihoodStats
     },
   ];
 
   const disbursementSources: DisbursementSource[] = [
-    { name: 'AICS', amount: 0, color: 'bg-blue-500' },
-    { name: 'Social pension', amount: 2000, color: 'bg-purple-500' },
-    { name: 'Educational assistance', amount: 2500, color: 'bg-pink-500' },
-    { name: 'Livelihood kit funding', amount: 0, color: 'bg-emerald-500' },
+    { name: 'AICS', amount: aicsStats.approved * 5000, color: 'bg-blue-500' },
+    { name: 'Social pension', amount: pwdSeniorStats.approved * 3000, color: 'bg-purple-500' },
+    { name: 'Educational assistance', amount: soloChildStats.approved * 5000, color: 'bg-pink-500' },
+    { name: 'Livelihood kit funding', amount: livelihoodStats.approved * 15000, color: 'bg-emerald-500' },
   ];
 
   const monthlyVolume = [
@@ -113,7 +126,7 @@ export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMod
     { month: 'Jun', applications: 0, disbursed: 0, barHeight: 0 },
     { month: 'Jul', applications: 0, disbursed: 0, barHeight: 0 },
     { month: 'Aug', applications: 0, disbursed: 0, barHeight: 0 },
-    { month: 'Sep', applications: 3, disbursed: 1500, barHeight: 45 },
+    { month: 'Sep', applications: totalApplications, disbursed: totalDisbursed, barHeight: totalApplications > 0 ? 45 : 0 },
   ];
 
   const handleExportCSV = () => {
@@ -152,7 +165,7 @@ export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMod
   };
 
   return (
-    <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+    <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in slide-in-from-bottom-3 duration-500 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
@@ -274,15 +287,19 @@ export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMod
             <div className="relative w-48 h-48 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="38" fill="transparent" stroke="#1e293b" strokeWidth="11" />
-                <circle cx="50" cy="50" r="38" fill="transparent" stroke="#3b82f6" strokeWidth="11" strokeDasharray="238.76" strokeDashoffset="210" className="transition-all duration-1000 ease-out" />
-                <circle cx="50" cy="50" r="38" fill="transparent" stroke="#a855f7" strokeWidth="11" strokeDasharray="238.76" strokeDashoffset="180" className="transition-all duration-1000 ease-out" />
-                <circle cx="50" cy="50" r="38" fill="transparent" stroke="#f43f5e" strokeWidth="11" strokeDasharray="238.76" strokeDashoffset="155" className="transition-all duration-1000 ease-out" />
-                <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10b981" strokeWidth="11" strokeDasharray="238.76" strokeDashoffset="60" className="transition-all duration-1000 ease-out" />
+                {totalApplications > 0 && (
+                  <>
+                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="#3b82f6" strokeWidth="11" strokeDasharray="238.76" strokeDashoffset={238.76 - (238.76 * (aicsStats.total / totalApplications))} className="transition-all duration-1000 ease-out" />
+                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="#a855f7" strokeWidth="11" strokeDasharray="238.76" strokeDashoffset={238.76 - (238.76 * (pwdSeniorStats.total / totalApplications))} className="transition-all duration-1000 ease-out" />
+                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="#f43f5e" strokeWidth="11" strokeDasharray="238.76" strokeDashoffset={238.76 - (238.76 * (soloChildStats.total / totalApplications))} className="transition-all duration-1000 ease-out" />
+                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10b981" strokeWidth="11" strokeDasharray="238.76" strokeDashoffset={238.76 - (238.76 * (livelihoodStats.total / totalApplications))} className="transition-all duration-1000 ease-out" />
+                  </>
+                )}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                <span className="text-2xl font-black text-white leading-none">1</span>
+                <span className="text-2xl font-black text-white leading-none">{totalApplications}</span>
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">
-                  Total Application
+                  Total Application{totalApplications !== 1 ? 's' : ''}
                 </span>
               </div>
             </div>
@@ -329,7 +346,7 @@ export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMod
             <div className="space-y-5 my-4">
               {disbursementSources.map((source) => {
                 const maxVal = 3000;
-                const percent = (source.amount / maxVal) * 100;
+                const percent = source.amount > 0 ? (source.amount / maxVal) * 100 : 0;
                 return (
                   <div 
                     key={source.name} 
@@ -389,7 +406,7 @@ export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMod
               <div className="relative h-full w-full px-6 flex items-end justify-between">
                 <svg className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
                   <path
-                    d="M 30 144 L 85 144 L 140 144 L 195 144 L 250 144 C 290 144, 310 20, 350 20"
+                    d={totalApplications > 0 ? "M 30 144 L 85 144 L 140 144 L 195 144 L 250 144 C 290 144, 310 20, 350 20" : "M 30 144 L 85 144 L 140 144 L 195 144 L 250 144 L 350 144"}
                     fill="none"
                     stroke="#3b82f6"
                     strokeWidth="3"
@@ -418,9 +435,9 @@ export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMod
                     )}
                     <div
                       className={`w-2.5 h-2.5 rounded-full border-2 border-[#0e1726] transition-transform ${
-                        idx === 5 ? 'bg-blue-400 scale-125 shadow-[0_0_10px_#3b82f6]' : 'bg-blue-500'
+                        idx === 5 && totalApplications > 0 ? 'bg-blue-400 scale-125 shadow-[0_0_10px_#3b82f6]' : 'bg-blue-500'
                       }`}
-                      style={{ marginBottom: idx === 5 ? '135px' : '12px' }}
+                      style={{ marginBottom: (idx === 5 && totalApplications > 0) ? '135px' : '12px' }}
                     ></div>
                     <span className="absolute -bottom-5 text-[11px] font-medium text-slate-400">
                       {item.month}
@@ -443,7 +460,7 @@ export const ReportsAnalyticsView: React.FC<{ darkMode?: boolean }> = ({ darkMod
           </div>
 
           <div className="border-t border-slate-800/80 pt-3 mt-4 text-[11px] text-slate-400 font-medium">
-            Latest month (Sep): <strong className="text-slate-200">1 applications</strong> · <strong className="text-slate-200">₱1,500 disbursed</strong>
+            Latest month (Sep): <strong className="text-slate-200">{monthlyVolume[5].applications} applications</strong> · <strong className="text-slate-200">₱{monthlyVolume[5].disbursed.toLocaleString()} disbursed</strong>
           </div>
         </div>
       </div>

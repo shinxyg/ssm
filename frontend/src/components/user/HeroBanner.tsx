@@ -46,7 +46,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       {/* Top Flex Row: Badge & Track Applications Button */}
       <div className="relative z-10 flex flex-wrap justify-between items-center gap-4 mb-4">
         {/* Badge Pill */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/50 border border-blue-400/30 text-blue-200 text-xs font-semibold backdrop-blur-md">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/80 border border-blue-400/30 text-blue-200 text-xs font-semibold">
           <Sparkles className="w-3.5 h-3.5 text-blue-400" />
           <span>Gov Serves Social Services Portal • Help & Service Guide</span>
         </div>
@@ -54,7 +54,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         {/* Track My Applications Button */}
         <button
           onClick={onOpenTrackModal}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/90 text-white font-medium text-xs border border-slate-600/60 shadow-lg backdrop-blur-md transition-all transform hover:-translate-y-0.5"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-white font-medium text-xs border border-slate-600/60 shadow-lg transition-colors cursor-pointer"
         >
           <FileText className="w-4 h-4 text-blue-400" />
           <span>Track My Applications</span>
@@ -83,7 +83,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search services, requirements, or benefits (e.g. Medical, Senior Booklet, PWD ID, Funeral, Livelihood)..."
-            className="w-full pl-10 pr-4 py-3 bg-[#0d162a]/90 border border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:border-blue-500 shadow-inner backdrop-blur-md transition-all"
+            className="w-full pl-10 pr-4 py-3 bg-[#0d162a] border border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:border-blue-500 shadow-inner transition-colors"
           />
           {searchQuery && (
             <button

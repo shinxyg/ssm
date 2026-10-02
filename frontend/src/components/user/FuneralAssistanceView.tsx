@@ -458,7 +458,7 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
                     ))}
                   </select>
                   <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Please choose an accredited partner funeral home. If your chosen funeral home is not listed, select 'Others'.
+                    Please choose a partner funeral home. If your chosen funeral home is not listed, select 'Others'.
                   </p>
                 </div>
               </div>

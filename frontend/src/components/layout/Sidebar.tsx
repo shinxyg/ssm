@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   BookOpen, 
-  ShieldAlert, 
+  ShieldAlert,
+  ShieldCheck,
   UserCheck, 
   Users, 
   Heart,
@@ -84,8 +85,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="p-1 text-slate-400 hover:text-white transition-colors shrink-0 ml-1"
-            title={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+            className="p-1 text-slate-400 hover:text-white transition-colors shrink-0 ml-1 cursor-pointer"
+            title={isOpen ? undefined : "Expand Sidebar"}
           >
             {isOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
@@ -116,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                     ? 'bg-[#152747] text-white border-blue-500/30'
                     : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
                 }`}
-                title={item.label}
+                title={isOpen ? undefined : item.label}
               >
                 <Icon className={`w-4 h-4 shrink-0 transition-colors ${
                   isActive 
@@ -143,7 +144,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                   ? 'bg-[#152747] text-white border-blue-500/30'
                   : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
               }`}
-              title="Livelihood & Training"
+              title={isOpen ? undefined : "Livelihood & Training"}
             >
               <div className="flex items-center gap-3.5">
                 <GraduationCap className={`w-4 h-4 shrink-0 transition-colors ${
@@ -192,7 +193,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                 ? 'bg-[#152747] text-white border-blue-500/30'
                 : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
             }`}
-            title="Financial Aid Disbursement"
+            title={isOpen ? undefined : "Financial Aid Disbursement"}
           >
             <Wallet className={`w-4 h-4 shrink-0 transition-colors ${
               activeTab === 'payout'
@@ -220,7 +221,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                 ? 'bg-[#152747] text-white border-blue-500/30'
                 : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
             }`}
-            title="Application History"
+            title={isOpen ? undefined : "Application History"}
           >
             <FileText className={`w-4 h-4 shrink-0 transition-colors ${
               activeTab === 'history'
@@ -228,6 +229,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                 : 'text-[#94a3b8] group-hover:text-white'
             }`} />
             {isOpen && <span className="truncate">Application History</span>}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('login')}
+            className={`w-full flex items-center ${
+              isOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
+            } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group mt-1 ${
+              activeTab === 'login'
+                ? 'bg-[#152747] text-white border-blue-500/30'
+                : 'bg-transparent text-blue-400 hover:text-blue-300 hover:bg-[#101e38] border-transparent'
+            }`}
+            title={isOpen ? undefined : "Login Portal"}
+          >
+            <ShieldCheck className="w-4 h-4 shrink-0 text-blue-400 group-hover:text-blue-300" />
+            {isOpen && <span className="truncate">Login Portal</span>}
           </button>
         </div>
       </div>

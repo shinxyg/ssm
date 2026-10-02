@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ServiceItem, ApplicationRecord } from '../../types';
 import { X, CheckCircle2, Upload, FileText, Send, ShieldCheck } from 'lucide-react';
 
@@ -21,6 +21,17 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
   const [barangay, setBarangay] = useState<string>('Barangay San Lorenzo, District 2');
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (service) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [service]);
 
   if (!service) return null;
 

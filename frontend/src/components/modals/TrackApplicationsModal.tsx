@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, Search, CheckCircle2, Clock, FileCheck, QrCode, Download, ShieldCheck } from 'lucide-react';
 import type { ApplicationRecord } from '../../types';
 
@@ -15,6 +15,17 @@ export const TrackApplicationsModal: React.FC<TrackApplicationsModalProps> = ({
   applications,
   darkMode = true,
 }) => {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (

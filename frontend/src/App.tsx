@@ -17,15 +17,52 @@ import { PwdAssistanceView } from './components/user/PwdAssistanceView';
 import { SeniorCitizenAssistanceView } from './components/user/SeniorCitizenAssistanceView';
 import { SoloParentAssistanceView } from './components/user/SoloParentAssistanceView';
 import { UserProfileView } from './components/user/UserProfileView';
+import { LoginView } from './components/login/LoginView';
+import { 
+  AdminAicsView, 
+  AdminPwdSeniorView, 
+  AdminSoloChildView, 
+  AdminLivelihoodView, 
+  AdminDisbursementView, 
+  AdminBeneficiaryView, 
+  AdminCaseView, 
+  AdminAppointmentView, 
+  AdminActivityView, 
+  AdminUserView, 
+  ReportsAnalyticsView 
+} from './admin';
 
 import { initialServices, initialApplications } from './data/servicesData';
 import type { ServiceItem, ApplicationRecord } from './types';
-import { History, ShieldCheck, QrCode } from 'lucide-react';
+import { 
+  History, 
+  ShieldCheck, 
+  QrCode, 
+  LayoutDashboard, 
+  FileText as FileTextIcon, 
+  Users as UsersIcon, 
+  LogOut, 
+  Sparkles,
+  BarChart3,
+  ShieldAlert,
+  Users,
+  Baby,
+  GraduationCap,
+  Wallet,
+  Contact2,
+  FolderKanban,
+  Calendar,
+  UserCheck,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>('help-guide');
+  const [userRole, setUserRole] = useState<'user' | 'admin'>('user');
+  const [adminTab, setAdminTab] = useState<string>('reports');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
@@ -130,13 +167,291 @@ export default function App() {
     'soloparent-financial-form': 'Solo Parent Services',
     'soloparent-edu-form': 'Solo Parent Services',
     'childwelfare': 'Child Welfare Services',
-    'livelihood': 'Livelihood & Training',
-    'livelihood-grants': 'Livelihood & Training',
-    'skills-training': 'Livelihood & Training',
+    'livelihood': 'Livelihood & Training — Livelihood Program',
+    'livelihood-grants': 'Livelihood & Training — Livelihood Program',
+    'skills-training': 'Livelihood & Training — Training Program',
     'payout': 'Financial Aid Disbursement',
     'history': 'Application History',
     'profile': 'User Profile',
   };
+
+  if (activeTab === 'login') {
+    return (
+      <LoginView
+        onLoginSuccess={(role) => {
+          setUserRole(role);
+          setActiveTab('help-guide');
+        }}
+        onBackToHome={() => setActiveTab('help-guide')}
+        darkMode={darkMode}
+      />
+    );
+  }
+
+  if (userRole === 'admin') {
+    const adminTabTitles: Record<string, string> = {
+      'profile': 'Administrator Profile',
+      'reports': 'Reports & Analytics',
+      'aics': 'AICS Applications Management',
+      'pwd-senior': 'PWD & Senior Citizens Registry',
+      'solo-child': 'Solo Parent & Child Welfare',
+      'livelihood': 'Livelihood & Grants Management',
+      'disbursement': 'Disbursement & Financial Aid Payouts',
+      'beneficiaries': 'Beneficiary Master Registry',
+      'cases': 'Social Worker Case Management',
+      'appointments': 'Citizen Appointments Calendar',
+      'activity': 'System Security & Activity Log',
+      'users': 'User & Access Control Management',
+    };
+
+    return (
+      <div className={`h-screen max-h-screen overflow-hidden flex flex-row font-['Plus_Jakarta_Sans',sans-serif] ${
+        darkMode ? 'bg-[#070e1b] text-slate-100' : 'bg-slate-100 text-slate-900'
+      }`}>
+        {/* Left Sidebar (Full Height from Top to Bottom with Collapse Support) */}
+        <aside className={`border-r border-slate-800/80 bg-[#070e1b] flex flex-col h-screen shrink-0 select-none transition-all duration-300 ${
+          sidebarOpen ? 'w-64' : 'w-16'
+        }`}>
+          {/* Top Header inside Sidebar with Seal Logo & Collapse Button */}
+          <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800/60 shrink-0">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <img
+                src="/Government Service Integrity Seal.png"
+                alt="Government Service Integrity Seal"
+                className="w-9 h-9 object-contain shrink-0"
+              />
+              {sidebarOpen && (
+                <div className="flex flex-col justify-center truncate">
+                  <h1 className="font-extrabold text-base tracking-tight leading-none text-white">GovServe</h1>
+                  <span className="text-[10px] font-bold tracking-wide text-purple-400 uppercase mt-0.5">Admin Portal</span>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-1 text-slate-400 hover:text-white transition-colors shrink-0 ml-1 cursor-pointer"
+              title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+            >
+              {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {/* Admin Navigation Menu (Matching Reference Screenshot) */}
+          <div className="p-3 space-y-4 overflow-y-auto flex-1 text-slate-100">
+            
+            {/* Top Main Section */}
+            <div className="space-y-1">
+              {[
+                { id: 'reports', label: 'Reports & Analytics', icon: BarChart3 },
+                { id: 'aics', label: 'Assistance to Individuals in Crisis', icon: ShieldAlert },
+                { id: 'pwd-senior', label: 'PWD & Senior Citizens', icon: Users },
+                { id: 'solo-child', label: 'Solo Parent & Child Welfare', icon: Baby },
+                { id: 'livelihood', label: 'Livelihood & Training Grants', icon: GraduationCap },
+                { id: 'disbursement', label: 'Financial Aid Disbursement', icon: Wallet },
+              ].map((item) => {
+                const Icon = item.icon;
+                const isActive = adminTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setAdminTab(item.id)}
+                    className={`w-full flex items-center ${
+                      sidebarOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
+                    } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group cursor-pointer ${
+                      isActive
+                        ? 'bg-[#152747] text-white border-blue-500/30 shadow-md'
+                        : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
+                    }`}
+                    title={sidebarOpen ? undefined : item.label}
+                  >
+                    <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                      isActive ? 'text-blue-400' : 'text-[#94a3b8] group-hover:text-white'
+                    }`} />
+                    {sidebarOpen && <span className="truncate">{item.label}</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* BENEFICIARY Section */}
+            <div className="pt-2 border-t border-slate-800/60 space-y-1">
+              {sidebarOpen && (
+                <div className="px-4 text-[10px] font-bold tracking-wider uppercase mb-1.5 text-slate-500">
+                  BENEFICIARY
+                </div>
+              )}
+              <button
+                onClick={() => setAdminTab('beneficiaries')}
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
+                } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group cursor-pointer ${
+                  adminTab === 'beneficiaries'
+                    ? 'bg-[#152747] text-white border-blue-500/30 shadow-md'
+                    : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
+                }`}
+                title={sidebarOpen ? undefined : "Beneficiary Management"}
+              >
+                <Contact2 className={`w-4 h-4 shrink-0 transition-colors ${
+                  adminTab === 'beneficiaries' ? 'text-blue-400' : 'text-[#94a3b8] group-hover:text-white'
+                }`} />
+                {sidebarOpen && <span className="truncate">Beneficiary Management</span>}
+              </button>
+            </div>
+
+            {/* CASE MANAGE Section */}
+            <div className="pt-2 border-t border-slate-800/60 space-y-1">
+              {sidebarOpen && (
+                <div className="px-4 text-[10px] font-bold tracking-wider uppercase mb-1.5 text-slate-500">
+                  CASE MANAGE
+                </div>
+              )}
+              <button
+                onClick={() => setAdminTab('cases')}
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
+                } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group cursor-pointer ${
+                  adminTab === 'cases'
+                    ? 'bg-[#152747] text-white border-blue-500/30 shadow-md'
+                    : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
+                }`}
+                title={sidebarOpen ? undefined : "Case Management"}
+              >
+                <FolderKanban className={`w-4 h-4 shrink-0 transition-colors ${
+                  adminTab === 'cases' ? 'text-blue-400' : 'text-[#94a3b8] group-hover:text-white'
+                }`} />
+                {sidebarOpen && <span className="truncate">Case Management</span>}
+              </button>
+            </div>
+
+            {/* SCHEDULING Section */}
+            <div className="pt-2 border-t border-slate-800/60 space-y-1">
+              {sidebarOpen && (
+                <div className="px-4 text-[10px] font-bold tracking-wider uppercase mb-1.5 text-slate-500">
+                  SCHEDULING
+                </div>
+              )}
+              <button
+                onClick={() => setAdminTab('appointments')}
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
+                } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group cursor-pointer ${
+                  adminTab === 'appointments'
+                    ? 'bg-[#152747] text-white border-blue-500/30 shadow-md'
+                    : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
+                }`}
+                title={sidebarOpen ? undefined : "Appointments"}
+              >
+                <Calendar className={`w-4 h-4 shrink-0 transition-colors ${
+                  adminTab === 'appointments' ? 'text-blue-400' : 'text-[#94a3b8] group-hover:text-white'
+                }`} />
+                {sidebarOpen && <span className="truncate">Appointments</span>}
+              </button>
+            </div>
+
+            {/* MONITORING Section */}
+            <div className="pt-2 border-t border-slate-800/60 space-y-1">
+              {sidebarOpen && (
+                <div className="px-4 text-[10px] font-bold tracking-wider uppercase mb-1.5 text-slate-500">
+                  MONITORING
+                </div>
+              )}
+              <button
+                onClick={() => setAdminTab('activity')}
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
+                } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group cursor-pointer ${
+                  adminTab === 'activity'
+                    ? 'bg-[#152747] text-white border-blue-500/30 shadow-md'
+                    : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
+                }`}
+                title={sidebarOpen ? undefined : "Activity Log"}
+              >
+                <History className={`w-4 h-4 shrink-0 transition-colors ${
+                  adminTab === 'activity' ? 'text-blue-400' : 'text-[#94a3b8] group-hover:text-white'
+                }`} />
+                {sidebarOpen && <span className="truncate">Activity Log</span>}
+              </button>
+            </div>
+
+            {/* ADMINISTRATION Section */}
+            <div className="pt-2 border-t border-slate-800/60 space-y-1">
+              {sidebarOpen && (
+                <div className="px-4 text-[10px] font-bold tracking-wider uppercase mb-1.5 text-slate-500">
+                  ADMINISTRATION
+                </div>
+              )}
+              <button
+                onClick={() => setAdminTab('users')}
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
+                } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group cursor-pointer ${
+                  adminTab === 'users'
+                    ? 'bg-[#152747] text-white border-blue-500/30 shadow-md'
+                    : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
+                }`}
+                title={sidebarOpen ? undefined : "User Management"}
+              >
+                <UserCheck className={`w-4 h-4 shrink-0 transition-colors ${
+                  adminTab === 'users' ? 'text-blue-400' : 'text-[#94a3b8] group-hover:text-white'
+                }`} />
+                {sidebarOpen && <span className="truncate">User Management</span>}
+              </button>
+            </div>
+
+          </div>
+        </aside>
+
+        {/* Right Main Container: Top Header Navbar + Active View */}
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          {/* Top Navbar */}
+          <Navbar
+            activeSection={adminTabTitles[adminTab] || 'Admin Management'}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            onNavigateToProfile={() => setAdminTab('profile')}
+            onNavigateToLogin={() => {
+              setUserRole('user');
+              setActiveTab('login');
+            }}
+            userRole="admin"
+            userName="System Admin"
+            userSubtitle="Administrator"
+            userInitials="AD"
+          />
+
+          {/* Admin Main Content Area */}
+          <main className="flex-1 p-6 overflow-y-auto bg-[#070e1b]">
+            {adminTab === 'profile' ? (
+              <UserProfileView darkMode={darkMode} userRole="admin" />
+            ) : adminTab === 'reports' ? (
+              <ReportsAnalyticsView darkMode={darkMode} applications={applications} />
+            ) : adminTab === 'aics' ? (
+              <AdminAicsView darkMode={darkMode} applications={applications} />
+            ) : adminTab === 'pwd-senior' ? (
+              <AdminPwdSeniorView darkMode={darkMode} />
+            ) : adminTab === 'solo-child' ? (
+              <AdminSoloChildView darkMode={darkMode} />
+            ) : adminTab === 'livelihood' ? (
+              <AdminLivelihoodView darkMode={darkMode} />
+            ) : adminTab === 'disbursement' ? (
+              <AdminDisbursementView darkMode={darkMode} />
+            ) : adminTab === 'beneficiaries' ? (
+              <AdminBeneficiaryView darkMode={darkMode} />
+            ) : adminTab === 'cases' ? (
+              <AdminCaseView darkMode={darkMode} />
+            ) : adminTab === 'appointments' ? (
+              <AdminAppointmentView darkMode={darkMode} />
+            ) : adminTab === 'activity' ? (
+              <AdminActivityView darkMode={darkMode} />
+            ) : (
+              <AdminUserView darkMode={darkMode} />
+            )}
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`h-screen max-h-screen overflow-hidden flex flex-row font-['Plus_Jakarta_Sans',sans-serif] transition-colors duration-200 ${
@@ -159,10 +474,12 @@ export default function App() {
           darkMode={darkMode}
           setDarkMode={setDarkMode}
           onNavigateToProfile={() => setActiveTab('profile')}
+          onNavigateToLogin={() => setActiveTab('login')}
+          userRole="user"
         />
 
-        {/* Main Content Area (Independent Viewport Scroll) */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-8">
+        {/* Main Content Area (Independent Viewport Scroll with GPU Acceleration) */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-8 [transform:translateZ(0)]">
           {activeTab === 'help-guide' ? (
             /* Help & Service Guide Main Overview Page */
             <>
@@ -277,7 +594,8 @@ export default function App() {
           ) : activeTab === 'livelihood' || activeTab === 'livelihood-grants' ? (
             /* Livelihood Program View */
             <LivelihoodProgramView
-              onApply={() => handleApplyFromModule('Gov Service Livelihood Program', 'Official government service for Livelihood and Enterprise Assistance of Gov Service.')}
+              onBack={() => setActiveTab('help-guide')}
+              onAddApplication={handleAddApplication}
               darkMode={darkMode}
             />
           ) : activeTab === 'skills-training' ? (

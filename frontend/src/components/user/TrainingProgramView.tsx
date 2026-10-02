@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   BookOpen, 
   FileEdit, 
@@ -27,6 +28,7 @@ import {
   Printer,
   Download,
   ChevronRight,
+  ChevronUp,
   GraduationCap,
   Target,
   History,
@@ -67,21 +69,27 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
   // Navigation Tabs State (1: Available Training, 2: Apply for Training, 3: Schedule, 4: History)
   const [activeTab, setActiveTab] = useState<number>(1);
 
-  // Application Step inside Tab 2 (1: Select Course, 2: Applicant Info, 3: Requirements & Review)
+  // Application Step inside Tab 2 (1: Complete Checklist, 2: Applicant Info, 3: Upload Documents, 4: Review & Submit)
   const [applyStep, setApplyStep] = useState<number>(1);
   const [selectedCourseTitle, setSelectedCourseTitle] = useState<string>('Bread and Pastry Making');
+  const [isEditingFromStep4, setIsEditingFromStep4] = useState<boolean>(false);
 
   // Step 2 Form States — Educational Background, Purpose, Experience
   const [highestEdu, setHighestEdu] = useState<string>('');
-  const [schoolName, setSchoolName] = useState<string>('Batasan Hills National High School');
+  const [schoolName, setSchoolName] = useState<string>('');
   const [trainingPurpose, setTrainingPurpose] = useState<string>('');
-  const [purposeReason, setPurposeReason] = useState<string>('To acquire TESDA National Certificate (NC II) for employment or small business.');
+  const [purposeReason, setPurposeReason] = useState<string>('');
   const [previousTraining, setPreviousTraining] = useState<string>('');
 
   // Step 3 Document Upload States
   const [docIndigency, setDocIndigency] = useState<{ name: string; url?: string } | null>(null);
   const [docQcId, setDocQcId] = useState<{ name: string; url?: string } | null>(null);
   const [docPhotoId, setDocPhotoId] = useState<{ name: string; url?: string } | null>(null);
+
+  // Step completion criteria
+  const isStep1Complete = Boolean(selectedCourseTitle);
+  const isStep2Complete = Boolean(highestEdu && trainingPurpose && previousTraining);
+  const isStep3Complete = Boolean(docIndigency && docQcId);
   // Sample Letter Modal State
   const [showSampleLetterModal, setShowSampleLetterModal] = useState<boolean>(false);
 
@@ -102,12 +110,12 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
   useEffect(() => {
     const isAnyModalOpen = Boolean(showSampleLetterModal || activeCameraDocKey || selectedScheduleModal);
     if (isAnyModalOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('modal-open');
     } else {
-      document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
     };
   }, [showSampleLetterModal, activeCameraDocKey, selectedScheduleModal]);
 
@@ -274,29 +282,9 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
   };
 
   const handleFinalSubmit = () => {
-    const refNo = `TRN-${Math.floor(100000 + Math.random() * 900000)}`;
-    const newApp: ApplicationRecord = {
-      referenceNo: refNo,
-      serviceName: `Skills Training Program — ${selectedCourseTitle}`,
-      category: 'Livelihood & Training',
-      dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      status: 'Under Review',
-      assignedSocialWorker: 'QC Vocational Training Center (SSD Dept)',
-      amountOrType: 'TESDA Accredited Training Grant',
-      details: {
-        applicantName: 'JEFFERSON FERNANDO LEE',
-        courseTitle: selectedCourseTitle,
-        highestEdu,
-        trainingPurpose,
-        barangay: 'Bagong Silangan',
-      }
-    };
-
-    if (onAddApplication) {
-      onAddApplication(newApp);
-    }
-    setSubmittedRecord(newApp);
-    setActiveTab(3);
+    setApplyStep(1);
+    setIsEditingFromStep4(false);
+    setActiveTab(1);
   };
 
   const labelClass = `text-[10px] font-extrabold uppercase tracking-wider block mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`;
@@ -308,53 +296,6 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Top Stepper Tabs Bar */}
-      <div className={`flex flex-wrap gap-2 p-1.5 rounded-2xl border ${
-        darkMode ? 'bg-[#0c1529] border-slate-800' : 'bg-white border-slate-200 shadow-sm'
-      }`}>
-        <button
-          type="button"
-          onClick={() => setActiveTab(1)}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 1
-              ? 'bg-blue-600 text-white shadow-md'
-              : darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>1. AVAILABLE TRAINING</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab(2);
-            if (applyStep === 1) setApplyStep(2);
-          }}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 2
-              ? 'bg-blue-600 text-white shadow-md'
-              : darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <FileEdit className="w-3.5 h-3.5" />
-          <span>2. APPLY FOR TRAINING</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab(3)}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 3
-              ? 'bg-blue-600 text-white shadow-md'
-              : darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Calendar className="w-3.5 h-3.5" />
-          <span>3. TRAINING SCHEDULE</span>
-        </button>
-      </div>
-
       {/* ========================================================================= */}
       {/* TAB 1: AVAILABLE TRAINING PROGRAMS GRID                                    */}
       {/* ========================================================================= */}
@@ -362,12 +303,9 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
         <div className="space-y-6">
           {/* Sub-header Title Row */}
           <div className="flex justify-between items-center">
-            <div>
-              <h3 className={`text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Available Training Programs</h3>
-              <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                Choose a training program suited to your interest and schedule before applying.
-              </p>
-            </div>
+            <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              Choose a training program suited to your interest and schedule before applying.
+            </p>
 
             <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
               darkMode 
@@ -385,10 +323,10 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
               return (
                 <div
                   key={course.id}
-                  className={`rounded-2xl border p-5 shadow-xl transition-all flex flex-col justify-between space-y-4 group ${
+                  className={`rounded-2xl border p-5 transition-all flex flex-col justify-between space-y-4 group ${
                     darkMode 
                       ? 'bg-[#0e1930] border-slate-800/80 hover:border-blue-500/40' 
-                      : 'bg-white border-slate-200 hover:border-blue-400 shadow-slate-200/50'
+                      : 'bg-white border-slate-200 hover:border-blue-400'
                   }`}
                 >
                   <div>
@@ -471,7 +409,7 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                     <button
                       type="button"
                       onClick={() => handleStartApply(course.title)}
-                      className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-600/30 border border-blue-400/40 transition-all flex items-center justify-center gap-1.5"
+                      className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5"
                     >
                       <span>Apply Now</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -485,14 +423,14 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: APPLY FOR TRAINING (3-STEP APPLICATION WORKFLOW)                    */}
+      {/* TAB 2: APPLY FOR TRAINING (4-STEP APPLICATION WORKFLOW)                    */}
       {/* ========================================================================= */}
       {activeTab === 2 && (
-        <div className={`max-w-4xl mx-auto rounded-3xl border p-6 sm:p-7 space-y-6 ${
+        <div className={`max-w-4xl mx-auto rounded-3xl border overflow-hidden ${
           darkMode ? 'bg-[#0d162a] border-slate-800' : 'bg-white border-slate-200 shadow-xl'
         }`}>
           {/* Header Title Bar */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-800">
+          <div className="p-6 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800">
             <div>
               <h2 className={`text-xl font-black tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                 Apply for Training Program
@@ -510,543 +448,941 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
             </div>
           </div>
 
-          {/* Step Buttons Indicator (Course -> Applicant Info -> Requirements) */}
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setActiveTab(1)}
-              className="px-4 py-2 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-600/30 transition-all"
-            >
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>Course ({selectedCourseTitle})</span>
-            </button>
+          {/* 4-Step Stepper Progress Header */}
+          <div className={`p-6 border-b ${darkMode ? 'bg-[#0c162b] border-slate-800' : 'bg-slate-100/70 border-slate-200'}`}>
+            {/* Step circles & progress line */}
+            <div className="max-w-3xl mx-auto mb-6 relative">
+              <div className="absolute top-4 left-6 right-6 h-0.5 bg-slate-700 -z-0">
+                <div 
+                  className="h-full bg-blue-500 transition-all duration-300"
+                  style={{ width: `${((applyStep - 1) / 3) * 100}%` }}
+                />
+              </div>
 
-            <ChevronRight className="w-4 h-4 text-slate-600" />
+              <div className="flex justify-between items-center relative z-10">
+                {[1, 2, 3, 4].map((stepNum) => {
+                  const isActive = applyStep === stepNum;
+                  const isPassed = applyStep > stepNum;
+                  return (
+                    <button
+                      key={stepNum}
+                      type="button"
+                      onClick={() => {
+                        if (stepNum === 1) {
+                          setApplyStep(1);
+                        } else if (stepNum === 2 && isStep1Complete) {
+                          setApplyStep(2);
+                        } else if (stepNum === 3 && isStep1Complete && isStep2Complete) {
+                          setApplyStep(3);
+                        } else if (stepNum === 4 && isStep1Complete && isStep2Complete && isStep3Complete) {
+                          setApplyStep(4);
+                        }
+                      }}
+                      className={`w-9 h-9 rounded-full font-bold text-xs flex items-center justify-center transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-blue-600 text-white'
+                          : isPassed
+                          ? 'bg-blue-900 text-blue-300 border border-blue-500/60'
+                          : darkMode ? 'bg-slate-800 text-slate-400 border border-slate-700' : 'bg-slate-200 text-slate-600 border border-slate-300'
+                      }`}
+                    >
+                      {isPassed ? <CheckCircle2 className="w-4 h-4 text-blue-400" /> : stepNum}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => setApplyStep(2)}
-              className={`px-5 py-2 rounded-full text-xs font-extrabold flex items-center gap-2 transition-all ${
-                applyStep === 2
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-800/60 text-slate-400 border border-slate-700 hover:text-white'
-              }`}
-            >
-              <span className="w-5 h-5 rounded-full bg-white/20 text-white text-[10px] flex items-center justify-center font-bold">2</span>
-              <span>Applicant Info</span>
-            </button>
-
-            <ChevronRight className="w-4 h-4 text-slate-600" />
-
-            <button
-              type="button"
-              onClick={() => setApplyStep(3)}
-              className={`px-5 py-2 rounded-full text-xs font-extrabold flex items-center gap-2 transition-all ${
-                applyStep === 3
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-800/60 text-slate-400 border border-slate-700 hover:text-white'
-              }`}
-            >
-              <span className="w-5 h-5 rounded-full bg-white/20 text-white text-[10px] flex items-center justify-center font-bold">3</span>
-              <span>Requirements</span>
-            </button>
+            {/* Stepper Tabs Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center max-w-4xl mx-auto">
+              {[
+                { num: 1, label: 'COMPLETE CHECKLIST' },
+                { num: 2, label: 'APPLICATION FORM' },
+                { num: 3, label: 'UPLOAD DOCUMENTS' },
+                { num: 4, label: 'REVIEW & SUBMIT' },
+              ].map((step) => {
+                const isActive = applyStep === step.num;
+                return (
+                  <button
+                    key={step.num}
+                    type="button"
+                    onClick={() => {
+                      if (step.num === 1) {
+                        setApplyStep(1);
+                      } else if (step.num === 2 && isStep1Complete) {
+                        setApplyStep(2);
+                      } else if (step.num === 3 && isStep1Complete && isStep2Complete) {
+                        setApplyStep(3);
+                      } else if (step.num === 4 && isStep1Complete && isStep2Complete && isStep3Complete) {
+                        setApplyStep(4);
+                      }
+                    }}
+                    className={`py-3 px-2 rounded-xl text-[11px] font-extrabold tracking-wider transition-all border cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-600 text-white border-blue-400'
+                        : darkMode
+                        ? 'bg-[#101b33] text-slate-400 border-slate-800 hover:text-slate-200'
+                        : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900'
+                    }`}
+                  >
+                    {step.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* ----------------------------------------------------------------------- */}
-          {/* APPLY STEP 2: APPLICANT INFO & BACKGROUND FORM                          */}
-          {/* ----------------------------------------------------------------------- */}
-          {applyStep === 2 && (
-            <div className="space-y-6 pt-2">
-              {/* SECTION 1: APPLICANT INFORMATION (DISABLED / READ-ONLY) */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center pb-2.5 border-b border-slate-800/80">
+          <div className="p-6 sm:p-7 space-y-6">
+            {/* ----------------------------------------------------------------------- */}
+            {/* APPLY STEP 1: COMPLETE CHECKLIST / COURSE SELECTION                     */}
+            {/* ----------------------------------------------------------------------- */}
+            {applyStep === 1 && (
+              <div className="space-y-6 max-w-3xl mx-auto">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                    <BookOpen className="w-5 h-5 text-blue-400" />
+                    <h3 className="text-sm font-black tracking-wider uppercase text-white">
+                      STEP 1 — SELECTED COURSE & PRE-REQUISITE CHECKLIST
+                    </h3>
+                  </div>
+
+                  <div className={`p-5 rounded-2xl border space-y-3 ${
+                    darkMode ? 'bg-[#091124] border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400">Selected Training Course</span>
+                        <h4 className="text-base font-extrabold text-white">{selectedCourseTitle}</h4>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab(1)}
+                        className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-lg border border-slate-700 transition-all cursor-pointer"
+                      >
+                        Change Course
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-800/80">
+                      <div>
+                        <span className="text-slate-400 font-bold">Training Duration:</span>
+                        <span className="text-white ml-2">18 - 30 working days</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 font-bold">Batch:</span>
+                        <span className="text-white ml-2">3rd Batch 2026</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 font-bold">Application Period:</span>
+                        <span className="text-white ml-2">July 1 - July 15, 2026</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 font-bold">Target Starts:</span>
+                        <span className="text-white ml-2">August 1, 2026</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    <h4 className="text-xs font-extrabold uppercase text-slate-300">QUALIFICATION & ENTRY REQUIREMENTS</h4>
+                    <div className="space-y-2 text-xs">
+                      {[
+                        'Quezon City Resident (with QC ID or Barangay Certificate of Residency)',
+                        'At least 18 years old and physically fit to undergo skills training',
+                        'Willing to complete the required training duration and assessment',
+                        'Must submit formal Request Letter / Letter of Intent addressed to SSDD'
+                      ].map((req, idx) => (
+                        <div key={idx} className={`p-3 rounded-xl border flex items-center gap-3 ${
+                          darkMode ? 'bg-slate-900/60 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+                        }`}>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span className="font-semibold">{req}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end items-center pt-6 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isEditingFromStep4) {
+                        setIsEditingFromStep4(false);
+                        setApplyStep(4);
+                      } else {
+                        setApplyStep(2);
+                      }
+                    }}
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-md"
+                  >
+                    <span>Next</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ----------------------------------------------------------------------- */}
+            {/* APPLY STEP 2: APPLICANT INFO & BACKGROUND FORM                          */}
+            {/* ----------------------------------------------------------------------- */}
+            {applyStep === 2 && (
+              <div className="space-y-6 pt-2">
+                {/* SECTION 1: APPLICANT INFORMATION (DISABLED / READ-ONLY) */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center pb-2.5 border-b border-slate-800/80">
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="w-4 h-4 text-blue-400" />
+                      <h3 className={`text-xs font-black tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        APPLICANT INFORMATION
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        First name *
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        JEFFERSON
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Middle name
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        FERNANDO
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Last name *
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        LEE
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Suffix (Jr., Sr., III, etc.)
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-slate-400' : 'bg-slate-100 border-slate-300 text-slate-500'
+                      }`}>
+                        Suffix (Jr., Sr., III, etc.)
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Nationality *
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        FILIPINO
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Date of birth *
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        27/09/2004
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Age *
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        22
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Gender *
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        Male
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Civil status *
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        Single
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        House/Building number *
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        176
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Street name *
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        23
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Barangay *
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        Bagong Silangan
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Phone number *
+                      </label>
+                      <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
+                        darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}>
+                        09155582122
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION 2: EDUCATIONAL BACKGROUND */}
+                <div className="pt-4 border-t border-slate-800/80 space-y-4">
                   <div className="flex items-center gap-2">
-                    <UserCheck className="w-4 h-4 text-blue-400" />
+                    <GraduationCap className="w-4 h-4 text-blue-400" />
                     <h3 className={`text-xs font-black tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                      APPLICANT INFORMATION
+                      EDUCATIONAL BACKGROUND
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-extrabold text-slate-400 block">HIGHEST EDUCATIONAL ATTAINMENT *</label>
+                      <select
+                        value={highestEdu}
+                        onChange={(e) => setHighestEdu(e.target.value)}
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border focus:border-blue-500 focus:outline-none ${
+                          darkMode ? 'bg-[#131f37] border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      >
+                        <option value="">Select Option</option>
+                        <option value="Elementary Level">Elementary Level</option>
+                        <option value="Elementary Graduate">Elementary Graduate</option>
+                        <option value="High School Level">High School Level</option>
+                        <option value="High School Graduate">High School Graduate</option>
+                        <option value="Senior High School">Senior High School</option>
+                        <option value="College Level">College Level</option>
+                        <option value="College Graduate">College Graduate</option>
+                        <option value="Vocational / Technical">Vocational / Technical</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-extrabold text-slate-400 block">SCHOOL / INSTITUTION</label>
+                      <input
+                        type="text"
+                        value={schoolName}
+                        onChange={(e) => setSchoolName(e.target.value)}
+                        placeholder="e.g. Batasan Hills National High School"
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border focus:border-blue-500 focus:outline-none ${
+                          darkMode ? 'bg-[#131f37] border-slate-800 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION 3: TRAINING PURPOSE */}
+                <div className="pt-4 border-t border-slate-800/80 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4 text-blue-400" />
+                    <h3 className={`text-xs font-black tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                      TRAINING PURPOSE
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4 text-xs">
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-extrabold text-slate-400 block">WHY ARE YOU APPLYING FOR THE TRAINING? *</label>
+                      <select
+                        value={trainingPurpose}
+                        onChange={(e) => setTrainingPurpose(e.target.value)}
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border focus:border-blue-500 focus:outline-none ${
+                          darkMode ? 'bg-[#131f37] border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      >
+                        <option value="">Select Option</option>
+                        <option value="Skills Development">Skills Development</option>
+                        <option value="Employment / Job Application">Employment / Job Application</option>
+                        <option value="Business / Livelihood Setup">Business / Livelihood Setup</option>
+                        <option value="Career Shift / Promotion">Career Shift / Promotion</option>
+                        <option value="Personal Interest / Hobby">Personal Interest / Hobby</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-extrabold text-slate-400 block">BRIEFLY STATE YOUR REASON FOR APPLYING:</label>
+                      <textarea
+                        rows={3}
+                        value={purposeReason}
+                        onChange={(e) => setPurposeReason(e.target.value)}
+                        placeholder="Provide brief details about your motivation or livelihood plans..."
+                        className={`w-full p-3.5 rounded-xl text-xs font-bold border focus:border-blue-500 focus:outline-none ${
+                          darkMode ? 'bg-[#131f37] border-slate-800 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION 4: PREVIOUS TRAINING / EXPERIENCE */}
+                <div className="pt-4 border-t border-slate-800/80 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <History className="w-4 h-4 text-blue-400" />
+                    <h3 className={`text-xs font-black tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                      PREVIOUS TRAINING / EXPERIENCE
+                    </h3>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs">
+                    <label className="text-[11px] font-extrabold text-slate-400 block">HAVE YOU ATTENDED A SIMILAR SKILLS TRAINING BEFORE? *</label>
+                    <select
+                      value={previousTraining}
+                      onChange={(e) => setPreviousTraining(e.target.value)}
+                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border focus:border-blue-500 focus:outline-none ${
+                        darkMode ? 'bg-[#131f37] border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    >
+                      <option value="">Select Option</option>
+                      <option value="No">No</option>
+                      <option value="Yes - TESDA Accredited Course">Yes - TESDA Accredited Course</option>
+                      <option value="Yes - LGU / Barangay Training">Yes - LGU / Barangay Training</option>
+                      <option value="Yes - Private Seminar / Workshop">Yes - Private Seminar / Workshop</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Bottom Nav Action Bar */}
+                <div className="flex justify-between items-center pt-4 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setApplyStep(1)}
+                    className={`px-6 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    Back
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={!isStep2Complete}
+                    onClick={() => {
+                      if (isStep2Complete) {
+                        if (isEditingFromStep4) {
+                          setIsEditingFromStep4(false);
+                          setApplyStep(4);
+                        } else {
+                          setApplyStep(3);
+                        }
+                      }
+                    }}
+                    className={`px-6 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${
+                      isStep2Complete
+                        ? 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer shadow-md'
+                        : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/60'
+                    }`}
+                  >
+                    <span>Next</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ----------------------------------------------------------------------- */}
+            {/* APPLY STEP 3: DOCUMENTARY REQUIREMENTS                                  */}
+            {/* ----------------------------------------------------------------------- */}
+            {applyStep === 3 && (
+              <div className="space-y-6 pt-2">
+                {/* Header Title Row */}
+                <div className="pb-3 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <FileCheck className="w-4 h-4 text-blue-400" />
+                    <h3 className={`text-xs font-black tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                      REQUIREMENTS / SUPPORTING DOCUMENTS
                     </h3>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                  <div>
-                    <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Full Name
-                    </label>
-                    <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
-                      darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
-                    }`}>
-                      JEFFERSON FERNANDO LEE
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Date of Birth
-                    </label>
-                    <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
-                      darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
-                    }`}>
-                      SEPTEMBER 27, 2004
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Age
-                    </label>
-                    <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
-                      darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
-                    }`}>
-                      22 y/o
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Sex
-                    </label>
-                    <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
-                      darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
-                    }`}>
-                      Male
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Civil Status
-                    </label>
-                    <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
-                      darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
-                    }`}>
-                      Single
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Contact Number
-                    </label>
-                    <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
-                      darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
-                    }`}>
-                      09155582122
-                    </div>
-                  </div>
-
-                  <div className="col-span-1 sm:col-span-2">
-                    <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Email Address
-                    </label>
-                    <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
-                      darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
-                    }`}>
-                      jeffersonlee1234@gmail.com
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Barangay
-                    </label>
-                    <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
-                      darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
-                    }`}>
-                      Bagong Silangan
-                    </div>
-                  </div>
-
-                  <div className="col-span-1 sm:col-span-2">
-                    <label className={`text-[11px] font-extrabold block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                      Complete Address
-                    </label>
-                    <div className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border truncate ${
-                      darkMode ? 'bg-[#131f37] border-slate-800/90 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
-                    }`}>
-                      176, 23, Brgy. Bagong Silangan, Quezon City
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 2: EDUCATIONAL BACKGROUND */}
-              <div className="pt-4 border-t border-slate-800/80 space-y-4">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4 text-blue-400" />
-                  <h3 className={`text-xs font-black tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    EDUCATIONAL BACKGROUND
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-extrabold text-slate-400 block">HIGHEST EDUCATIONAL ATTAINMENT *</label>
-                    <select
-                      value={highestEdu}
-                      onChange={(e) => setHighestEdu(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border focus:border-blue-500 focus:outline-none ${
-                        darkMode ? 'bg-[#131f37] border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-900'
-                      }`}
-                    >
-                      <option value="">Select Option</option>
-                      <option value="Elementary Level">Elementary Level</option>
-                      <option value="Elementary Graduate">Elementary Graduate</option>
-                      <option value="High School Level">High School Level</option>
-                      <option value="High School Graduate">High School Graduate</option>
-                      <option value="Senior High School">Senior High School</option>
-                      <option value="College Level">College Level</option>
-                      <option value="College Graduate">College Graduate</option>
-                      <option value="Vocational / Technical">Vocational / Technical</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-extrabold text-slate-400 block">SCHOOL / INSTITUTION</label>
-                    <input
-                      type="text"
-                      value={schoolName}
-                      onChange={(e) => setSchoolName(e.target.value)}
-                      placeholder="e.g. Batasan Hills National High School"
-                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border focus:border-blue-500 focus:outline-none ${
-                        darkMode ? 'bg-[#131f37] border-slate-800 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 3: TRAINING PURPOSE */}
-              <div className="pt-4 border-t border-slate-800/80 space-y-4">
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-blue-400" />
-                  <h3 className={`text-xs font-black tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    TRAINING PURPOSE
-                  </h3>
-                </div>
-
-                <div className="space-y-4 text-xs">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-extrabold text-slate-400 block">WHY ARE YOU APPLYING FOR THE TRAINING? *</label>
-                    <select
-                      value={trainingPurpose}
-                      onChange={(e) => setTrainingPurpose(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border focus:border-blue-500 focus:outline-none ${
-                        darkMode ? 'bg-[#131f37] border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-900'
-                      }`}
-                    >
-                      <option value="">Select Option</option>
-                      <option value="Skills Development">Skills Development</option>
-                      <option value="Employment / Job Application">Employment / Job Application</option>
-                      <option value="Business / Livelihood Setup">Business / Livelihood Setup</option>
-                      <option value="Career Shift / Promotion">Career Shift / Promotion</option>
-                      <option value="Personal Interest / Hobby">Personal Interest / Hobby</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-extrabold text-slate-400 block">BRIEFLY STATE YOUR REASON FOR APPLYING:</label>
-                    <textarea
-                      rows={3}
-                      value={purposeReason}
-                      onChange={(e) => setPurposeReason(e.target.value)}
-                      placeholder="Provide brief details about your motivation or livelihood plans..."
-                      className={`w-full p-3.5 rounded-xl text-xs font-bold border focus:border-blue-500 focus:outline-none ${
-                        darkMode ? 'bg-[#131f37] border-slate-800 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900'
-                      }`}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 4: PREVIOUS TRAINING / EXPERIENCE */}
-              <div className="pt-4 border-t border-slate-800/80 space-y-4">
-                <div className="flex items-center gap-2">
-                  <History className="w-4 h-4 text-blue-400" />
-                  <h3 className={`text-xs font-black tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    PREVIOUS TRAINING / EXPERIENCE
-                  </h3>
-                </div>
-
-                <div className="space-y-1.5 text-xs">
-                  <label className="text-[11px] font-extrabold text-slate-400 block">HAVE YOU ATTENDED A SIMILAR SKILLS TRAINING BEFORE? *</label>
-                  <select
-                    value={previousTraining}
-                    onChange={(e) => setPreviousTraining(e.target.value)}
-                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border focus:border-blue-500 focus:outline-none ${
-                      darkMode ? 'bg-[#131f37] border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  >
-                    <option value="">Select Option</option>
-                    <option value="No">No</option>
-                    <option value="Yes - TESDA Accredited Course">Yes - TESDA Accredited Course</option>
-                    <option value="Yes - LGU / Barangay Training">Yes - LGU / Barangay Training</option>
-                    <option value="Yes - Private Seminar / Workshop">Yes - Private Seminar / Workshop</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Bottom Nav Action Bar */}
-              <div className="flex justify-between items-center pt-4 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setApplyStep(1)}
-                  className={`px-6 py-2.5 rounded-xl border text-xs font-bold transition-all ${
-                    darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  Back
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setApplyStep(3)}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30"
-                >
-                  <span>Next</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ----------------------------------------------------------------------- */}
-          {/* APPLY STEP 3: DOCUMENTARY REQUIREMENTS & FINAL SUBMIT                     */}
-          {/* ----------------------------------------------------------------------- */}
-          {applyStep === 3 && (
-            <div className="space-y-6 pt-2">
-              {/* Header Title Row */}
-              <div className="pb-3 border-b border-slate-800">
-                <div className="flex items-center gap-2">
-                  <FileCheck className="w-4 h-4 text-blue-400" />
-                  <h3 className={`text-xs font-black tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    IV. REQUIREMENTS / SUPPORTING DOCUMENTS
-                  </h3>
-                </div>
-              </div>
-
-              {/* Upload Items List */}
-              <div className="space-y-4">
-                {[
-                  {
-                    key: 'requestLetter',
-                    title: 'REQUEST LETTER *',
-                    desc: 'Attached formal request letter addressed to SSDD / City Mayor.',
-                    doc: docIndigency,
-                    setDoc: setDocIndigency,
-                  },
-                  {
-                    key: 'qcIdResidency',
-                    title: 'QC ID / PROOF OF QC RESIDENCY *',
-                    desc: 'Clear photo of your QCitizen ID, Barangay Certificate of Residency, or Valid ID (front and back).',
-                    doc: docQcId,
-                    setDoc: setDocQcId,
-                  },
-                  {
-                    key: 'indigencyBarangay',
-                    title: 'INDIGENCY OF BARANGAY (OPTIONAL)',
-                    desc: 'Barangay Certificate of Indigency (optional supporting document).',
-                    doc: docPhotoId,
-                    setDoc: setDocPhotoId,
-                  },
-                ].map((item) => {
-                  const uploaded = item.doc;
-                  return (
-                    <React.Fragment key={item.key}>
-                      {item.key === 'requestLetter' && (
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <button
-                            type="button"
-                            onClick={() => setShowSampleLetterModal(true)}
-                            className="px-3.5 py-1.5 bg-blue-950/80 hover:bg-blue-900 text-blue-400 border border-blue-800 text-[11px] font-bold rounded-xl inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                            title="Click to view Sample Letter of Intent"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                            <span>SAMPLE DOCUMENT</span>
-                          </button>
-                        </div>
-                      )}
-
-                      <div
-                        className={`p-5 rounded-2xl border space-y-3 transition-all ${
-                          uploaded
-                            ? darkMode
-                              ? 'bg-[#0d1c3a]/70 border-2 border-emerald-500/50 shadow-lg'
-                              : 'bg-emerald-50/80 border-2 border-emerald-500/60 shadow-md'
-                            : darkMode
-                            ? 'bg-[#0b1326] border-slate-800/80'
-                            : 'bg-slate-50 border-slate-200'
-                        }`}
-                      >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs font-black tracking-wide uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                              {item.title}
-                            </span>
-                            {uploaded && (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-500/20 shrink-0" />
-                            )}
-                          </div>
-                          <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                            {item.desc}
-                          </p>
-                          <span className={`text-[11px] block mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                            Allowed file types: JPG, JPEG, PNG, WEBP (or take photo using Camera)
-                          </span>
-                        </div>
-
-                      {/* Action buttons */}
-                      <div className="flex flex-wrap items-center gap-3 pt-1">
-                        <label className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 transition-all">
-                          <Upload className="w-3.5 h-3.5" />
-                          <span>UPLOAD PHOTO</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files[0]) {
-                                const file = e.target.files[0];
-                                item.setDoc({ name: file.name, url: URL.createObjectURL(file) });
-                              }
-                            }}
-                          />
-                        </label>
-
-                        <button
-                          type="button"
-                          onClick={() => openCameraModal(item.key)}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 transition-all"
-                        >
-                          <Camera className="w-3.5 h-3.5" />
-                          <span>TAKE PHOTO (CAMERA)</span>
-                        </button>
-                      </div>
-
-                      {/* Uploaded Card Thumbnail Preview */}
-                      {uploaded && (
-                        <div className="pt-2">
-                          <div 
-                            className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group transition-all ${
-                              darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
-                            }`}
-                          >
+                {/* Upload Items List */}
+                <div className="space-y-4">
+                  {[
+                    {
+                      key: 'requestLetter',
+                      title: 'REQUEST LETTER *',
+                      desc: 'Attached formal request letter addressed to SSDD / City Mayor.',
+                      doc: docIndigency,
+                      setDoc: setDocIndigency,
+                    },
+                    {
+                      key: 'qcIdResidency',
+                      title: 'QC ID / PROOF OF QC RESIDENCY *',
+                      desc: 'Clear photo of your QCitizen ID, Barangay Certificate of Residency, or Valid ID (front and back).',
+                      doc: docQcId,
+                      setDoc: setDocQcId,
+                    },
+                    {
+                      key: 'indigencyBarangay',
+                      title: 'INDIGENCY OF BARANGAY (OPTIONAL)',
+                      desc: 'Barangay Certificate of Indigency (optional supporting document).',
+                      doc: docPhotoId,
+                      setDoc: setDocPhotoId,
+                    },
+                  ].map((item) => {
+                    const uploaded = item.doc;
+                    return (
+                      <React.Fragment key={item.key}>
+                        {item.key === 'requestLetter' && (
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
                             <button
                               type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                item.setDoc(null);
-                              }}
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-slate-700 hover:bg-red-600 text-white rounded-full flex items-center justify-center border border-slate-600 shadow-md transition-all cursor-pointer z-10"
-                              title="Remove photo"
+                              onClick={() => setShowSampleLetterModal(true)}
+                              className="px-3.5 py-1.5 bg-blue-950/80 hover:bg-blue-900 text-blue-400 border border-blue-800 text-[11px] font-bold rounded-xl inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                              title="Click to view Sample Letter of Intent"
                             >
-                              <X className="w-3.5 h-3.5" />
+                              <FileText className="w-3.5 h-3.5" />
+                              <span>SAMPLE DOCUMENT</span>
                             </button>
+                          </div>
+                        )}
 
-                            <div className={`w-20 h-20 rounded-xl overflow-hidden border shrink-0 ${
-                              darkMode ? 'border-slate-700 bg-slate-950' : 'border-slate-200 bg-slate-100'
-                            }`}>
-                              <img
-                                src={uploaded.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80'}
-                                alt={uploaded.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                              />
+                        <div
+                          className={`p-5 rounded-2xl border space-y-3 transition-all ${
+                            uploaded
+                              ? darkMode
+                                ? 'bg-[#0d1c3a]/70 border-2 border-emerald-500/50 shadow-lg'
+                                : 'bg-emerald-50/80 border-2 border-emerald-500/60 shadow-md'
+                              : darkMode
+                              ? 'bg-[#0b1326] border-slate-800/80'
+                              : 'bg-slate-50 border-slate-200'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs font-black tracking-wide uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                {item.title}
+                              </span>
+                              {uploaded && (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-500/20 shrink-0" />
+                              )}
                             </div>
-
-                            <span className={`text-[10px] font-bold text-center truncate max-w-full mt-2 block px-1 group-hover:text-blue-400 ${
-                              darkMode ? 'text-slate-200' : 'text-slate-800'
-                            }`}>
-                              {uploaded.name}
+                            <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                              {item.desc}
+                            </p>
+                            <span className={`text-[11px] block mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                              Allowed file types: JPG, JPEG, PNG, WEBP (or take photo using Camera)
                             </span>
                           </div>
+
+                          {/* Action buttons */}
+                          <div className="flex flex-wrap items-center gap-3 pt-1">
+                            <label className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 transition-all">
+                              <Upload className="w-3.5 h-3.5" />
+                              <span>UPLOAD PHOTO</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    const file = e.target.files[0];
+                                    item.setDoc({ name: file.name, url: URL.createObjectURL(file) });
+                                  }
+                                }}
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={() => openCameraModal(item.key)}
+                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 transition-all"
+                            >
+                              <Camera className="w-3.5 h-3.5" />
+                              <span>TAKE PHOTO (CAMERA)</span>
+                            </button>
+                          </div>
+
+                          {/* Uploaded Card Thumbnail Preview */}
+                          {uploaded && (
+                            <div className="pt-2">
+                              <div 
+                                className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group transition-all ${
+                                  darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
+                                }`}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    item.setDoc(null);
+                                  }}
+                                  className="absolute -top-2 -right-2 w-6 h-6 bg-slate-700 hover:bg-red-600 text-white rounded-full flex items-center justify-center border border-slate-600 shadow-md transition-all cursor-pointer z-10"
+                                  title="Remove photo"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+
+                                <div className={`w-20 h-20 rounded-xl overflow-hidden border shrink-0 ${
+                                  darkMode ? 'border-slate-700 bg-slate-950' : 'border-slate-200 bg-slate-100'
+                                }`}>
+                                  <img
+                                    src={uploaded.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80'}
+                                    alt={uploaded.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  />
+                                </div>
+
+                                <span className={`text-[10px] font-bold text-center truncate max-w-full mt-2 block px-1 group-hover:text-blue-400 ${
+                                  darkMode ? 'text-slate-200' : 'text-slate-800'
+                                }`}>
+                                  {uploaded.name}
+                                </span>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </React.Fragment>
-                );
-                })}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+
+                {/* Bottom Nav Action Bar */}
+                <div className="flex justify-between items-center pt-4 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setApplyStep(2)}
+                    className={`px-5 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    Back
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={!isStep3Complete}
+                    onClick={() => {
+                      if (isStep3Complete) {
+                        if (isEditingFromStep4) {
+                          setIsEditingFromStep4(false);
+                          setApplyStep(4);
+                        } else {
+                          setApplyStep(4);
+                        }
+                      }
+                    }}
+                    className={`px-6 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${
+                      isStep3Complete
+                        ? 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer shadow-md'
+                        : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/60'
+                    }`}
+                  >
+                    <span>Next</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+            )}
 
-              {/* REVIEW APPLICATION SUMMARY */}
-              <div className="pt-4 border-t border-slate-800/80 space-y-3">
-                <h3 className={`text-xs font-black tracking-wide uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                  REVIEW APPLICATION SUMMARY
-                </h3>
+            {/* ----------------------------------------------------------------------- */}
+            {/* APPLY STEP 4: REVIEW & SUBMIT APPLICATION                                */}
+            {/* ----------------------------------------------------------------------- */}
+            {applyStep === 4 && (
+              <div className="space-y-6 max-w-4xl mx-auto">
 
-                <div className={`p-5 rounded-2xl border space-y-2 text-xs ${
-                  darkMode ? 'bg-[#091124] border-slate-800/90 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+                {/* CARD 1: SELECTED COURSE DETAILS */}
+                <div className={`p-6 rounded-2xl border space-y-4 ${
+                  darkMode ? 'bg-[#0b1426] border-slate-800' : 'bg-white border-slate-200'
                 }`}>
-                  <div className="flex justify-between items-center pb-1 border-b border-slate-800/60">
-                    <h4 className="text-sm font-extrabold text-white">{selectedCourseTitle}</h4>
-                    <span className="text-xs font-bold text-blue-400">18 working days</span>
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-800/80">
+                    <div className="flex items-center gap-2">
+                      <ChevronUp className="w-4 h-4 text-slate-400" />
+                      <h3 className="text-sm font-extrabold text-white">Selected Course Details</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingFromStep4(true);
+                        setApplyStep(1);
+                      }}
+                      className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <FileEdit className="w-3.5 h-3.5" />
+                      <span>EDIT</span>
+                    </button>
                   </div>
 
-                  <div className="space-y-1.5 pt-1">
-                    <div>
-                      <span className="font-bold text-slate-400">Training Batch: </span>
-                      <span className="text-white font-semibold">3rd Batch 2026</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-400">Application Period: </span>
-                      <span className="text-white font-semibold">July 1, 2026 - July 15, 2026</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-400">Training Schedule: </span>
-                      <span className="text-white font-semibold">August 1 - 18, 2026</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-400">Applicant: </span>
-                      <span className="text-white font-semibold">JEFFERSON LEE • Male, 22 • Single • Brgy. Bagong Silangan</span>
-                    </div>
-                    <div>
-                      <span className="font-bold text-slate-400">Education & Purpose: </span>
-                      <span className="text-white font-semibold">
-                        {highestEdu && trainingPurpose
-                          ? `${highestEdu} • ${trainingPurpose}`
-                          : (highestEdu || trainingPurpose)
-                          ? `${highestEdu || 'Not specified'} ${trainingPurpose ? `• ${trainingPurpose}` : ''}`
-                          : 'Senior High School • Skills Development'}
-                      </span>
+                  <div>
+                    <span className="text-xs font-black tracking-wider text-blue-400 uppercase block mb-3">
+                      COURSE & TRAINING INFORMATION
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6 text-xs">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 block uppercase">COURSE TITLE</span>
+                        <span className="text-white font-extrabold text-sm">{selectedCourseTitle}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 block uppercase">TRAINING BATCH</span>
+                        <span className="text-white font-extrabold">3rd Batch 2026</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 block uppercase">APPLICATION PERIOD</span>
+                        <span className="text-white font-extrabold">July 1, 2026 - July 15, 2026</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 block uppercase">TRAINING SCHEDULE</span>
+                        <span className="text-white font-extrabold">August 1 - 18, 2026</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Certification Checkbox */}
-              <div className="pt-2">
-                <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-300 font-medium">
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="mt-0.5 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-0 cursor-pointer"
-                  />
-                  <span>I hereby certify that all information provided is true and correct, and I commit to faithfully attend all scheduled training sessions for this course.</span>
-                </label>
-              </div>
+                {/* CARD 2: PERSONAL INFORMATION & APPLICANT DETAILS */}
+                <div className={`p-6 rounded-2xl border space-y-6 ${
+                  darkMode ? 'bg-[#0b1426] border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-800/80">
+                    <div className="flex items-center gap-2">
+                      <ChevronUp className="w-4 h-4 text-slate-400" />
+                      <h3 className="text-sm font-extrabold text-white">Personal Information</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingFromStep4(true);
+                        setApplyStep(2);
+                      }}
+                      className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <FileEdit className="w-3.5 h-3.5" />
+                      <span>EDIT</span>
+                    </button>
+                  </div>
 
-              {/* Bottom Nav Action Bar */}
-              <div className="flex justify-between items-center pt-4 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setApplyStep(2)}
-                  className={`px-5 py-2.5 rounded-xl border text-xs font-bold transition-all ${
-                    darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  Back
-                </button>
+                  {/* Section 1: Personal Information (Pic 1 Style) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">FIRST NAME</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">JEFFERSON</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">MIDDLE NAME</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">FERNANDO</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">LAST NAME</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">LEE</span>
+                    </div>
 
-                <button
-                  type="button"
-                  onClick={handleFinalSubmit}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2"
-                >
-                  <span>Submit</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">SUFFIX</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">N/A</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">NATIONALITY</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">FILIPINO</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">DATE OF BIRTH</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">2004-09-27</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">AGE</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">22</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">GENDER</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">Male</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">CIVIL STATUS</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">Single</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">HOUSE / BUILDING NUMBER</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">176</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">STREET NAME</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">23</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">BARANGAY</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">Bagong Silangan</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">PHONE NUMBER</span>
+                      <span className="text-white font-extrabold text-xs block mt-0.5">0915582122</span>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Educational Background */}
+                  <div className="pt-4 border-t border-slate-800/80 space-y-3">
+                    <span className="text-xs font-black tracking-wider text-blue-400 uppercase block">
+                      EDUCATIONAL BACKGROUND
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 block uppercase">HIGHEST EDUCATIONAL ATTAINMENT</span>
+                        <span className="text-white font-extrabold">{highestEdu || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 block uppercase">SCHOOL / INSTITUTION</span>
+                        <span className="text-white font-extrabold">{schoolName || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Training Purpose */}
+                  <div className="pt-4 border-t border-slate-800/80 space-y-3">
+                    <span className="text-xs font-black tracking-wider text-blue-400 uppercase block">
+                      TRAINING PURPOSE
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 block uppercase">WHY ARE YOU APPLYING FOR THE TRAINING?</span>
+                        <span className="text-white font-extrabold">{trainingPurpose || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-extrabold text-slate-400 block uppercase">BRIEFLY STATE YOUR REASON FOR APPLYING</span>
+                        <span className="text-white font-extrabold">{purposeReason || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 4: Previous Training / Experience */}
+                  <div className="pt-4 border-t border-slate-800/80 space-y-3">
+                    <span className="text-xs font-black tracking-wider text-blue-400 uppercase block">
+                      PREVIOUS TRAINING / EXPERIENCE
+                    </span>
+                    <div className="text-xs">
+                      <span className="text-[10px] font-extrabold text-slate-400 block uppercase">HAVE YOU ATTENDED A SIMILAR SKILLS TRAINING BEFORE?</span>
+                      <span className="text-white font-extrabold">{previousTraining || 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CARD 3: REQUIRED DOCUMENTS */}
+                <div className={`p-6 rounded-2xl border space-y-5 ${
+                  darkMode ? 'bg-[#0b1426] border-slate-800' : 'bg-white border-slate-200'
+                }`}>
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-800/80">
+                    <div className="flex items-center gap-2">
+                      <ChevronUp className="w-4 h-4 text-slate-400" />
+                      <h3 className="text-sm font-extrabold text-white">Required documents</h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingFromStep4(true);
+                        setApplyStep(3);
+                      }}
+                      className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <FileEdit className="w-3.5 h-3.5" />
+                      <span>EDIT</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 text-xs">
+                    {[
+                      { title: 'REQUEST LETTER *', doc: docIndigency },
+                      { title: 'QC ID / PROOF OF QC RESIDENCY *', doc: docQcId },
+                      { title: 'INDIGENCY OF BARANGAY (OPTIONAL)', doc: docPhotoId }
+                    ].map((item, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-200 block">{item.title}</span>
+                        {item.doc ? (
+                          <div className="pt-1">
+                            <div className="relative w-36 border border-slate-700/80 rounded-2xl p-2.5 bg-[#0e1933] flex flex-col items-center shadow-lg">
+                              <div className="w-20 h-20 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 shrink-0">
+                                <img src={item.doc.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80'} alt={item.doc.name} className="w-full h-full object-cover" />
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-200 mt-2 truncate max-w-full text-center px-1">{item.doc.name}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-500 italic">No photo uploaded</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* BOTTOM ACTION BAR */}
+                <div className="flex justify-between items-center pt-6 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setApplyStep(3)}
+                    className="px-8 py-2.5 rounded-full border border-slate-700 bg-slate-900/60 text-slate-300 hover:bg-slate-800 text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    BACK
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleFinalSubmit}
+                    className="px-10 py-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-blue-600/30"
+                  >
+                    SUBMIT
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
@@ -1090,9 +1426,9 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
       {/* ========================================================================= */}
       {/* MODAL: SAMPLE LETTER OF INTENT PREVIEW                                    */}
       {/* ========================================================================= */}
-      {showSampleLetterModal && (
+      {showSampleLetterModal && createPortal(
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[9999] bg-[#030712]/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
           onClick={() => setShowSampleLetterModal(false)}
         >
           <div 
@@ -1130,46 +1466,27 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
               />
             </div>
 
-            {/* Description Info Box */}
-            <div className={`p-3.5 rounded-xl border text-xs leading-relaxed font-medium ${
-              darkMode 
-                ? 'bg-[#12233f]/70 border-blue-900/50 text-blue-200' 
-                : 'bg-blue-50 border-blue-200 text-blue-900'
-            }`}>
-              Sample formal request letter addressed to SSDD indicating intent to participate in the skills training program.
-            </div>
-
             {/* Modal Action Buttons */}
-            <div className="flex justify-between items-center pt-2">
+            <div className="flex justify-end items-center pt-2">
               <a
                 href="/LETTER OF INTENT - Copy.png"
                 download="LETTER_OF_INTENT_SAMPLE.png"
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border inline-flex items-center gap-2 cursor-pointer ${
-                  darkMode
-                    ? 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 text-slate-200'
-                    : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700'
-                }`}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center gap-2 cursor-pointer"
               >
+                <Download className="w-3.5 h-3.5" />
                 <span>Download Sample</span>
               </a>
-
-              <button
-                type="button"
-                onClick={() => setShowSampleLetterModal(false)}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
-              >
-                Close
-              </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}
       {/* MODAL: CAMERA CAPTURE SIMULATION                                          */}
       {/* ========================================================================= */}
-      {activeCameraDocKey && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+      {activeCameraDocKey && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className={`relative w-full max-w-md border rounded-3xl p-6 space-y-4 ${
             darkMode ? 'bg-[#0e172a] border-slate-800' : 'bg-white border-slate-200'
           }`}>
@@ -1216,7 +1533,8 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}
@@ -1225,8 +1543,8 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
 
 
       {/* MODAL: SYLLABUS & VENUE DETAIL MODAL                                        */}
-      {selectedScheduleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+      {selectedScheduleModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
           <div className={`relative w-full max-w-2xl rounded-3xl border p-6 space-y-5 shadow-2xl ${
             darkMode ? 'bg-[#0f192e] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
           }`}>
@@ -1308,7 +1626,8 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

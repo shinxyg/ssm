@@ -106,7 +106,7 @@ export const initialServices: ServiceItem[] = [
   {
     id: 'childwelfare-edu',
     title: 'Educational Assistance for Indigent Children & Youth',
-    category: 'childwelfare',
+    category: 'child',
     description: "Provides educational and financial aid support for indigent children & youth, solo parents' children/beneficiaries, and children with disabilities (CWD) residing in Quezon City.",
     requirements: [
       'Child Birth Certificate',
@@ -121,7 +121,7 @@ export const initialServices: ServiceItem[] = [
   {
     id: 'childwelfare-services',
     title: 'Child Welfare Services',
-    category: 'childwelfare',
+    category: 'child',
     description: 'Comprehensive care, protection, and developmental welfare services dedicated to ensuring the well-being and rights of children and youth in Quezon City.',
     requirements: [
       'Child Birth Certificate',
@@ -304,32 +304,4 @@ export const initialServices: ServiceItem[] = [
   }
 ];
 
-export const initialApplications: ApplicationRecord[] = [
-  {
-    referenceNo: 'AICS-2026-8841',
-    serviceName: 'Medical Assistance',
-    category: 'AICS',
-    dateSubmitted: 'Sep 24, 2026',
-    status: 'Ready for Payout',
-    amountOrType: '₱25,000 Guarantee Letter',
-    assignedSocialWorker: 'Social Worker Maria Santos, RSW',
-  },
-  {
-    referenceNo: 'PWD-2026-4019',
-    serviceName: 'PWD Social Assistance Program',
-    category: 'PWD',
-    dateSubmitted: 'Sep 26, 2026',
-    status: 'Approved',
-    amountOrType: 'Financial Aid & Assistive Devices',
-    assignedSocialWorker: 'Officer Arnaldo Cruz, OSCA',
-  },
-  {
-    referenceNo: 'SEN-2026-1102',
-    serviceName: 'Senior Citizen Social Pension Program',
-    category: 'SENIOR',
-    dateSubmitted: 'Sep 28, 2026',
-    status: 'Under Review',
-    amountOrType: '₱3,000 Q3 Pension',
-    assignedSocialWorker: 'Social Worker Elena Reyes, RSW',
-  },
-];
+export const initialApplications: ApplicationRecord[] = [];

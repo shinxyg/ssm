@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, HeartHandshake, CheckCircle, Sparkles, ArrowRight, ShieldAlert } from 'lucide-react';
 
 interface EligibilityFinderModalProps {
@@ -18,6 +18,17 @@ export const EligibilityFinderModal: React.FC<EligibilityFinderModalProps> = ({
   const [need, setNeed] = useState<string>('medical');
   const [income, setIncome] = useState<string>('below15k');
   const [results, setResults] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

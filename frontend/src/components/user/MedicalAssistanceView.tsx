@@ -66,6 +66,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
   // Step 1 Form States
   const [assistanceType, setAssistanceType] = useState<string>('');
   const [hospitalFacility, setHospitalFacility] = useState<string>('');
+  const [otherHospitalFacility, setOtherHospitalFacility] = useState<string>('');
   const [medicalCondition, setMedicalCondition] = useState<string>('');
   const [showReqModal, setShowReqModal] = useState<boolean>(false);
 
@@ -121,7 +122,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
   const handleToggleApplicantPatient = (checked: boolean) => {
     setIsApplicantPatient(checked);
     if (checked) {
-      setPatientRelation('Sarili');
+      setPatientRelation('Self');
       setPatientFirstName(firstName);
       setPatientMiddleName(middleName);
       setPatientLastName(lastName);
@@ -228,7 +229,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
     'Philippine Children\'s Medical Center (PCMC)',
     'Quirino Memorial Medical Center (QMMC)',
     'St. Luke\'s Medical Center – Quezon City',
-    'Other Accredited Health Facility'
+    'Other Health Facility'
   ];
 
   const handleFileUpload = (reqKey: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -431,7 +432,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   {/* Field 1: Accredited Partner Hospital */}
                   <div className="space-y-2">
                     <label className={`text-xs font-bold uppercase tracking-wide block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                      Accredited Partner Hospital / Healthcare Facility *
+                      Partner Hospital / Healthcare Facility *
                     </label>
                     <select
                       value={hospitalFacility}
@@ -442,7 +443,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                           : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500'
                       }`}
                     >
-                      <option value="">Select Accredited Partner Hospital / Healthcare Facility</option>
+                      <option value="">Select Partner Hospital / Healthcare Facility</option>
                       {accreditedHospitals.map((hosp) => (
                         <option key={hosp} value={hosp}>
                           {hosp}
@@ -450,6 +451,26 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       ))}
                     </select>
                   </div>
+
+                  {/* Field 1b: Specify Other Health Facility Name */}
+                  {hospitalFacility === 'Other Health Facility' && (
+                    <div className="space-y-2 animate-in fade-in duration-300">
+                      <label className={`text-xs font-bold uppercase tracking-wide block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                        Specify Health Facility / Hospital Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={otherHospitalFacility}
+                        onChange={(e) => setOtherHospitalFacility(e.target.value)}
+                        placeholder="e.g. FEU-NRMF Medical Center / Capitol Medical Center"
+                        className={`w-full px-4 py-3.5 rounded-xl border text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                          darkMode
+                            ? 'bg-[#0f1c38] border-slate-700 text-white focus:border-blue-500 placeholder-slate-500'
+                            : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500 placeholder-slate-400'
+                        }`}
+                      />
+                    </div>
+                  )}
 
                   {/* Field 2: Medical Condition / Diagnosis */}
                   <div className="space-y-2">
@@ -903,10 +924,10 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     key: 'reseta', 
                     title: (assistanceType.toLowerCase().includes('bill') || assistanceType.toLowerCase().includes('hospital'))
                       ? 'HOSPITAL BILL / SOA *' 
-                      : 'RESETA NG GAMOT *' 
+                      : 'DOCTOR PRESCRIPTION / MEDICINE PRESCRIPTION *' 
                   },
                   { key: 'indigency', title: 'BARANGAY CERTIFICATE OF INDIGENCY *' },
-                  { key: 'qcid_patient', title: 'QC ID NG PASYENTE *' },
+                  { key: 'qcid_patient', title: 'PATIENT QC ID *' },
                   { key: 'authorization', title: 'AUTHORIZATION / PERSONAL LETTER *' },
                 ].map((doc) => {
                   const uploaded = uploadedFiles[doc.key];
@@ -1067,14 +1088,36 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                        Type of Assistance: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{assistanceType || 'Medicines / Medical Supplies (Tulong sa Gamot / Reseta)'}</span>
+                        Type of Assistance: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{assistanceType || 'Medicines / Medical Supplies'}</span>
                       </span>
                     </div>
+                    {assistanceType === 'Medical Bill Assistance' && (
+                      <>
+                        {hospitalFacility && (
+                          <div className="flex items-start gap-3">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                            <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                              Hospital / Health Facility: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                {hospitalFacility === 'Other Health Facility' && otherHospitalFacility ? `${otherHospitalFacility} (Other Health Facility)` : hospitalFacility}
+                              </span>
+                            </span>
+                          </div>
+                        )}
+                        {medicalCondition && (
+                          <div className="flex items-start gap-3">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                            <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                              Medical Condition / Diagnosis: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{medicalCondition}</span>
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                        Kinakailangang Dokumento: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                          Medical Certificate / Abstract at {(assistanceType.toLowerCase().includes('bill') || assistanceType.toLowerCase().includes('hospital')) ? 'Hospital Bill / SOA' : 'Reseta ng Gamot'}
+                        Required Documents: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                          Medical Certificate / Abstract and {(assistanceType.toLowerCase().includes('bill') || assistanceType.toLowerCase().includes('hospital')) ? 'Hospital Bill / SOA' : 'Doctor Prescription'}
                         </span>
                       </span>
                     </div>
@@ -1131,7 +1174,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       </div>
                       <div>
                         <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>GENDER</span>
-                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{gender || 'Lalaki'}</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{gender || 'Male'}</span>
                       </div>
                       <div>
                         <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CIVIL STATUS</span>
@@ -1158,7 +1201,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     {/* Patient Information Sub-section */}
                     <div className={`pt-4 border-t space-y-4 ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
                       <h5 className={`text-xs font-extrabold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                        Patient Information (Medicine Beneficiary)
+                        Patient Information ({assistanceType.toLowerCase().includes('bill') ? 'Medical Bill Beneficiary' : 'Medicine Beneficiary'})
                       </h5>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
                         <div>
@@ -1229,10 +1272,10 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                         key: 'reseta', 
                         title: (assistanceType.toLowerCase().includes('bill') || assistanceType.toLowerCase().includes('hospital'))
                           ? 'HOSPITAL BILL / SOA *' 
-                          : 'RESETA NG GAMOT *' 
+                          : 'DOCTOR PRESCRIPTION / MEDICINE PRESCRIPTION *' 
                       },
                       { key: 'indigency', title: 'BARANGAY CERTIFICATE OF INDIGENCY *' },
-                      { key: 'qcid_patient', title: 'QC ID NG PASYENTE *' },
+                      { key: 'qcid_patient', title: 'PATIENT QC ID *' },
                       { key: 'authorization', title: 'AUTHORIZATION / PERSONAL LETTER *' },
                     ].map((doc) => {
                       const file = uploadedFiles[doc.key];

@@ -10,6 +10,15 @@
   }
 }
 
+/* Lock background scrolling on body, main, and sidebar when modal is active */
+body.modal-open,
+body.modal-open main,
+body.modal-open aside,
+body.modal-open div[class*="overflow-y-auto"] {
+  overflow: hidden !important;
+}
+
+
 /* Custom High-Visibility Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
@@ -35,17 +44,16 @@
 }
 
 /* Smooth Hardware-Accelerated Main Scroll Container */
-main {
+main, .overflow-y-auto {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   scroll-behavior: smooth;
   transform: translateZ(0);
   backface-visibility: hidden;
-  perspective: 1000px;
 }
 
-/* GPU Hardware Layer Compositing for High Graphics Smooth Scrolling */
-.glass-card, .glass-card-hover {
+/* Force GPU Layer Compositing for High Graphics Smooth Scrolling */
+.glass-card, .glass-card-hover, [class*="rounded-2xl"] {
   transform: translateZ(0);
   backface-visibility: hidden;
 }

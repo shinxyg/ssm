@@ -1,16 +1,47 @@
 import React, { useState } from 'react';
-import { Search, History, CheckCircle2, XCircle, Calendar, ChevronDown, Trash2, Activity } from 'lucide-react';
+import { Search, History, CheckCircle2, XCircle, Calendar, ChevronDown, Trash2, Activity, RotateCcw } from 'lucide-react';
 
 export const AdminActivityView: React.FC<{ darkMode?: boolean }> = ({ darkMode = true }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [moduleFilter, setModuleFilter] = useState<string>('All Modules');
   const [actionFilter, setActionFilter] = useState<string>('All Actions');
+  const [isRecentlyDeletedView, setIsRecentlyDeletedView] = useState<boolean>(false);
+
+  if (isRecentlyDeletedView) {
+    return (
+      <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in duration-300 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+        <div className="flex items-center justify-between pt-2">
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">Recently Deleted</h1>
+          <button 
+            type="button" 
+            onClick={() => setIsRecentlyDeletedView(false)}
+            className="flex items-center gap-2 bg-[#0e1726] hover:bg-[#142036] text-slate-200 hover:text-white border border-slate-700/80 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+          >
+            <RotateCcw className="w-4 h-4 text-slate-300" />
+            <span>Back to Activity Log</span>
+          </button>
+        </div>
+
+        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-16 text-center shadow-xl flex flex-col items-center justify-center">
+          <div className="p-3.5 rounded-2xl bg-[#121c2e] border border-slate-800 text-slate-400 mb-3">
+            <Trash2 className="w-8 h-8 stroke-[1.5]" />
+          </div>
+          <h4 className="text-base font-extrabold text-white">No recently deleted logs found</h4>
+          <p className="text-xs text-slate-400 mt-1">Deleted records and logs will appear here for 30 days before permanent deletion.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-extrabold tracking-tight text-white">Activity Log</h1>
-        <button type="button" className="flex items-center gap-2 bg-[#0e1726] hover:bg-[#142036] text-slate-300 hover:text-white border border-slate-700/80 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm">
+        <button 
+          type="button" 
+          onClick={() => setIsRecentlyDeletedView(true)}
+          className="flex items-center gap-2 bg-[#0e1726] hover:bg-[#142036] text-slate-300 hover:text-white border border-slate-700/80 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+        >
           <Trash2 className="w-3.5 h-3.5 text-slate-400" />
           <span>Recently Deleted</span>
         </button>

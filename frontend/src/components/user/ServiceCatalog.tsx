@@ -29,7 +29,7 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
   filterTitle = "Available Social Services Programs",
   darkMode = true,
 }) => {
-  const getIcon = (iconName: string) => {
+  const getIcon = (iconName?: string) => {
     switch (iconName) {
       case 'medical': return Stethoscope;
       case 'education': return GraduationCap;
@@ -80,10 +80,10 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
             return (
               <div
                 key={service.id}
-                className={`group relative border rounded-2xl p-5 shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col justify-between ${
+                className={`group relative border rounded-2xl p-5 shadow-md hover:shadow-xl transition-colors duration-200 flex flex-col justify-between [transform:translateZ(0)] ${
                   darkMode 
-                    ? 'bg-[#0e172a]/90 border-slate-800/90 hover:border-blue-500/50' 
-                    : 'bg-white border-slate-200 hover:border-blue-400 shadow-slate-200/50'
+                    ? 'bg-[#0e172a] border-slate-800 hover:border-blue-500/50' 
+                    : 'bg-white border-slate-200 hover:border-blue-400'
                 }`}
               >
                 <div>

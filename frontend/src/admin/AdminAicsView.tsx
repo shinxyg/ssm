@@ -27,36 +27,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
   const [selectedApp, setSelectedApp] = useState<ApplicationRecord | null>(null);
 
   const allApps: ApplicationRecord[] = useMemo(() => {
-    if (applications.length > 0) return applications;
-    return [
-      {
-        referenceNo: 'AICS-2026-8841',
-        serviceName: 'AICS Medical & Hospitalization Guarantee Letter',
-        category: 'AICS',
-        dateSubmitted: 'Sep 24, 2026',
-        status: 'Ready for Payout',
-        amountOrType: '₱25,000 Guarantee Letter',
-        assignedSocialWorker: 'Social Worker Maria Santos, RSW',
-      },
-      {
-        referenceNo: 'AICS-2026-9012',
-        serviceName: 'AICS Funeral & Burial Financial Assistance',
-        category: 'AICS',
-        dateSubmitted: 'Sep 27, 2026',
-        status: 'Under Review',
-        amountOrType: '₱15,000 Funeral Aid',
-        assignedSocialWorker: 'Social Worker Elena Reyes, RSW',
-      },
-      {
-        referenceNo: 'AICS-2026-7734',
-        serviceName: 'Emergency Food & Calamity Aid',
-        category: 'AICS',
-        dateSubmitted: 'Sep 28, 2026',
-        status: 'Approved',
-        amountOrType: 'Food Pack & ₱5,000 Cash',
-        assignedSocialWorker: 'Officer Arnaldo Cruz, OSCA',
-      }
-    ];
+    return applications;
   }, [applications]);
 
   const aicsApps = useMemo(() => {
@@ -239,7 +210,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
                     onClick={() => setSelectedApp(app)}
                   >
                     <td className="py-4 px-6 font-mono font-bold text-blue-400">{app.referenceNo}</td>
-                    <td className="py-4 px-6 font-bold text-white">Jefferson Lee</td>
+                    <td className="py-4 px-6 font-bold text-white">{(app as any).applicantName || app.details?.applicantName || 'Applicant'}</td>
                     <td className="py-4 px-6 text-slate-300">{app.serviceName}</td>
                     <td className="py-4 px-6 text-slate-400 font-mono text-[11px]">{app.dateSubmitted}</td>
                     <td className="py-4 px-6">
@@ -314,7 +285,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
               <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-900/60 border border-slate-800">
                 <div>
                   <span className="text-slate-400 text-[10px] font-semibold uppercase">Applicant Name</span>
-                  <div className="font-bold text-white text-sm mt-0.5">Jefferson Lee</div>
+                  <div className="font-bold text-white text-sm mt-0.5">{(selectedApp as any).applicantName || selectedApp.details?.applicantName || 'Applicant'}</div>
                 </div>
                 <div>
                   <span className="text-slate-400 text-[10px] font-semibold uppercase">Date Filed</span>

@@ -6,13 +6,23 @@ interface NavbarProps {
   darkMode: boolean;
   setDarkMode: (dark: boolean) => void;
   onNavigateToProfile?: () => void;
+  onNavigateToLogin?: () => void;
+  userRole?: 'user' | 'admin';
+  userName?: string;
+  userSubtitle?: string;
+  userInitials?: string;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
   activeSection,
   darkMode,
   setDarkMode,
-  onNavigateToProfile
+  onNavigateToProfile,
+  onNavigateToLogin,
+  userRole = 'user',
+  userName,
+  userSubtitle,
+  userInitials,
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
@@ -21,6 +31,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  const displayName = userName || (userRole === 'admin' ? 'System Admin' : 'Jefferson Lee');
+  const displaySubtitle = userSubtitle || (userRole === 'admin' ? 'Administrator' : 'Citizen Resident');
+  const displayInitials = userInitials || (userRole === 'admin' ? 'AD' : 'JL');
 
   useEffect(() => {
     const updateTime = () => {
@@ -52,7 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className={`sticky top-0 z-40 h-16 shrink-0 border-b px-6 flex items-center justify-between shadow-sm transition-colors duration-200 ${
       darkMode 
-        ? 'bg-[#0d172a] border-slate-800/80 text-white' 
+        ? 'bg-[#070e1b] border-slate-800/80 text-white' 
         : 'bg-white border-slate-200 text-slate-900'
     }`}>
       {/* Left Area: Active Page / Section Title */}
@@ -62,104 +76,67 @@ export const Navbar: React.FC<NavbarProps> = ({
         </h2>
       </div>
 
-      {/* Right Controls & User Profile */}
-      <div className="flex items-center gap-3.5 pr-1">
+      {/* Right Controls & User Profile Matching Reference Screenshot */}
+      <div className="flex items-center gap-4 pr-1">
         {/* Real-time Clock */}
-        <div className="text-right hidden sm:block">
-          <div className={`text-xs font-bold tracking-wider font-mono ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-            {timeStr || '11:17:23 PM'}
+        <div className="text-right hidden sm:flex flex-col justify-center">
+          <div className={`text-xs sm:text-[13px] font-extrabold font-mono tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+            {timeStr || '04:18:49 PM'}
           </div>
           <div className={`text-[10px] font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-            {dateStr || 'Mon, Sep 28'}
+            {dateStr || 'Fri, Oct 2'}
           </div>
         </div>
 
-        {/* Theme Toggle */}
+        {/* Theme Toggle Button */}
         <button
           type="button"
           onClick={() => setDarkMode(!darkMode)}
-          className={`p-1.5 rounded-lg transition-colors ${
+          className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
             darkMode 
-              ? 'text-slate-400 hover:text-amber-300 hover:bg-slate-800' 
-              : 'text-slate-600 hover:text-amber-600 hover:bg-slate-100'
+              ? 'text-slate-300 hover:text-white hover:bg-slate-800/80' 
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
           title={darkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
         >
           {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
-        {/* Notification Bell */}
-        <div className="relative" ref={notifRef}>
-          <button
-            type="button"
-            onClick={() => {
-              setShowNotifications(!showNotifications);
-              setShowProfileMenu(false);
-            }}
-            className={`relative p-1.5 rounded-lg transition-colors ${
-              darkMode 
-                ? 'text-slate-400 hover:text-white hover:bg-slate-800' 
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-            title="Notifications"
-          >
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-          </button>
-
-          {/* Notifications Dropdown */}
-          {showNotifications && (
-            <div className={`absolute right-0 mt-2 w-80 rounded-xl shadow-2xl p-3 z-50 border animate-in fade-in slide-in-from-top-2 ${
-              darkMode ? 'bg-[#111c35] border-slate-700/80 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
-            }`}>
-              <div className={`flex justify-between items-center pb-2 border-b mb-2 ${darkMode ? 'border-slate-700/50' : 'border-slate-200'}`}>
-                <span className="text-xs font-bold">Notifications (2)</span>
-                <button 
-                  type="button"
-                  onClick={() => setShowNotifications(false)} 
-                  className="text-[10px] text-blue-500 hover:underline"
-                >
-                  Mark all read
-                </button>
-              </div>
-              <div className="space-y-2 text-xs">
-                <div className={`p-2 rounded-lg border ${darkMode ? 'bg-blue-950/40 border-blue-800/40' : 'bg-blue-50 border-blue-200'}`}>
-                  <div className={`font-semibold ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>AICS Voucher Ready</div>
-                  <div className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Your Medical Assistance claim voucher #AICS-8841 is ready for payout.</div>
-                  <div className={`text-[9px] mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>10 mins ago</div>
-                </div>
-                <div className={`p-2 rounded-lg border ${darkMode ? 'bg-slate-800/40 border-slate-700/40' : 'bg-slate-100 border-slate-200'}`}>
-                  <div className={`font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>Senior Booklet Verified</div>
-                  <div className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Documents for Senior Citizen medicine booklet request approved.</div>
-                  <div className={`text-[9px] mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>2 hours ago</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* User Profile Capsule (No Border) with Interactive Dropdown & Click Outside */}
+        {/* User Profile Pill Badge matching exact compact request */}
         <div className="relative" ref={profileRef}>
           <button
             type="button"
-            onClick={() => {
-              setShowProfileMenu(!showProfileMenu);
-              setShowNotifications(false);
-            }}
-            className="flex items-center gap-2.5 p-0 border-none outline-none transition-all cursor-pointer select-none hover:opacity-80"
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className={`flex items-center gap-2.5 px-2.5 py-1 rounded-xl outline-none transition-all cursor-pointer select-none group border ${
+              showProfileMenu 
+                ? 'bg-[#0f1b33] border-blue-500/40' 
+                : 'bg-transparent hover:bg-[#0f1b33]/60 border-transparent'
+            }`}
           >
-            <span className={`text-xs font-bold hidden lg:inline tracking-wide ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-              Hi, JEFFERSON
-            </span>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center shadow-md border border-blue-400/40">
-              JL
+            {/* Title & Subtitle text on the left */}
+            <div className="text-right hidden sm:flex flex-col justify-center">
+              <span className={`text-xs font-bold leading-tight transition-colors ${
+                darkMode ? 'text-white group-hover:text-blue-300' : 'text-slate-900 group-hover:text-blue-600'
+              }`}>
+                {displayName}
+              </span>
+              <span className={`text-[10px] font-medium leading-tight mt-0.5 ${
+                darkMode ? 'text-slate-400' : 'text-slate-500'
+              }`}>
+                {displaySubtitle}
+              </span>
+            </div>
+
+            {/* Avatar Squircle Badge on the right (AD / JL) */}
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-sky-400 text-white font-extrabold text-xs flex items-center justify-center shrink-0">
+              {displayInitials}
             </div>
           </button>
 
-          {/* Profile Dropdown Menu */}
+          {/* Profile Dropdown Menu (Compact, No Shadow, No Line) */}
           {showProfileMenu && (
-            <div className={`absolute right-0 mt-2 w-48 rounded-2xl shadow-2xl p-2 z-50 border animate-in fade-in slide-in-from-top-2 ${
-              darkMode ? 'bg-[#0f172a] border-slate-700/80 text-white' : 'bg-white border-slate-200 text-slate-800'
+            <div className={`absolute right-0 mt-1.5 w-44 rounded-xl p-1.5 z-50 border animate-in fade-in slide-in-from-top-2 ${
+              darkMode ? 'bg-[#091122] border-slate-700/80 text-white' : 'bg-white border-slate-200 text-slate-800'
             }`}>
               <button
                 type="button"
@@ -167,13 +144,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   setShowProfileMenu(false);
                   if (onNavigateToProfile) onNavigateToProfile();
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold rounded-xl transition-colors ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                   darkMode 
-                    ? 'text-slate-200 hover:text-white hover:bg-slate-800/80' 
-                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                    ? 'text-slate-100 hover:bg-slate-800/60' 
+                    : 'text-slate-800 hover:bg-slate-100'
                 }`}
               >
-                <User className="w-4 h-4 text-slate-400" />
+                <User className="w-3.5 h-3.5 text-slate-400" />
                 <span>Profile</span>
               </button>
 
@@ -181,14 +158,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                 type="button"
                 onClick={() => {
                   setShowProfileMenu(false);
+                  if (onNavigateToLogin) onNavigateToLogin();
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold text-red-500 rounded-xl transition-colors ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-red-500 rounded-lg transition-colors cursor-pointer mt-0.5 ${
                   darkMode 
-                    ? 'hover:text-red-400 hover:bg-red-950/30' 
-                    : 'hover:text-red-600 hover:bg-red-50'
+                    ? 'hover:bg-red-950/30' 
+                    : 'hover:bg-red-50'
                 }`}
               >
-                <LogOut className="w-4 h-4 text-red-500" />
+                <LogOut className="w-3.5 h-3.5 text-red-500" />
                 <span>Log Out</span>
               </button>
             </div>
