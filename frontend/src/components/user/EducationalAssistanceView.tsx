@@ -169,8 +169,6 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
 
   const isStep3Complete = true;
 
-  // Image Preview Modal State
-  const [previewImageModal, setPreviewImageModal] = useState<{ title: string; url: string } | null>(null);
 
   // Camera Capture Modal State
   const [activeCameraDocKey, setActiveCameraDocKey] = useState<string | null>(null);
@@ -248,7 +246,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
     };
 
     onAddApplication(newAppRecord);
-    setIsSuccessModalOpen(true);
+    onBack();
   };
 
 
@@ -1381,11 +1379,9 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   {uploaded && (
                     <div className="pt-2">
                       <div 
-                        onClick={() => setPreviewImageModal({ title: item.title, url: uploaded.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80' })}
-                        className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group cursor-pointer hover:border-blue-500/80 transition-all ${
+                        className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group transition-all ${
                           darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
                         }`}
-                        title="Click to view photo"
                       >
                         {/* Floating X Delete Button */}
                         <button
@@ -1717,11 +1713,9 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                     {item.doc ? (
                       <div className="pt-1">
                         <div 
-                          onClick={() => setPreviewImageModal({ title: item.title, url: item.doc?.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80' })}
-                          className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg group cursor-pointer hover:border-blue-500/80 transition-all ${
+                          className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg group transition-all ${
                             darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
                           }`}
-                          title="Click to view full photo"
                         >
                           <div className={`w-20 h-20 rounded-xl overflow-hidden border shrink-0 ${
                             darkMode ? 'border-slate-700 bg-slate-950' : 'border-slate-200 bg-slate-100'
@@ -1809,50 +1803,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         </div>
       )}
 
-      {/* Success Modal */}
-      {isSuccessModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className={`max-w-lg w-full rounded-2xl border p-6 space-y-6 text-center shadow-2xl animate-in zoom-in-95 duration-200 ${
-            darkMode ? 'bg-[#0f1b35] border-blue-900/60 text-white' : 'bg-white border-slate-200 text-slate-900'
-          }`}>
-            <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center border border-emerald-500/40">
-              <CheckCircle2 className="w-8 h-8" />
-            </div>
 
-            <div>
-              <h3 className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">Application Submitted Successfully!</h3>
-              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                Your QC Educational Assistance claim application has been filed and verified by QC Social Services.
-              </p>
-            </div>
-
-            <div className={`p-4 rounded-xl border text-center ${
-              darkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-50 border-slate-200'
-            }`}>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">REFERENCE NUMBER</span>
-              <span className="text-lg font-mono font-extrabold text-blue-600 dark:text-blue-400">{generatedRefNo}</span>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${generatedRefNo}`}
-                alt="Claim QR Voucher"
-                className="w-32 h-32 mx-auto mt-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white p-2"
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSuccessModalOpen(false);
-                  onBack();
-                }}
-                className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider shadow-lg"
-              >
-                Go to Application History
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Requirements Modal Overlay */}
       {showReqModal && (
@@ -1894,51 +1845,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         </div>
       )}
 
-      {/* Full Image Preview Modal */}
-      {previewImageModal && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setPreviewImageModal(null)}
-        >
-          <div 
-            className={`max-w-3xl w-full rounded-2xl border p-4 sm:p-6 space-y-4 shadow-2xl relative ${
-              darkMode ? 'bg-[#0b1329] border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
-            }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center border-b pb-3 border-slate-700/60">
-              <h3 className="text-sm font-extrabold uppercase tracking-wide truncate max-w-md">
-                {previewImageModal.title}
-              </h3>
-              <button 
-                type="button" 
-                onClick={() => setPreviewImageModal(null)}
-                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <div className="relative max-h-[75vh] flex items-center justify-center overflow-hidden rounded-xl bg-black/40 border border-slate-800 p-2">
-              <img 
-                src={previewImageModal.url} 
-                alt={previewImageModal.title} 
-                className="max-h-[70vh] w-auto object-contain rounded-lg shadow-lg"
-              />
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setPreviewImageModal(null)}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold uppercase transition-all"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

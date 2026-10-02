@@ -250,7 +250,7 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
     };
 
     onAddApplication(newApp);
-    setSubmittedRef(newRefNo);
+    onBack();
   };
 
   return (
@@ -387,43 +387,7 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
         <div className="p-6 sm:p-8">
 
           {/* SUCCESS SUBMITTED VIEW */}
-          {submittedRef ? (
-            <div className="text-center py-10 space-y-6 max-w-lg mx-auto">
-              <div className="w-20 h-20 rounded-full bg-emerald-950 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/20 animate-bounce">
-                <CheckCircle2 className="w-10 h-10" />
-              </div>
-
-              <div>
-                <h3 className="text-xl font-extrabold text-white">Funeral Assistance Application Submitted!</h3>
-                <p className="text-xs text-slate-300 mt-2 leading-relaxed">
-                  Your funeral assistance request for <strong className="text-blue-400">{`${deceasedFirstName} ${deceasedLastName}`.trim() || 'the deceased resident'}</strong> under partner funeral home <strong className="text-white">{selectedFuneralHome}</strong> has been transmitted to QC CSWDO.
-                </p>
-              </div>
-
-              <div className="p-5 bg-slate-900/90 border border-slate-700/90 rounded-2xl space-y-2">
-                <span className="text-[11px] text-slate-400 uppercase font-bold tracking-wider block">Official Guarantee Reference Control Number</span>
-                <span className="text-2xl font-black font-mono text-amber-400 tracking-widest">{submittedRef}</span>
-              </div>
-
-              <div className="p-4 bg-blue-950/40 border border-blue-800/60 rounded-xl flex items-center gap-3 text-left">
-                <QrCode className="w-10 h-10 text-blue-400 shrink-0" />
-                <div className="text-xs">
-                  <span className="font-bold text-white block">Certificate of Guarantee Issued</span>
-                  <span className="text-slate-300">Present this reference control voucher to {selectedFuneralHome} to cover service package up to Php 25,000.</span>
-                </div>
-              </div>
-
-              <div className="flex gap-3 justify-center pt-2">
-                <button
-                  type="button"
-                  onClick={onBack}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl border border-blue-400/40"
-                >
-                  Return to Programs
-                </button>
-              </div>
-            </div>
-          ) : currentStep === 1 ? (
+          {currentStep === 1 ? (
             /* STEP 1: COMPLETE CHECKLIST (MATCHING USER SCREENSHOTS 1, 2, 3) */
             <div className="space-y-6 max-w-3xl mx-auto">
               
@@ -1266,11 +1230,11 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
                     {/* Deceased Information Sub-section */}
                     <div className={`pt-4 border-t space-y-4 ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
                       <h5 className={`text-xs font-extrabold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                        Impormasyon ng Sumakabilang-Buhay (Deceased Details)
+                        Deceased Information
                       </h5>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
                         <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>RELASYON SA SUMAKABILANG-BUHAY</span>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>RELATIONSHIP TO DECEASED</span>
                           <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{relationToDeceased || 'Child'}</span>
                         </div>
                         <div>

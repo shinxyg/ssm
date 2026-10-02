@@ -12,7 +12,8 @@ import {
   Pencil,
   UserCheck,
   ChevronUp,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react';
 import type { ApplicationRecord } from '../../types';
 
@@ -102,11 +103,6 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
 
   // Section 4: FAMILY COMPOSITION
   const [familyMembers, setFamilyMembers] = useState<{ id: string; name: string; rel: string; age: string; occ: string }[]>([]);
-  const [showAddMemberModal, setShowAddMemberModal] = useState<boolean>(false);
-  const [memName, setMemName] = useState<string>('');
-  const [memRel, setMemRel] = useState<string>('');
-  const [memAge, setMemAge] = useState<string>('');
-  const [memOcc, setMemOcc] = useState<string>('');
 
   // Section 5: ESTIMATE MONTHLY EXPENSES
   const [monthlyExpenses, setMonthlyExpenses] = useState<string>('');
@@ -115,23 +111,22 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
   const [reasonForAssistance, setReasonForAssistance] = useState<string>('');
 
   const handleAddFamilyMember = () => {
-    if (memName.trim()) {
-      setFamilyMembers((prev) => [
-        ...prev,
-        {
-          id: `mem-${Date.now()}`,
-          name: memName,
-          rel: memRel || 'Relative',
-          age: memAge || 'N/A',
-          occ: memOcc || 'N/A',
-        },
-      ]);
-      setMemName('');
-      setMemRel('');
-      setMemAge('');
-      setMemOcc('');
-      setShowAddMemberModal(false);
-    }
+    setFamilyMembers((prev) => [
+      ...prev,
+      {
+        id: `mem-${Date.now()}`,
+        name: '',
+        rel: '',
+        age: '',
+        occ: '',
+      },
+    ]);
+  };
+
+  const updateFamilyMember = (id: string, field: 'name' | 'rel' | 'age' | 'occ', value: string) => {
+    setFamilyMembers((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, [field]: value } : m))
+    );
   };
 
   const handleRemoveFamilyMember = (id: string) => {
@@ -152,8 +147,6 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
   const [docMedical, setDocMedical] = useState<{ name: string; url?: string } | null>(null);
   const [docResidency, setDocResidency] = useState<{ name: string; url?: string } | null>(null);
 
-  // Image Preview Lightbox State
-  const [previewImageModal, setPreviewImageModal] = useState<{ title: string; url: string } | null>(null);
 
   // Camera Capture Modal State
   const [activeCameraDocKey, setActiveCameraDocKey] = useState<string | null>(null);
@@ -218,7 +211,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
     };
 
     onAddApplication(newAppRecord);
-    setIsSuccessModalOpen(true);
+    onBack();
   };
 
   // Shared Theme Styling Tokens for High-Contrast Readability
@@ -777,8 +770,8 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
 
               <button
                 type="button"
-                onClick={() => setShowAddMemberModal(true)}
-                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0"
+                onClick={handleAddFamilyMember}
+                className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer"
               >
                 <span>+ Add Family Member</span>
               </button>
@@ -793,30 +786,104 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 </p>
                 <button
                   type="button"
-                  onClick={() => setShowAddMemberModal(true)}
-                  className="px-4 py-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-500/30 transition-all inline-flex items-center gap-1.5"
+                  onClick={handleAddFamilyMember}
+                  className="px-4 py-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-500/30 transition-all inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>+ Add Family Member</span>
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
-                {familyMembers.map((m) => (
-                  <div key={m.id} className={`p-3.5 rounded-xl border flex items-center justify-between ${
-                    darkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-50 border-slate-200'
-                  }`}>
-                    <div className="text-xs">
-                      <strong className="text-blue-500 font-extrabold">{m.name}</strong> ({m.rel}, {m.age} yrs) — <span className="text-slate-400">{m.occ}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFamilyMember(m.id)}
-                      className="p-1 text-slate-400 hover:text-red-500 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className={`border-b font-bold ${
+                      darkMode ? 'border-slate-800 text-slate-400 bg-slate-900/80' : 'border-slate-200 text-slate-600 bg-slate-100'
+                    }`}>
+                      <th className="py-2.5 px-3 min-w-[150px]">Name *</th>
+                      <th className="py-2.5 px-3 min-w-[120px]">Relationship</th>
+                      <th className="py-2.5 px-3 w-[80px]">Age</th>
+                      <th className="py-2.5 px-3 min-w-[130px]">Occupation / Status</th>
+                      <th className="py-2.5 px-3 text-right w-[60px]">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${darkMode ? 'divide-slate-800' : 'divide-slate-200'}`}>
+                    {familyMembers.map((m) => (
+                      <tr key={m.id} className="font-medium">
+                        <td className="py-2 px-2">
+                          <input
+                            type="text"
+                            value={m.name}
+                            onChange={(e) => updateFamilyMember(m.id, 'name', e.target.value)}
+                            placeholder="Full name"
+                            className={inputClass}
+                          />
+                        </td>
+                        <td className="py-2 px-2">
+                          <input
+                            type="text"
+                            value={m.rel}
+                            onChange={(e) => updateFamilyMember(m.id, 'rel', e.target.value)}
+                            placeholder="Son / Daughter / Spouse"
+                            className={inputClass}
+                          />
+                        </td>
+                        <td className="py-2 px-2">
+                          <input
+                            type="text"
+                            value={m.age}
+                            onChange={(e) => updateFamilyMember(m.id, 'age', e.target.value.replace(/\D/g, '').slice(0, 2))}
+                            maxLength={2}
+                            placeholder="Age"
+                            className={inputClass}
+                          />
+                        </td>
+                        <td className="py-2 px-2 space-y-1">
+                          <select
+                            value={['Unemployed', 'Employed', 'Self-Employed', 'Student', 'Retired', 'Housewife / Househusband', 'None / N/A'].includes(m.occ) ? m.occ : (m.occ ? 'Other' : '')}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === 'Other') {
+                                updateFamilyMember(m.id, 'occ', 'Other');
+                              } else {
+                                updateFamilyMember(m.id, 'occ', val);
+                              }
+                            }}
+                            className={inputClass}
+                          >
+                            <option value="">Select Occupation / Status</option>
+                            <option value="Unemployed">Unemployed</option>
+                            <option value="Employed">Employed</option>
+                            <option value="Self-Employed">Self-Employed</option>
+                            <option value="Student">Student</option>
+                            <option value="Retired">Retired</option>
+                            <option value="Housewife / Househusband">Housewife / Househusband</option>
+                            <option value="None / N/A">None / N/A</option>
+                            <option value="Other">Other (Specify)</option>
+                          </select>
+                          {(!['Unemployed', 'Employed', 'Self-Employed', 'Student', 'Retired', 'Housewife / Househusband', 'None / N/A'].includes(m.occ) && m.occ !== '') && (
+                            <input
+                              type="text"
+                              value={m.occ === 'Other' ? '' : m.occ}
+                              onChange={(e) => updateFamilyMember(m.id, 'occ', e.target.value || 'Other')}
+                              placeholder="Specify occupation..."
+                              className={inputClass}
+                            />
+                          )}
+                        </td>
+                        <td className="py-2 px-2 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFamilyMember(m.id)}
+                            className="text-rose-500 hover:text-rose-400 p-1.5 rounded-lg border border-rose-500/20 hover:bg-rose-500/10 transition-colors"
+                            title="Remove Member"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
@@ -993,18 +1060,9 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                   {item.doc && (
                     <div className="mt-3">
                       <div 
-                        onClick={() => {
-                          if (item.doc) {
-                            setPreviewImageModal({
-                              title: item.title,
-                              url: item.doc.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80'
-                            });
-                          }
-                        }}
-                        className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group cursor-pointer hover:border-blue-500/80 transition-all ${
+                        className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group transition-all ${
                           darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
                         }`}
-                        title="Click to view photo"
                       >
                         {/* Floating X Delete Button */}
                         <button
@@ -1287,7 +1345,9 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                   </h5>
                   <div className="text-xs">
                     <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>ESTIMATED MONTHLY EXPENSES</span>
-                    <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>₱{monthlyExpenses || '5,000'}</span>
+                    <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                      {monthlyExpenses ? (monthlyExpenses.startsWith('₱') ? monthlyExpenses : `₱${!isNaN(Number(monthlyExpenses)) ? Number(monthlyExpenses).toLocaleString('en-US') : monthlyExpenses}`) : 'Not Specified'}
+                    </span>
                   </div>
                 </div>
 
@@ -1344,18 +1404,9 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                       {item.doc ? (
                         <div className="pt-1">
                           <div 
-                            onClick={() => {
-                              if (item.doc) {
-                                setPreviewImageModal({
-                                  title: item.title,
-                                  url: item.doc.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80'
-                                });
-                              }
-                            }}
-                            className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg group cursor-pointer hover:border-blue-500/80 transition-all ${
+                            className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg group transition-all ${
                               darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
                             }`}
-                            title="Click to view full photo"
                           >
                             <div className={`w-20 h-20 rounded-xl overflow-hidden border shrink-0 ${
                               darkMode ? 'border-slate-700 bg-slate-950' : 'border-slate-200 bg-slate-100'
@@ -1407,51 +1458,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
       )}
       </div>
 
-      {/* Full Image Preview Modal */}
-      {previewImageModal && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setPreviewImageModal(null)}
-        >
-          <div 
-            className={`max-w-3xl w-full rounded-2xl border p-4 sm:p-6 space-y-4 shadow-2xl relative ${
-              darkMode ? 'bg-[#0b1329] border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
-            }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center border-b pb-3 border-slate-700/60">
-              <h3 className="text-sm font-extrabold uppercase tracking-wide truncate max-w-md">
-                {previewImageModal.title}
-              </h3>
-              <button 
-                type="button" 
-                onClick={() => setPreviewImageModal(null)}
-                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <div className="relative max-h-[75vh] flex items-center justify-center overflow-hidden rounded-xl bg-black/40 border border-slate-800 p-2">
-              <img 
-                src={previewImageModal.url} 
-                alt={previewImageModal.title} 
-                className="max-h-[70vh] w-auto object-contain rounded-lg shadow-lg"
-              />
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setPreviewImageModal(null)}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold uppercase transition-all"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Camera Capture Modal */}
       {activeCameraDocKey && (
@@ -1494,50 +1501,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
         </div>
       )}
 
-      {/* Success Modal */}
-      {isSuccessModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className={`max-w-lg w-full rounded-2xl border p-6 space-y-6 text-center shadow-2xl animate-in zoom-in-95 duration-200 ${
-            darkMode ? 'bg-[#0f1b35] border-blue-900/60 text-white' : 'bg-white border-slate-200 text-slate-900'
-          }`}>
-            <div className="w-14 h-14 mx-auto rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center border border-emerald-500/40">
-              <CheckCircle2 className="w-8 h-8" />
-            </div>
 
-            <div>
-              <h3 className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">Application Submitted Successfully!</h3>
-              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                Your PWD Social Assistance claim application has been filed and verified by QC Social Services.
-              </p>
-            </div>
-
-            <div className={`p-4 rounded-xl border text-center ${
-              darkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-50 border-slate-200'
-            }`}>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">REFERENCE NUMBER</span>
-              <span className="text-lg font-mono font-extrabold text-blue-600 dark:text-blue-400">{generatedRefNo}</span>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${generatedRefNo}`}
-                alt="Claim QR Voucher"
-                className="w-32 h-32 mx-auto mt-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white p-2"
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSuccessModalOpen(false);
-                  onBack();
-                }}
-                className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider shadow-lg"
-              >
-                Go to Application History
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Requirements Modal Overlay */}
       {showReqModal && (
@@ -1579,87 +1543,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
       )}
 
       {/* Add Family Member Modal */}
-      {showAddMemberModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className={`max-w-md w-full rounded-2xl border p-6 space-y-4 shadow-2xl ${
-            darkMode ? 'bg-[#0f1b35] border-blue-900/60 text-white' : 'bg-white border-slate-200 text-slate-900'
-          }`}>
-            <div className={`flex justify-between items-center border-b pb-3 ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-              <h3 className="text-sm font-extrabold text-blue-500 flex items-center gap-2">
-                Add Family Member
-              </h3>
-              <button type="button" onClick={() => setShowAddMemberModal(false)} className="text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <div className="space-y-3">
-              <div>
-                <label className={labelClass}>Full Name *</label>
-                <input
-                  type="text"
-                  value={memName}
-                  onChange={(e) => setMemName(e.target.value)}
-                  placeholder="e.g. Maria Lee"
-                  className={inputClass}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>Relationship</label>
-                  <input
-                    type="text"
-                    value={memRel}
-                    onChange={(e) => setMemRel(e.target.value)}
-                    placeholder="e.g. Child / Spouse"
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label className={labelClass}>Age</label>
-                  <input
-                    type="number"
-                    value={memAge}
-                    onChange={(e) => setMemAge(e.target.value)}
-                    placeholder="e.g. 18"
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className={labelClass}>Occupation / Status</label>
-                <input
-                  type="text"
-                  value={memOcc}
-                  onChange={(e) => setMemOcc(e.target.value)}
-                  placeholder="e.g. Student / N/A"
-                  className={inputClass}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setShowAddMemberModal(false)}
-                className={backBtnClass}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleAddFamilyMember}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold shadow-md"
-              >
-                Add Member
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

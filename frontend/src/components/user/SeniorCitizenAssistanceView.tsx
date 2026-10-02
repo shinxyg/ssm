@@ -159,7 +159,6 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
   const toggleSection = (key: string) => setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
 
   // Image Preview Modal State
-  const [previewImageModal, setPreviewImageModal] = useState<{ title: string; url: string } | null>(null);
 
   // Camera Capture Modal State
   const [activeCameraDocKey, setActiveCameraDocKey] = useState<string | null>(null);
@@ -271,8 +270,7 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
     };
 
     onAddApplication(newApp);
-    setSubmittedAppRecord(newApp);
-    setShowSuccessModal(true);
+    onBack();
   };
 
   return (
@@ -872,25 +870,51 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                             <input
                               type="text"
                               value={mem.age}
-                              onChange={(e) => updateFamilyMember(mem.id, 'age', e.target.value)}
+                              onChange={(e) => updateFamilyMember(mem.id, 'age', e.target.value.replace(/\D/g, '').slice(0, 2))}
+                              maxLength={2}
                               placeholder="Age"
                               className={inputClass}
                             />
                           </td>
-                          <td className="py-2 px-2">
-                            <input
-                              type="text"
-                              value={mem.occupation}
-                              onChange={(e) => updateFamilyMember(mem.id, 'occupation', e.target.value)}
-                              placeholder="Occupation"
+                          <td className="py-2 px-2 space-y-1">
+                            <select
+                              value={['Unemployed', 'Employed', 'Self-Employed', 'Student', 'Retired', 'Housewife / Househusband', 'None / N/A'].includes(mem.occupation) ? mem.occupation : (mem.occupation ? 'Other' : '')}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === 'Other') {
+                                  updateFamilyMember(mem.id, 'occupation', 'Other');
+                                } else {
+                                  updateFamilyMember(mem.id, 'occupation', val);
+                                }
+                              }}
                               className={inputClass}
-                            />
+                            >
+                              <option value="">Select Occupation</option>
+                              <option value="Unemployed">Unemployed</option>
+                              <option value="Employed">Employed</option>
+                              <option value="Self-Employed">Self-Employed</option>
+                              <option value="Student">Student</option>
+                              <option value="Retired">Retired</option>
+                              <option value="Housewife / Househusband">Housewife / Househusband</option>
+                              <option value="None / N/A">None / N/A</option>
+                              <option value="Other">Other (Specify)</option>
+                            </select>
+                            {(!['Unemployed', 'Employed', 'Self-Employed', 'Student', 'Retired', 'Housewife / Househusband', 'None / N/A'].includes(mem.occupation) && mem.occupation !== '') && (
+                              <input
+                                type="text"
+                                value={mem.occupation === 'Other' ? '' : mem.occupation}
+                                onChange={(e) => updateFamilyMember(mem.id, 'occupation', e.target.value || 'Other')}
+                                placeholder="Specify occupation..."
+                                className={inputClass}
+                              />
+                            )}
                           </td>
                           <td className="py-2 px-2">
                             <input
                               type="text"
                               value={mem.incomeSource}
-                              onChange={(e) => updateFamilyMember(mem.id, 'incomeSource', e.target.value)}
+                              onChange={(e) => updateFamilyMember(mem.id, 'incomeSource', e.target.value.replace(/\D/g, '').slice(0, 5))}
+                              maxLength={5}
                               placeholder="Income / Support"
                               className={inputClass}
                             />
@@ -924,8 +948,9 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                 <input
                   type="text"
                   value={totalMonthlyExpenses}
-                  onChange={(e) => setTotalMonthlyExpenses(e.target.value)}
-                  placeholder="e.g. ₱3,500 (food, medicines, utilities)"
+                  onChange={(e) => setTotalMonthlyExpenses(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                  maxLength={5}
+                  placeholder="e.g. 3500"
                   className={inputClass}
                 />
               </div>
@@ -1153,11 +1178,9 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   {uploaded && (
                     <div className="pt-2">
                       <div 
-                        onClick={() => setPreviewImageModal({ title: item.title, url: uploaded.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80' })}
-                        className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group cursor-pointer hover:border-blue-500/80 transition-all ${
+                        className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group transition-all ${
                           darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
                         }`}
-                        title="Click to view photo"
                       >
                         {/* Floating X Delete Button */}
                         <button
@@ -1312,30 +1335,118 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   </div>
                 </div>
 
-                {/* 2. Occupation, Income & Household Expenses */}
+                {/* 2. Occupation / Financial Information */}
                 <div className={`pt-4 border-t ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    2. OCCUPATION, INCOME & HOUSEHOLD EXPENSES
+                    2. OCCUPATION / FINANCIAL INFORMATION
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs">
                     <div>
                       <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>EMPLOYMENT STATUS</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{employmentStatus || 'N/A'}</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{employmentStatus || 'Not Specified'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>OCCUPATION</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{occupation || 'N/A'}</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CURRENT / PREVIOUS OCCUPATION</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{occupation || 'Not Specified'}</span>
+                    </div>
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SOURCE OF INCOME</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{sourceOfIncome || 'Not Specified'}</span>
                     </div>
                     <div>
                       <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>APPROX. MONTHLY INCOME</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{approxMonthlyIncome || 'N/A'}</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{approxMonthlyIncome || 'Not Specified'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Family Composition & Dependents */}
+                <div className={`pt-4 border-t ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                  <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
+                    3. FAMILY COMPOSITION & DEPENDENTS
+                  </h5>
+                  {familyMembers.length === 0 ? (
+                    <span className="text-xs text-slate-400 italic">No family members added / specified.</span>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className={`border-b text-[10px] uppercase font-bold ${darkMode ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'}`}>
+                            <th className="py-1.5 px-2">Name</th>
+                            <th className="py-1.5 px-2">Relationship</th>
+                            <th className="py-1.5 px-2">Age</th>
+                            <th className="py-1.5 px-2">Occupation</th>
+                            <th className="py-1.5 px-2">Income / Support</th>
+                          </tr>
+                        </thead>
+                        <tbody className={`divide-y ${darkMode ? 'divide-slate-800/60' : 'divide-slate-200'}`}>
+                          {familyMembers.map((mem) => (
+                            <tr key={mem.id} className="font-medium">
+                              <td className={`py-2 px-2 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{mem.name || 'N/A'}</td>
+                              <td className="py-2 px-2 text-slate-400">{mem.relationship || 'N/A'}</td>
+                              <td className="py-2 px-2 text-slate-400">{mem.age || 'N/A'}</td>
+                              <td className="py-2 px-2 text-slate-400">{mem.occupation || 'N/A'}</td>
+                              <td className="py-2 px-2 text-emerald-400 font-bold">
+                                {mem.incomeSource
+                                  ? (mem.incomeSource.startsWith('₱')
+                                      ? mem.incomeSource
+                                      : (!isNaN(Number(mem.incomeSource)) ? `₱${Number(mem.incomeSource).toLocaleString('en-US')}` : mem.incomeSource))
+                                  : 'N/A'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. Monthly Household Expenses */}
+                <div className={`pt-4 border-t ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                  <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
+                    4. MONTHLY HOUSEHOLD EXPENSES
+                  </h5>
+                  <div className="text-xs">
+                    <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>TOTAL MONTHLY HOUSEHOLD EXPENSES</span>
+                    <span className="font-bold text-amber-500">
+                      {totalMonthlyExpenses
+                        ? (totalMonthlyExpenses.startsWith('₱')
+                            ? totalMonthlyExpenses
+                            : `₱${!isNaN(Number(totalMonthlyExpenses)) ? Number(totalMonthlyExpenses).toLocaleString('en-US') : totalMonthlyExpenses}`)
+                        : 'Not Specified'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 5. Living Situation & Additional Information */}
+                <div className={`pt-4 border-t ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                  <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
+                    5. LIVING SITUATION & ADDITIONAL INFORMATION
+                  </h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>LIVING ARRANGEMENT</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{livingArrangement === 'Other' ? customLivingArrangement : (livingArrangement || 'Not Specified')}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>MONTHLY EXPENSES</span>
-                      <span className="font-bold text-amber-500">{totalMonthlyExpenses || 'N/A'}</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SOURCE OF FINANCIAL SUPPORT</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{financialSupportSource === 'Other' ? customFinancialSupport : (financialSupportSource || 'Not Specified')}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PENSIONS / BENEFITS RECEIVED</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>REASON FOR REQUESTING ASSISTANCE</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{reasonForAssistance === 'Other' ? customReasonForAssistance : (reasonForAssistance || 'Not Specified')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6. Other Assistance / Benefits Received */}
+                <div className={`pt-4 border-t ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
+                  <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
+                    6. OTHER ASSISTANCE / BENEFITS RECEIVED
+                  </h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs">
+                    <div>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PENSION / BENEFITS RECEIVED</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                         {pensionsReceived === 'Other' ? (otherPensionDetails || 'Other') : (pensionsReceived || 'None')}
                       </span>
@@ -1345,27 +1456,6 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                         {otherBenefitsReceived === 'Other' ? (customOtherBenefit || 'Other') : (otherBenefitsReceived || 'None')}
                       </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Living Situation & Financial Support */}
-                <div className={`pt-4 border-t ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
-                  <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    3. LIVING SITUATION & FINANCIAL SUPPORT
-                  </h5>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
-                    <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>LIVING ARRANGEMENT</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{livingArrangement === 'Other' ? customLivingArrangement : (livingArrangement || 'N/A')}</span>
-                    </div>
-                    <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FINANCIAL SUPPORT SOURCE</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{financialSupportSource === 'Other' ? customFinancialSupport : (financialSupportSource || 'N/A')}</span>
-                    </div>
-                    <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>REASON FOR REQUEST</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{reasonForAssistance === 'Other' ? customReasonForAssistance : (reasonForAssistance || 'N/A')}</span>
                     </div>
                   </div>
                 </div>
@@ -1415,8 +1505,7 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                         {file ? (
                           <div className="pt-1">
                             <div 
-                              onClick={() => setPreviewImageModal({ title: item.title, url: file.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80' })}
-                              className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg cursor-pointer hover:border-blue-500/80 transition-all ${
+                              className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg transition-all ${
                                 darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
                               }`}
                             >
@@ -1514,7 +1603,8 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   <input
                     type="text"
                     value={memAge}
-                    onChange={(e) => setMemAge(e.target.value)}
+                    onChange={(e) => setMemAge(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                    maxLength={2}
                     placeholder="e.g. 35"
                     className={inputClass}
                   />
@@ -1537,8 +1627,9 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                 <input
                   type="text"
                   value={memIncome}
-                  onChange={(e) => setMemIncome(e.target.value)}
-                  placeholder="e.g. ₱8,000 monthly"
+                  onChange={(e) => setMemIncome(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                  maxLength={5}
+                  placeholder="e.g. 8000"
                   className={inputClass}
                 />
               </div>
@@ -1568,86 +1659,7 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
       {/* ========================================================================= */}
       {/* MODAL: APPLICATION SUBMISSION SUCCESS & QR Payout Voucher                 */}
       {/* ========================================================================= */}
-      {showSuccessModal && submittedAppRecord && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className={`w-full max-w-xl border rounded-3xl p-6 sm:p-8 space-y-6 text-center ${
-            darkMode ? 'bg-[#0e172a] border-blue-500/40' : 'bg-white border-blue-300'
-          }`}>
-            <div className="w-16 h-16 bg-emerald-500/20 border-2 border-emerald-500 rounded-full flex items-center justify-center mx-auto text-emerald-500">
-              <CheckCircle2 className="w-10 h-10" />
-            </div>
 
-            <div className="space-y-1">
-              <span className="text-xs font-mono uppercase tracking-widest text-emerald-500 font-bold">
-                APPLICATION SUBMITTED SUCCESSFULLY
-              </span>
-              <h3 className={`text-xl sm:text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                Social Welfare Assistance (Senior Sector)
-              </h3>
-              <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Quezon City Social Services and Development Department (SSDD)
-              </p>
-            </div>
-
-            <div className={`p-4 rounded-2xl border space-y-3 text-left ${
-              darkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'
-            }`}>
-              <div className={`flex justify-between items-center border-b ${dividerClass} pb-2`}>
-                <span className={`text-xs font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Reference Number:</span>
-                <strong className="text-sm font-mono text-blue-500 font-black">{submittedAppRecord.referenceNo}</strong>
-              </div>
-              <div className={`flex justify-between items-center border-b ${dividerClass} pb-2`}>
-                <span className={`text-xs font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Beneficiary Name:</span>
-                <strong className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{submittedAppRecord.details?.applicantName || 'Senior Citizen Beneficiary'}</strong>
-              </div>
-              <div className={`flex justify-between items-center border-b ${dividerClass} pb-2`}>
-                <span className={`text-xs font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Status:</span>
-                <strong className="text-xs text-emerald-500 font-extrabold">{submittedAppRecord.status}</strong>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className={`text-xs font-bold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Assigned Social Worker:</span>
-                <strong className={`text-xs ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{submittedAppRecord.assignedSocialWorker}</strong>
-              </div>
-            </div>
-
-            {/* QR Code Voucher */}
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 text-slate-950 flex items-center justify-between gap-4">
-              <div className="text-left space-y-0.5">
-                <span className="text-[10px] font-black uppercase text-blue-800 tracking-wider">OFFICIAL QC CITIZEN VOUCHER</span>
-                <h4 className="text-xs font-extrabold">{submittedAppRecord.referenceNo}</h4>
-                <p className="text-[10px] text-slate-600">Present this QR Code during verification or treasury payout.</p>
-              </div>
-              <div className="p-2 bg-slate-100 rounded-xl border border-slate-300 shrink-0">
-                <QrCode className="w-14 h-14 text-slate-900" />
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className={`flex-1 py-3 font-extrabold text-xs rounded-xl border flex items-center justify-center gap-2 ${
-                  darkMode ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
-                }`}
-              >
-                <Printer className="w-4 h-4" />
-                <span>Print Application Voucher</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  onBack();
-                }}
-                className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs rounded-xl uppercase tracking-wider"
-              >
-                Done / Back to Home
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* MODAL: DOCUMENTARY REQUIREMENTS GUIDELINES                                */}
@@ -1741,51 +1753,7 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
         </div>
       )}
 
-      {/* Full Image Preview Modal */}
-      {previewImageModal && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setPreviewImageModal(null)}
-        >
-          <div 
-            className={`max-w-3xl w-full rounded-2xl border p-4 sm:p-6 space-y-4 shadow-2xl relative ${
-              darkMode ? 'bg-[#0b1329] border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
-            }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center border-b pb-3 border-slate-700/60">
-              <h3 className="text-sm font-extrabold uppercase tracking-wide truncate max-w-md">
-                {previewImageModal.title}
-              </h3>
-              <button 
-                type="button" 
-                onClick={() => setPreviewImageModal(null)}
-                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <div className="relative max-h-[75vh] flex items-center justify-center overflow-hidden rounded-xl bg-black/40 border border-slate-800 p-2">
-              <img 
-                src={previewImageModal.url} 
-                alt={previewImageModal.title} 
-                className="max-h-[70vh] w-auto object-contain rounded-lg shadow-lg"
-              />
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setPreviewImageModal(null)}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold"
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

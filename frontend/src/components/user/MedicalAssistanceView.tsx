@@ -89,7 +89,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
   const [isApplicantPatient, setIsApplicantPatient] = useState<boolean>(false);
   const [isSameAddress, setIsSameAddress] = useState<boolean>(false);
 
-  const [patientRelation, setPatientRelation] = useState<string>('Piliin');
+  const [patientRelation, setPatientRelation] = useState<string>('Select');
   const [patientFirstName, setPatientFirstName] = useState<string>('');
   const [patientMiddleName, setPatientMiddleName] = useState<string>('');
   const [patientLastName, setPatientLastName] = useState<string>('');
@@ -156,7 +156,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
 
   // Step 3 Form States & Camera Modal State
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File }>({});
-  const [previewImageModal, setPreviewImageModal] = useState<{ title: string; url: string } | null>(null);
+
   const [activeCameraKey, setActiveCameraKey] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -260,7 +260,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
     };
 
     onAddApplication(newApp);
-    setSubmittedRef(newRefNo);
+    onBack();
   };
 
   return (
@@ -397,43 +397,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
         <div className="p-6 sm:p-8">
 
           {/* SUCCESS SUBMITTED VIEW */}
-          {submittedRef ? (
-            <div className="text-center py-10 space-y-6 max-w-lg mx-auto">
-              <div className="w-20 h-20 rounded-full bg-emerald-950 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/20 animate-bounce">
-                <CheckCircle2 className="w-10 h-10" />
-              </div>
-
-              <div>
-                <h3 className="text-xl font-extrabold text-white">Application Successfully Submitted!</h3>
-                <p className="text-xs text-slate-300 mt-2 leading-relaxed">
-                  Your medical assistance request for <strong className="text-blue-400">{assistanceType}</strong> at <strong className="text-white">{hospitalFacility || 'Accredited Facility'}</strong> has been queued for Quezon City Social Welfare review.
-                </p>
-              </div>
-
-              <div className="p-5 bg-slate-900/90 border border-slate-700/90 rounded-2xl space-y-2">
-                <span className="text-[11px] text-slate-400 uppercase font-bold tracking-wider block">Official Control Reference Number</span>
-                <span className="text-2xl font-black font-mono text-amber-400 tracking-widest">{submittedRef}</span>
-              </div>
-
-              <div className="p-4 bg-blue-950/40 border border-blue-800/60 rounded-xl flex items-center gap-3 text-left">
-                <QrCode className="w-10 h-10 text-blue-400 shrink-0" />
-                <div className="text-xs">
-                  <span className="font-bold text-white block">Digital Guarantee Voucher Ready</span>
-                  <span className="text-slate-300">Present this reference number or QR voucher at CSWDO Window / Partner Hospital Social Work Desk.</span>
-                </div>
-              </div>
-
-              <div className="flex gap-3 justify-center pt-2">
-                <button
-                  type="button"
-                  onClick={onBack}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl border border-blue-400/40"
-                >
-                  Return to Programs
-                </button>
-              </div>
-            </div>
-          ) : currentStep === 1 ? (
+          {currentStep === 1 ? (
             /* STEP 1: COMPLETE CHECKLIST */
             <div className="space-y-6 max-w-3xl mx-auto">
               <div className="space-y-2">
@@ -728,14 +692,14 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                 </span>
               </label>
 
-              {/* Patient Information Section (Matching Screenshot 2) */}
+              {/* Patient Information Section */}
               <div className={`space-y-4 pt-2 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
                 <h3 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                  Impormasyon ng Pasyente (Kukutaan ng Gamot)
+                  Patient Information (Medicine Beneficiary)
                 </h3>
 
                 <div className="space-y-2">
-                  <label className={`text-xs font-bold block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Relasyon sa Pasyente *</label>
+                  <label className={`text-xs font-bold block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Relationship to Patient *</label>
                   <select
                     value={patientRelation}
                     onChange={(e) => setPatientRelation(e.target.value)}
@@ -743,13 +707,13 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
                     }`}
                   >
-                    <option value="Piliin">Piliin</option>
-                    <option value="Sarili">Sarili (Patient is Applicant)</option>
-                    <option value="Asawa">Asawa</option>
-                    <option value="Anak">Anak</option>
-                    <option value="Magulang">Magulang</option>
-                    <option value="Kapatid">Kapatid</option>
-                    <option value="Iba pa">Iba pa</option>
+                    <option value="Select">Select Relationship</option>
+                    <option value="Self">Self (Patient is Applicant)</option>
+                    <option value="Spouse">Spouse</option>
+                    <option value="Child">Child</option>
+                    <option value="Parent">Parent</option>
+                    <option value="Sibling">Sibling</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
 
@@ -1001,11 +965,9 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       {uploaded && previewUrl && (
                         <div className="pt-2">
                           <div 
-                            onClick={() => setPreviewImageModal({ title: doc.title, url: previewUrl })}
-                            className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group cursor-pointer hover:border-blue-500/80 transition-all ${
+                            className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group transition-all ${
                               darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
                             }`}
-                            title="Click to view photo"
                           >
                             {/* Floating X Delete Button */}
                             <button
@@ -1196,12 +1158,12 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     {/* Patient Information Sub-section */}
                     <div className={`pt-4 border-t space-y-4 ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
                       <h5 className={`text-xs font-extrabold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                        Impormasyon ng Pasyente (Kukuhan ng Gamot)
+                        Patient Information (Medicine Beneficiary)
                       </h5>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
                         <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>RELASYON SA PASYENTE</span>
-                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{patientRelation || 'Sarili'}</span>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>RELATIONSHIP TO PATIENT</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{patientRelation || 'Self'}</span>
                         </div>
                         <div>
                           <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FIRST NAME</span>
@@ -1217,7 +1179,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                         </div>
                         <div>
                           <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>GENDER</span>
-                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{patientGender || gender || 'Lalaki'}</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{patientGender || gender || 'Male'}</span>
                         </div>
                         <div>
                           <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>DATE OF BIRTH</span>
@@ -1286,11 +1248,9 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                           {previewUrl ? (
                             <div className="pt-1">
                               <div 
-                                onClick={() => setPreviewImageModal({ title: doc.title, url: previewUrl })}
-                                className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg group cursor-pointer hover:border-blue-500/80 transition-all ${
+                                className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg group transition-all ${
                                   darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
                                 }`}
-                                title="Click to view full photo"
                               >
                                 <div className={`w-20 h-20 rounded-xl overflow-hidden border shrink-0 ${
                                   darkMode ? 'border-slate-700 bg-slate-950' : 'border-slate-200 bg-slate-100'
@@ -1389,51 +1349,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
         </div>
       )}
 
-      {/* Full Image Preview Modal */}
-      {previewImageModal && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setPreviewImageModal(null)}
-        >
-          <div 
-            className={`max-w-3xl w-full rounded-2xl border p-4 sm:p-6 space-y-4 shadow-2xl relative ${
-              darkMode ? 'bg-[#0b1329] border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
-            }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center border-b pb-3 border-slate-700/60">
-              <h3 className="text-sm font-extrabold uppercase tracking-wide truncate max-w-md">
-                {previewImageModal.title}
-              </h3>
-              <button 
-                type="button" 
-                onClick={() => setPreviewImageModal(null)}
-                className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <div className="relative max-h-[75vh] flex items-center justify-center overflow-hidden rounded-xl bg-black/40 border border-slate-800 p-2">
-              <img 
-                src={previewImageModal.url} 
-                alt={previewImageModal.title} 
-                className="max-h-[70vh] w-auto object-contain rounded-lg shadow-lg"
-              />
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setPreviewImageModal(null)}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold uppercase transition-all"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Live Camera Capture Modal */}
       {activeCameraKey && (

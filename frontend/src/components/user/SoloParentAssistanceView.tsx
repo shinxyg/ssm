@@ -233,6 +233,19 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submittedApp, setSubmittedApp] = useState<ApplicationRecord | null>(null);
 
+  // Lock body scroll when any modal is open
+  useEffect(() => {
+    const isAnyModalOpen = Boolean(showReqModal || submittedApp);
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showReqModal, submittedApp]);
+
   const handleSubmitApplication = () => {
     if (!isTermsAccepted) return;
 
@@ -245,7 +258,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
         category: 'soloparent',
         dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         status: 'Under Review',
-        amountOrType: '₱1,000 / Month Financial Grant',
+        amountOrType: 'Solo Parent Welfare Grant',
         assignedSocialWorker: 'Ms. Jocelyn Reyes, RSW (Solo Parent Welfare Division)',
         qrCodeData: `GOVSERVE-SP-SUBSIDY-${refNum}-${applicantSpicNumber}`,
         details: {
@@ -260,8 +273,8 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
       };
 
       onAddApplication(newApp);
-      setSubmittedApp(newApp);
       setIsSubmitting(false);
+      onBack();
     }, 1000);
   };
 
@@ -1285,13 +1298,9 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                         2. SOLO PARENT INFORMATION
                       </h5>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
-                        <div className="col-span-1 sm:col-span-2">
+                        <div>
                           <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SOLO PARENT CATEGORY / REASON</span>
                           <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{soloParentCategory || 'Unmarried parent'}</span>
-                        </div>
-                        <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>MONTHLY SUBSIDY BENEFIT</span>
-                          <span className="font-bold text-amber-400">₱1,000 / Month Grant</span>
                         </div>
                         <div>
                           <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>NUMBER OF DEPENDENTS</span>
@@ -1496,59 +1505,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
         </div>
       )}
 
-      {/* SUCCESS CONFIRMATION MODAL */}
-      {submittedApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="bg-[#0b162c] border border-blue-800/80 rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 text-center text-white shadow-2xl relative">
-            
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-10 h-10" />
-            </div>
 
-            <div className="space-y-2">
-              <span className="text-[10px] font-extrabold tracking-widest uppercase text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-3 py-1 rounded-full">
-                Application Successfully Filed
-              </span>
-              <h3 className="text-xl font-black">Solo Parent Financial Subsidy</h3>
-              <p className="text-xs text-slate-300">
-                Your application has been received and routed to the Solo Parent Welfare Division.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 text-left">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Reference Number</span>
-                <span className="text-sm font-mono font-black text-blue-400">{submittedApp.referenceNo}</span>
-              </div>
-              <div className="flex justify-between items-center border-b border-slate-800 pb-2 text-xs">
-                <span className="text-slate-400">Monthly Grant Benefit</span>
-                <span className="font-bold text-amber-400">{submittedApp.amountOrType}</span>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-white text-slate-900 flex flex-col items-center gap-2">
-              <QrCode className="w-24 h-24 text-slate-900" />
-              <div className="text-[10px] font-mono font-bold tracking-widest text-slate-600">
-                {submittedApp.qrCodeData}
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setSubmittedApp(null);
-                  onBack();
-                }}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl uppercase tracking-wider"
-              >
-                Go to Application History
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
 
       {/* CAMERA CAPTURE MODAL */}
       {activeCameraKey && (

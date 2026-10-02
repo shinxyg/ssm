@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   BookOpen, 
   FileEdit, 
@@ -25,10 +25,18 @@ import {
   FileCheck,
   FileText,
   Printer,
+  Download,
   ChevronRight,
   GraduationCap,
   Target,
-  History
+  History,
+  Search,
+  Filter,
+  Users,
+  Building,
+  Award,
+  Info,
+  ExternalLink
 } from 'lucide-react';
 import type { ApplicationRecord } from '../../types';
 
@@ -64,19 +72,18 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
   const [selectedCourseTitle, setSelectedCourseTitle] = useState<string>('Bread and Pastry Making');
 
   // Step 2 Form States — Educational Background, Purpose, Experience
-  const [highestEdu, setHighestEdu] = useState<string>('Senior High School');
+  const [highestEdu, setHighestEdu] = useState<string>('');
   const [schoolName, setSchoolName] = useState<string>('Batasan Hills National High School');
-  const [trainingPurpose, setTrainingPurpose] = useState<string>('Skills Development (Pagpapalawak ng Kasanayan)');
+  const [trainingPurpose, setTrainingPurpose] = useState<string>('');
   const [purposeReason, setPurposeReason] = useState<string>('To acquire TESDA National Certificate (NC II) for employment or small business.');
-  const [previousTraining, setPreviousTraining] = useState<string>('No (Hindi pa)');
+  const [previousTraining, setPreviousTraining] = useState<string>('');
 
   // Step 3 Document Upload States
   const [docIndigency, setDocIndigency] = useState<{ name: string; url?: string } | null>(null);
   const [docQcId, setDocQcId] = useState<{ name: string; url?: string } | null>(null);
   const [docPhotoId, setDocPhotoId] = useState<{ name: string; url?: string } | null>(null);
-
-  // Preview Image Modal State
-  const [previewImageModal, setPreviewImageModal] = useState<{ title: string; url: string } | null>(null);
+  // Sample Letter Modal State
+  const [showSampleLetterModal, setShowSampleLetterModal] = useState<boolean>(false);
 
   // Camera Capture Modal State
   const [activeCameraDocKey, setActiveCameraDocKey] = useState<string | null>(null);
@@ -85,7 +92,24 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
 
   // Submission Success State
   const [submittedRecord, setSubmittedRecord] = useState<ApplicationRecord | null>(null);
-  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+
+  // Tab 3 Schedule Filter & Syllabus Modal State
+  const [scheduleSearch, setScheduleSearch] = useState<string>('');
+  const [scheduleVenueFilter, setScheduleVenueFilter] = useState<string>('All');
+  const [selectedScheduleModal, setSelectedScheduleModal] = useState<any | null>(null);
+
+  // Lock background body scroll when any modal is open
+  useEffect(() => {
+    const isAnyModalOpen = Boolean(showSampleLetterModal || activeCameraDocKey || selectedScheduleModal);
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showSampleLetterModal, activeCameraDocKey, selectedScheduleModal]);
 
   const trainingCourses: TrainingCourse[] = [
     {
@@ -272,7 +296,7 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
       onAddApplication(newApp);
     }
     setSubmittedRecord(newApp);
-    setShowSuccessModal(true);
+    setActiveTab(3);
   };
 
   const labelClass = `text-[10px] font-extrabold uppercase tracking-wider block mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`;
@@ -328,19 +352,6 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
         >
           <Calendar className="w-3.5 h-3.5" />
           <span>3. TRAINING SCHEDULE</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab(4)}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 4
-              ? 'bg-blue-600 text-white shadow-md'
-              : darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          <span>4. TRAINING HISTORY</span>
         </button>
       </div>
 
@@ -678,6 +689,7 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                         darkMode ? 'bg-[#131f37] border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-900'
                       }`}
                     >
+                      <option value="">Select Option</option>
                       <option value="Elementary Level">Elementary Level</option>
                       <option value="Elementary Graduate">Elementary Graduate</option>
                       <option value="High School Level">High School Level</option>
@@ -723,9 +735,10 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                         darkMode ? 'bg-[#131f37] border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-900'
                       }`}
                     >
-                      <option value="Skills Development (Pagpapalawak ng Kasanayan)">Skills Development (Pagpapalawak ng Kasanayan)</option>
-                      <option value="Employment / Job Application (Paghahanap ng Trabaho)">Employment / Job Application (Paghahanap ng Trabaho)</option>
-                      <option value="Business / Livelihood Setup (Pagtatayo ng Negosyo)">Business / Livelihood Setup (Pagtatayo ng Negosyo)</option>
+                      <option value="">Select Option</option>
+                      <option value="Skills Development">Skills Development</option>
+                      <option value="Employment / Job Application">Employment / Job Application</option>
+                      <option value="Business / Livelihood Setup">Business / Livelihood Setup</option>
                       <option value="Career Shift / Promotion">Career Shift / Promotion</option>
                       <option value="Personal Interest / Hobby">Personal Interest / Hobby</option>
                     </select>
@@ -764,7 +777,8 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                       darkMode ? 'bg-[#131f37] border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-900'
                     }`}
                   >
-                    <option value="No (Hindi pa)">No (Hindi pa)</option>
+                    <option value="">Select Option</option>
+                    <option value="No">No</option>
                     <option value="Yes - TESDA Accredited Course">Yes - TESDA Accredited Course</option>
                     <option value="Yes - LGU / Barangay Training">Yes - LGU / Barangay Training</option>
                     <option value="Yes - Private Seminar / Workshop">Yes - Private Seminar / Workshop</option>
@@ -776,20 +790,20 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
               <div className="flex justify-between items-center pt-4 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setActiveTab(1)}
-                  className={`px-6 py-3 rounded-xl border text-xs font-bold transition-all ${
+                  onClick={() => setApplyStep(1)}
+                  className={`px-6 py-2.5 rounded-xl border text-xs font-bold transition-all ${
                     darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  Back to Courses
+                  Back
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setApplyStep(3)}
-                  className="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black rounded-xl uppercase tracking-wider transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30"
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30"
                 >
-                  <span>Continue to Requirements & Review</span>
+                  <span>Next</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -802,22 +816,13 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
           {applyStep === 3 && (
             <div className="space-y-6 pt-2">
               {/* Header Title Row */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-slate-800">
+              <div className="pb-3 border-b border-slate-800">
                 <div className="flex items-center gap-2">
                   <FileCheck className="w-4 h-4 text-blue-400" />
                   <h3 className={`text-xs font-black tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                     IV. REQUIREMENTS / SUPPORTING DOCUMENTS
                   </h3>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => alert("Viewing Sample Requirements Guidelines...")}
-                  className="px-3 py-1.5 bg-blue-950/80 hover:bg-blue-900/80 text-blue-400 border border-blue-800 text-[11px] font-bold rounded-xl flex items-center gap-1.5 transition-all"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>SAMPLE DOCUMENT</span>
-                </button>
               </div>
 
               {/* Upload Items List */}
@@ -847,34 +852,48 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                 ].map((item) => {
                   const uploaded = item.doc;
                   return (
-                    <div
-                      key={item.key}
-                      className={`p-5 rounded-2xl border space-y-3 transition-all ${
-                        uploaded
-                          ? darkMode
-                            ? 'bg-[#0d1c3a]/70 border-2 border-emerald-500/50 shadow-lg'
-                            : 'bg-emerald-50/80 border-2 border-emerald-500/60 shadow-md'
-                          : darkMode
-                          ? 'bg-[#0b1326] border-slate-800/80'
-                          : 'bg-slate-50 border-slate-200'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs font-black tracking-wide uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                            {item.title}
-                          </span>
-                          {uploaded && (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-500/20 shrink-0" />
-                          )}
+                    <React.Fragment key={item.key}>
+                      {item.key === 'requestLetter' && (
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowSampleLetterModal(true)}
+                            className="px-3.5 py-1.5 bg-blue-950/80 hover:bg-blue-900 text-blue-400 border border-blue-800 text-[11px] font-bold rounded-xl inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                            title="Click to view Sample Letter of Intent"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>SAMPLE DOCUMENT</span>
+                          </button>
                         </div>
-                        <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                          {item.desc}
-                        </p>
-                        <span className={`text-[11px] block mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                          Allowed file types: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Camera)
-                        </span>
-                      </div>
+                      )}
+
+                      <div
+                        className={`p-5 rounded-2xl border space-y-3 transition-all ${
+                          uploaded
+                            ? darkMode
+                              ? 'bg-[#0d1c3a]/70 border-2 border-emerald-500/50 shadow-lg'
+                              : 'bg-emerald-50/80 border-2 border-emerald-500/60 shadow-md'
+                            : darkMode
+                            ? 'bg-[#0b1326] border-slate-800/80'
+                            : 'bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-black tracking-wide uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                              {item.title}
+                            </span>
+                            {uploaded && (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-500/20 shrink-0" />
+                            )}
+                          </div>
+                          <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                            {item.desc}
+                          </p>
+                          <span className={`text-[11px] block mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                            Allowed file types: JPG, JPEG, PNG, WEBP (or take photo using Camera)
+                          </span>
+                        </div>
 
                       {/* Action buttons */}
                       <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -908,11 +927,9 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                       {uploaded && (
                         <div className="pt-2">
                           <div 
-                            onClick={() => setPreviewImageModal({ title: item.title, url: uploaded.url || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80' })}
-                            className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group cursor-pointer hover:border-blue-500/80 transition-all ${
+                            className={`relative w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-xl group transition-all ${
                               darkMode ? 'bg-[#091124] border-slate-700/90' : 'bg-white border-slate-200'
                             }`}
-                            title="Click to view photo"
                           >
                             <button
                               type="button"
@@ -945,7 +962,8 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                         </div>
                       )}
                     </div>
-                  );
+                  </React.Fragment>
+                );
                 })}
               </div>
 
@@ -982,7 +1000,13 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                     </div>
                     <div>
                       <span className="font-bold text-slate-400">Education & Purpose: </span>
-                      <span className="text-white font-semibold">{highestEdu} • {trainingPurpose.split('(')[0].trim()}</span>
+                      <span className="text-white font-semibold">
+                        {highestEdu && trainingPurpose
+                          ? `${highestEdu} • ${trainingPurpose}`
+                          : (highestEdu || trainingPurpose)
+                          ? `${highestEdu || 'Not specified'} ${trainingPurpose ? `• ${trainingPurpose}` : ''}`
+                          : 'Senior High School • Skills Development'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1017,7 +1041,7 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                   onClick={handleFinalSubmit}
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2"
                 >
-                  <span>Submit Application</span>
+                  <span>Submit</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -1030,111 +1054,112 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
       {/* TAB 3: TRAINING SCHEDULE                                                   */}
       {/* ========================================================================= */}
       {activeTab === 3 && (
-        <div className={`rounded-3xl border p-6 space-y-6 ${
-          darkMode ? 'bg-[#0e172a] border-slate-800' : 'bg-white border-slate-200 shadow-xl'
+        <div className={`rounded-3xl border p-12 text-center space-y-5 ${
+          darkMode ? 'bg-[#0e172a] border-slate-800' : 'bg-white border-slate-200'
         }`}>
-          <div>
-            <h3 className={`text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Training Schedule & Venues</h3>
-            <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Batch 3 (August 2026) Training sessions timetable across Quezon City Skills Training Centers.
+          <div className="w-16 h-16 mx-auto rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400">
+            <Calendar className="w-8 h-8 text-blue-400" />
+          </div>
+
+          <div className="max-w-md mx-auto space-y-2">
+            <h3 className={`text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+              No Approved Training Schedule Yet
+            </h3>
+            <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              You currently have no active or confirmed training schedule. Once your application is reviewed and approved by the social worker, your assigned official schedule, venue pass, and timetable will appear here.
             </p>
           </div>
 
-          <div className="space-y-4">
-            {[
-              { course: 'Bread and Pastry Making', venue: 'QC Skills Development Center, Brgy. Central', schedule: 'Mon - Fri | 8:00 AM - 12:00 PM', batch: 'Batch 3 (Aug 1 - 18, 2026)' },
-              { course: 'Barista Course', venue: 'Novaliches Vocational Institute, Novaliches', schedule: 'Mon - Fri | 1:00 PM - 5:00 PM', batch: 'Batch 3 (Aug 1 - 18, 2026)' },
-              { course: 'Basic Computer Literacy & Call Center Service', venue: 'QC Hall Computer Laboratory, East Avenue', schedule: 'Mon - Fri | 8:00 AM - 12:00 PM', batch: 'Batch 3 (Aug 1 - 18, 2026)' },
-              { course: 'Hairdressing & Beauty Care', venue: 'QC Manpower Training Center, Batasan Hills', schedule: 'Mon - Fri | 9:00 AM - 3:00 PM', batch: 'Batch 3 (Aug 1 - 30, 2026)' },
-            ].map((item, idx) => (
-              <div key={idx} className={`p-4 rounded-2xl border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${
-                darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
-              }`}>
-                <div>
-                  <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{item.course}</h4>
-                  <span className={`text-xs block mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{item.venue}</span>
-                  <span className="text-[11px] font-semibold text-blue-400 block mt-1">{item.schedule}</span>
-                </div>
-
-                <span className={`text-[10px] font-bold px-3 py-1 rounded-full border shrink-0 ${
-                  darkMode ? 'bg-blue-950/80 border-blue-800 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-700'
-                }`}>
-                  {item.batch}
-                </span>
-              </div>
-            ))}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab(1)}
+              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all inline-flex items-center gap-2 cursor-pointer"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>Browse Available Training Courses</span>
+            </button>
           </div>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 4: TRAINING HISTORY                                                    */}
-      {/* ========================================================================= */}
-      {activeTab === 4 && (
-        <div className={`rounded-3xl border p-6 space-y-6 ${
-          darkMode ? 'bg-[#0e172a] border-slate-800' : 'bg-white border-slate-200 shadow-xl'
-        }`}>
-          <div>
-            <h3 className={`text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Training Application History</h3>
-            <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Official history of vocational and skills training applications under Citizen Jefferson Lee.
-            </p>
-          </div>
 
-          <div className="space-y-4">
-            <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${
-              darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
-            }`}>
+
+
+
+      {/* ========================================================================= */}
+      {/* MODAL: SAMPLE LETTER OF INTENT PREVIEW                                    */}
+      {/* ========================================================================= */}
+      {showSampleLetterModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+          onClick={() => setShowSampleLetterModal(false)}
+        >
+          <div 
+            className={`max-w-xl w-full flex flex-col rounded-2xl border p-5 space-y-4 shadow-2xl relative overflow-hidden ${
+              darkMode ? 'bg-[#0d1627] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex justify-between items-start">
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-blue-400">TRN-884912</span>
-                  <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
-                    darkMode ? 'bg-emerald-950/80 border-emerald-800 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                  }`}>
-                    Graduated / Certificate Issued
-                  </span>
-                </div>
-                <h4 className={`text-sm font-extrabold mt-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                  Basic Computer Literacy & Office Productivity (Batch 1 2026)
-                </h4>
-                <span className={`text-xs block mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Completed: March 15, 2026 • TESDA National Certificate Level I
-                </span>
+                <h3 className="text-base sm:text-lg font-bold">
+                  Sample Request Letter
+                </h3>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">
+                  Sample Request Letter / Letter of Intent
+                </p>
               </div>
-
-              <button
-                type="button"
-                onClick={() => alert("Downloading Certificate of Completion (PDF)...")}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl border border-blue-400/40 flex items-center gap-1.5 shrink-0"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>View Certificate</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL: IMAGE PREVIEW                                                      */}
-      {/* ========================================================================= */}
-      {previewImageModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className={`relative w-full max-w-lg border rounded-3xl p-6 space-y-4 ${
-            darkMode ? 'bg-[#0e172a] border-slate-800' : 'bg-white border-slate-200'
-          }`}>
-            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-              <h3 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{previewImageModal.title}</h3>
-              <button
-                type="button"
-                onClick={() => setPreviewImageModal(null)}
-                className={`p-1 rounded-lg ${darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}`}
+              <button 
+                type="button" 
+                onClick={() => setShowSampleLetterModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
+                title="Close Modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="w-full max-h-[70vh] overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 flex items-center justify-center">
-              <img src={previewImageModal.url} alt={previewImageModal.title} className="w-full h-full object-contain" />
+
+            {/* Image Preview Box */}
+            <div className="rounded-xl bg-[#070d19] border border-slate-800/80 p-3 flex items-center justify-center overflow-hidden min-h-[160px]">
+              <img 
+                src="/LETTER OF INTENT - Copy.png" 
+                alt="Sample Request Letter" 
+                className="max-h-[300px] sm:max-h-[340px] w-auto h-auto object-contain rounded-md shadow-md"
+              />
+            </div>
+
+            {/* Description Info Box */}
+            <div className={`p-3.5 rounded-xl border text-xs leading-relaxed font-medium ${
+              darkMode 
+                ? 'bg-[#12233f]/70 border-blue-900/50 text-blue-200' 
+                : 'bg-blue-50 border-blue-200 text-blue-900'
+            }`}>
+              Sample formal request letter addressed to SSDD indicating intent to participate in the skills training program.
+            </div>
+
+            {/* Modal Action Buttons */}
+            <div className="flex justify-between items-center pt-2">
+              <a
+                href="/LETTER OF INTENT - Copy.png"
+                download="LETTER_OF_INTENT_SAMPLE.png"
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border inline-flex items-center gap-2 cursor-pointer ${
+                  darkMode
+                    ? 'bg-slate-800/80 hover:bg-slate-700 border-slate-700 text-slate-200'
+                    : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700'
+                }`}
+              >
+                <span>Download Sample</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setShowSampleLetterModal(false)}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
@@ -1197,55 +1222,89 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
       {/* ========================================================================= */}
       {/* MODAL: APPLICATION SUBMITTED SUCCESS                                      */}
       {/* ========================================================================= */}
-      {showSuccessModal && submittedRecord && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className={`relative w-full max-w-lg border rounded-3xl p-6 sm:p-8 space-y-6 text-center shadow-2xl ${
-            darkMode ? 'bg-[#0e172a] border-slate-800' : 'bg-white border-slate-200'
+
+
+      {/* MODAL: SYLLABUS & VENUE DETAIL MODAL                                        */}
+      {selectedScheduleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+          <div className={`relative w-full max-w-2xl rounded-3xl border p-6 space-y-5 shadow-2xl ${
+            darkMode ? 'bg-[#0f192e] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
           }`}>
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-10 h-10" />
+            <button
+              type="button"
+              onClick={() => setSelectedScheduleModal(null)}
+              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-full bg-slate-800/60 hover:bg-slate-700 transition-all cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-start gap-3">
+              <div className="p-3 bg-blue-600/20 text-blue-400 rounded-2xl border border-blue-500/30 shrink-0">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold">{selectedScheduleModal.course}</h3>
+                <span className="text-xs font-bold text-blue-400">{selectedScheduleModal.category} • {selectedScheduleModal.batch}</span>
+              </div>
             </div>
 
-            <div>
-              <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                Training Application Submitted!
-              </h3>
-              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                Your application for <strong>{submittedRecord.details?.courseTitle}</strong> has been successfully registered.
-              </p>
-            </div>
-
-            <div className={`p-4 rounded-2xl border text-left space-y-2 text-xs font-semibold ${
-              darkMode ? 'bg-slate-900/80 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-800'
+            {/* Venue & Time Overview */}
+            <div className={`p-4 rounded-2xl border space-y-2.5 text-xs ${
+              darkMode ? 'bg-slate-900/80 border-slate-800/90' : 'bg-slate-50 border-slate-200'
             }`}>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Reference Number:</span>
-                <span className="font-mono text-emerald-400 font-bold">{submittedRecord.referenceNo}</span>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div>
+                  <span className={`font-bold block ${darkMode ? 'text-white' : 'text-slate-900'}`}>{selectedScheduleModal.venue}</span>
+                  <span className="text-slate-400 block text-[11px]">{selectedScheduleModal.address}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Applicant Name:</span>
-                <span>{submittedRecord.details?.applicantName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Assigned Department:</span>
-                <span>{submittedRecord.assignedSocialWorker}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Application Status:</span>
-                <span className="text-amber-400 font-bold">{submittedRecord.status}</span>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-800/60">
+                <Clock className="w-4 h-4 text-blue-400 shrink-0" />
+                <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{selectedScheduleModal.schedule} • ({selectedScheduleModal.duration})</span>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-2">
+            {/* Syllabus Topics */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Course Syllabus & Training Breakdown</h4>
+              <div className="space-y-2">
+                {selectedScheduleModal.syllabus.map((topic: string, idx: number) => (
+                  <div key={idx} className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs ${
+                    darkMode ? 'bg-slate-900/50 border-slate-800/60' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span className={`font-medium ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{topic}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Bottom Actions */}
+            <div className="flex justify-end items-center gap-3 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setSelectedScheduleModal(null)}
+                className={`px-5 py-2.5 rounded-xl border text-xs font-bold transition-all ${
+                  darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Close
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
-                  setShowSuccessModal(false);
-                  setActiveTab(4);
+                  setSelectedCourseTitle(selectedScheduleModal.course);
+                  setSelectedScheduleModal(null);
+                  setApplyStep(2);
+                  setActiveTab(2);
                 }}
-                className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-xl shadow-lg"
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-blue-600/30"
               >
-                View Training History
+                <span>Apply for this Training</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
