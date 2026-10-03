@@ -4,7 +4,6 @@ import { Search, FileText } from 'lucide-react';
 export const AdminPwdSeniorView: React.FC<{ darkMode?: boolean }> = ({ darkMode = true }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'PWD' | 'SENIOR'>('ALL');
-  const [typeFilter, setTypeFilter] = useState<'ALL' | 'NEW' | 'RENEWAL' | 'LOST' | 'ASSISTANCE'>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
 
   return (
@@ -49,26 +48,15 @@ export const AdminPwdSeniorView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
           />
         </div>
 
-        <div className="space-y-3 pt-1">
-          <div className="flex flex-wrap items-center gap-6 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">CATEGORY</span>
-              <button type="button" onClick={() => setCategoryFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${categoryFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>ALL CATEGORIES</button>
-              <button type="button" onClick={() => setCategoryFilter('PWD')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${categoryFilter === 'PWD' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>PWD</button>
-              <button type="button" onClick={() => setCategoryFilter('SENIOR')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${categoryFilter === 'SENIOR' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>SENIOR CITIZEN</button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 border-l border-slate-800/80 pl-6">
-              <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">SERVICE TYPE</span>
-              <button type="button" onClick={() => setTypeFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${typeFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>ALL TYPES</button>
-              <button type="button" onClick={() => setTypeFilter('NEW')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${typeFilter === 'NEW' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>NEW ID</button>
-              <button type="button" onClick={() => setTypeFilter('RENEWAL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${typeFilter === 'RENEWAL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>RENEWAL</button>
-              <button type="button" onClick={() => setTypeFilter('LOST')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${typeFilter === 'LOST' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>LOST / REPLACEMENT</button>
-              <button type="button" onClick={() => setTypeFilter('ASSISTANCE')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${typeFilter === 'ASSISTANCE' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>SOCIAL ASSISTANCE</button>
-            </div>
+        <div className="flex flex-wrap items-center gap-6 pt-1 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">CATEGORY</span>
+            <button type="button" onClick={() => setCategoryFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${categoryFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>ALL CATEGORIES</button>
+            <button type="button" onClick={() => setCategoryFilter('PWD')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${categoryFilter === 'PWD' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>PWD</button>
+            <button type="button" onClick={() => setCategoryFilter('SENIOR')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${categoryFilter === 'SENIOR' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>SENIOR CITIZEN</button>
           </div>
 
-          <div className="flex items-center gap-2 pt-1 text-xs">
+          <div className="flex items-center gap-2 border-l border-slate-800/80 pl-6">
             <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">STATUS</span>
             <button type="button" onClick={() => setStatusFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${statusFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>ALL STATUSES</button>
             <button type="button" onClick={() => setStatusFilter('PENDING')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${statusFilter === 'PENDING' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>PENDING</button>

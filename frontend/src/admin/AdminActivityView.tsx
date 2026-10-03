@@ -113,6 +113,11 @@ export const AdminActivityView: React.FC<{ darkMode?: boolean }> = ({ darkMode =
                 <option value="All Modules">All Modules</option>
                 <option value="AICS">AICS</option>
                 <option value="PWD">PWD</option>
+                <option value="Senior Citizen">Senior Citizen</option>
+                <option value="Solo Parent">Solo Parent</option>
+                <option value="Child Welfare">Child Welfare</option>
+                <option value="Livelihood Program">Livelihood Program</option>
+                <option value="Training Program">Training Program</option>
                 <option value="User Management">User Management</option>
               </select>
               <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />

@@ -82,8 +82,11 @@ export const AdminCaseView: React.FC<{ darkMode?: boolean }> = ({ darkMode = tru
                   <option value="All Programs">All Programs</option>
                   <option value="AICS">AICS</option>
                   <option value="PWD">PWD</option>
-                  <option value="Child Welfare">Child Welfare</option>
+                  <option value="Senior Citizen">Senior Citizen</option>
                   <option value="Solo Parent">Solo Parent</option>
+                  <option value="Child Welfare">Child Welfare</option>
+                  <option value="Livelihood Program">Livelihood Program</option>
+                  <option value="Training Program">Training Program</option>
                 </select>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>

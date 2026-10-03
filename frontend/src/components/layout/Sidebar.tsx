@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { 
   BookOpen, 
   ShieldAlert,
-  ShieldCheck,
   UserCheck, 
   Users, 
   Heart,
@@ -229,22 +228,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                 : 'text-[#94a3b8] group-hover:text-white'
             }`} />
             {isOpen && <span className="truncate">Application History</span>}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('login')}
-            className={`w-full flex items-center ${
-              isOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
-            } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group mt-1 ${
-              activeTab === 'login'
-                ? 'bg-[#152747] text-white border-blue-500/30'
-                : 'bg-transparent text-blue-400 hover:text-blue-300 hover:bg-[#101e38] border-transparent'
-            }`}
-            title={isOpen ? undefined : "Login Portal"}
-          >
-            <ShieldCheck className="w-4 h-4 shrink-0 text-blue-400 group-hover:text-blue-300" />
-            {isOpen && <span className="truncate">Login Portal</span>}
           </button>
         </div>
       </div>

@@ -94,6 +94,9 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
                 <option value="PWD">PWD Services</option>
                 <option value="Senior">Senior Citizen</option>
                 <option value="Solo Parent">Solo Parent</option>
+                <option value="Child Welfare">Child Welfare</option>
+                <option value="Livelihood Program">Livelihood Program</option>
+                <option value="Training Program">Training Program</option>
               </select>
               <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
