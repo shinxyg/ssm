@@ -139,6 +139,7 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
   // Step 4 Form States
   const [isCertified, setIsCertified] = useState<boolean>(false);
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
+  const [submittedAppRecord, setSubmittedAppRecord] = useState<ApplicationRecord | null>(null);
 
   // Accredited Partner Funeral Homes List (matching screenshot 3)
   const funeralHomesList = [
@@ -239,19 +240,112 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newRefNo = `QC-AICS-2026-FUN-${Math.floor(1000 + Math.random() * 9000)}`;
+    const fullName = [firstName, middleName, lastName, suffix].filter(Boolean).join(' ') || 'JEFFERSON FERNANDO LEE';
+    const deceasedName = [deceasedFirstName, deceasedMiddleName, deceasedLastName, deceasedSuffix].filter(Boolean).join(' ') || 'Deceased Beneficiary';
+
+    const appDetails = {
+      category: 'AICS Funeral & Burial Assistance Services',
+      assistanceType: 'Funeral / Burial Aid',
+      hospitalFacility: selectedFuneralHome || 'Accredited Funeral Home Partner',
+      medicalCondition: `Burial Assistance Request (${selectedFuneralHome || 'Partner Funeral Parlor'})`,
+
+      // Step 2 Applicant
+      qcId,
+      applicantName: fullName,
+      firstName: firstName || 'JEFFERSON',
+      middleName: middleName || 'FERNANDO',
+      lastName: lastName || 'LEE',
+      suffix,
+      nationality,
+      dob: dob || '2004-09-27',
+      age: age || '22',
+      gender: gender || 'Male',
+      civilStatus: civilStatus || 'Single',
+      houseNo: houseNo || '176',
+      street: street || '23',
+      barangay: barangay || 'Bagong Silangan',
+      fullAddress: [houseNo, street, barangay, 'Quezon City'].filter(Boolean).join(', ') || '176, 23, Brgy. Bagong Silangan, Quezon City',
+      phone: phone || '09155582122',
+
+      // Step 2 Deceased Patient
+      isApplicantPatient: false,
+      patientRelation: relationToDeceased || 'Deceased Family Member',
+      patientName: deceasedName,
+      patientGender: deceasedGender || 'N/A',
+      patientDob: deceasedDob || 'N/A',
+      patientAge: deceasedAge || 'N/A',
+      patientAddress: `Brgy. ${barangay || 'Bagong Silangan'}, Quezon City`,
+
+      // Step 3 Uploads
+      uploadedFiles: Object.keys(uploadedFiles).length > 0 ? Object.keys(uploadedFiles) : ['Death Certificate', 'Indigency Certificate', 'Funeral Contract', 'PhilSys ID']
+    };
+
     const newApp: ApplicationRecord = {
       referenceNo: newRefNo,
-      serviceName: `QC Funeral Assistance — Guarantee Letter (${selectedFuneralHome})`,
+      applicantName: fullName,
+      serviceName: `QC Funeral Assistance — Guarantee Letter (${selectedFuneralHome || 'Partner Funeral Parlor'})`,
       category: 'AICS',
-      dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      assistanceType: 'Funeral / Burial Aid',
+      hospitalFacility: selectedFuneralHome || 'Accredited Funeral Home Partner',
+      medicalCondition: `Burial Assistance Request (${selectedFuneralHome || 'Partner Funeral Parlor'})`,
+      dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
       status: 'Under Review',
       amountOrType: 'P25,000 Guarantee Voucher / Funeral Aid',
       assignedSocialWorker: 'Social Worker Maria Santos, RSW (QC CSWDO)',
+      details: appDetails
     };
 
     onAddApplication(newApp);
-    onBack();
+    setSubmittedAppRecord(newApp);
   };
+
+  if (submittedAppRecord) {
+    return (
+      <div className="max-w-md mx-auto my-6 animate-in fade-in zoom-in-95 duration-300">
+        <div className={`p-5 sm:p-6 rounded-2xl border text-center space-y-4 ${
+          darkMode ? 'bg-[#0b1426] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+        }`}>
+          <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-7 h-7" />
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="text-lg sm:text-xl font-bold tracking-tight">Application Successfully Submitted</h3>
+            <p className={`text-xs max-w-sm mx-auto leading-normal ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              Your application for <span className="font-bold text-blue-400">QC Funeral Assistance</span> has been successfully submitted.
+            </p>
+          </div>
+
+          <div className={`p-4 rounded-xl border text-left space-y-2.5 font-mono ${
+            darkMode ? 'bg-[#060c18] border-slate-800/90' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 text-xs">
+              <span className={`text-[11px] font-sans font-medium uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Application Reference No.:
+              </span>
+              <span className="font-bold text-blue-400 text-xs sm:text-sm">{submittedAppRecord.referenceNo}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 text-xs pt-2 border-t border-slate-800/60">
+              <span className={`text-[11px] font-sans font-medium uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Date Filed:
+              </span>
+              <span className={`font-bold text-xs ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onBack}
+            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs tracking-wider uppercase rounded-xl transition-colors cursor-pointer"
+          >
+            VIEW FINANCIAL AID
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">

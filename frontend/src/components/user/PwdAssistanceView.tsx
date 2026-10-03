@@ -203,7 +203,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
       referenceNo: newRef,
       serviceName: 'PWD Social Assistance Program',
       category: 'PWD Services',
-      dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
       status: 'Ready for Payout',
       assignedSocialWorker: 'Maria Santos, RSW (QC Social Services)',
       amountOrType: '₱5,000 Social Aid / Assistive Device',

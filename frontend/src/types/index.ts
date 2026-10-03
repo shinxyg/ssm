@@ -12,10 +12,15 @@ export interface ServiceItem {
 
 export interface ApplicationRecord {
   referenceNo: string;
+  applicantName?: string;
   serviceName: string;
   category: string;
+  assistanceType?: string;
+  hospitalFacility?: string;
+  medicalCondition?: string;
+  benefitDocumentType?: string;
   dateSubmitted: string;
-  status: 'Approved' | 'Under Review' | 'Pending Documents' | 'Ready for Payout';
+  status: 'Approved' | 'Under Review' | 'Pending Documents' | 'Ready for Payout' | 'Rejected' | 'Disqualified' | 'Appointment Scheduled' | 'Completed' | 'Released' | (string & {});
   amountOrType: string;
   assignedSocialWorker: string;
   qrCodeData?: string;

@@ -62,23 +62,96 @@ export const initDB = async () => {
         status VARCHAR(100) DEFAULT 'Under Review',
         assigned_social_worker VARCHAR(255),
         benefit_document_type VARCHAR(255) DEFAULT 'Hospital Guarantee Letter (GL)',
+        details JSONB,
         date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
-      CREATE TABLE IF NOT EXISTS aics_documents (
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS first_name VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS middle_name VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS last_name VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS suffix VARCHAR(20);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS dob VARCHAR(50);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS age VARCHAR(10);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS gender VARCHAR(20);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS civil_status VARCHAR(50);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS house_no VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS street_name VARCHAR(150);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS barangay VARCHAR(150);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS is_patient_self BOOLEAN DEFAULT TRUE;
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_relationship VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_first_name VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_middle_name VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_last_name VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_suffix VARCHAR(20);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_gender VARCHAR(20);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_dob VARCHAR(50);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_age VARCHAR(10);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_house_no VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_street_name VARCHAR(150);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_barangay VARCHAR(150);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS nationality VARCHAR(50) DEFAULT 'FILIPINO';
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS details JSONB;
+
+      DROP TABLE IF EXISTS aics_documents CASCADE;
+
+      CREATE TABLE IF NOT EXISTS appointments (
         id SERIAL PRIMARY KEY,
-        application_ref VARCHAR(50) REFERENCES aics_applications(reference_no) ON DELETE CASCADE,
-        document_key VARCHAR(100) NOT NULL,
-        file_name VARCHAR(255) NOT NULL,
-        file_type VARCHAR(100),
-        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        reference_no VARCHAR(50) NOT NULL,
+        module_name VARCHAR(100) NOT NULL,
+        applicant_name VARCHAR(255) NOT NULL,
+        appointment_date VARCHAR(50) NOT NULL,
+        appointment_time VARCHAR(50) NOT NULL,
+        venue VARCHAR(255) NOT NULL,
+        purpose VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'Scheduled',
+        social_worker_notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS pwd_applications (
+        id SERIAL PRIMARY KEY,
+        reference_no VARCHAR(50) UNIQUE NOT NULL,
+        applicant_name VARCHAR(255) NOT NULL,
+        pwd_id_no VARCHAR(50),
+        disability_type VARCHAR(100),
+        barangay VARCHAR(150),
+        phone_number VARCHAR(50),
+        status VARCHAR(100) DEFAULT 'Pending Review',
+        date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS senior_applications (
+        id SERIAL PRIMARY KEY,
+        reference_no VARCHAR(50) UNIQUE NOT NULL,
+        applicant_name VARCHAR(255) NOT NULL,
+        osca_id_no VARCHAR(50),
+        dob VARCHAR(50),
+        age VARCHAR(10),
+        barangay VARCHAR(150),
+        phone_number VARCHAR(50),
+        status VARCHAR(100) DEFAULT 'Pending Verification',
+        date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS livelihood_applications (
+        id SERIAL PRIMARY KEY,
+        reference_no VARCHAR(50) UNIQUE NOT NULL,
+        applicant_name VARCHAR(255) NOT NULL,
+        program_name VARCHAR(255) NOT NULL,
+        proposal_title VARCHAR(255),
+        barangay VARCHAR(150),
+        phone_number VARCHAR(50),
+        status VARCHAR(100) DEFAULT 'Under Evaluation',
+        date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    console.log('✅ Database tables matching Step 2 Applicant & Patient details verified & ready!');
+    console.log('✅ Database tables for AICS, Appointments, PWD, Senior, and Livelihood verified & ready!');
     client.release();
   } catch (err) {
     console.error('❌ Database Connection Warning/Notice:', err.message);
   }
 };
+

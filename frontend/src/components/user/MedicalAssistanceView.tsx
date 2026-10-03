@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   ArrowLeft, 
   FileText, 
@@ -24,6 +24,7 @@ interface MedicalAssistanceViewProps {
   onBack: () => void;
   onAddApplication: (app: ApplicationRecord) => void;
   darkMode?: boolean;
+  applications?: ApplicationRecord[];
 }
 
 // Utility to calculate age from Date of Birth string
@@ -44,10 +45,21 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
   onBack,
   onAddApplication,
   darkMode = true,
+  applications = [],
 }) => {
   // Stepper state (1: COMPLETE CHECKLIST, 2: PERSONAL INFORMATION, 3: UPLOAD DOCUMENTS, 4: REVIEW & SUBMIT)
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isEditingFromStep4, setIsEditingFromStep4] = useState<boolean>(false);
+  const [submittedAppRecord, setSubmittedAppRecord] = useState<ApplicationRecord | null>(null);
+
+  // Check if citizen has an active pending application
+  const activePendingApp = useMemo(() => {
+    return applications.find((app) => {
+      const isAICS = app.category === 'AICS' || app.serviceName.toLowerCase().includes('medical') || app.serviceName.toLowerCase().includes('aics') || app.serviceName.toLowerCase().includes('medicine');
+      const isNotFinished = app.status !== 'RELEASED / COMPLETED' && (app.status as string) !== 'Completed' && (app.status as string) !== 'Rejected' && (app.status as string) !== 'Disqualified';
+      return isAICS && isNotFinished;
+    });
+  }, [applications]);
 
   const handleNextStep = (nextDefaultStep: number) => {
     if (isEditingFromStep4) {
@@ -157,6 +169,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
 
   // Step 3 Form States & Camera Modal State
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File }>({});
+  const [uploadedDocData, setUploadedDocData] = useState<{ [key: string]: { name: string; size: string; type: string; dataUrl: string } }>({});
 
   const [activeCameraKey, setActiveCameraKey] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -198,9 +211,20 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      const fileName = `${activeCameraKey}_camera_photo.jpg`;
+      setUploadedDocData(prev => ({
+        ...prev,
+        [activeCameraKey]: {
+          name: fileName,
+          size: '450.0 KB',
+          type: 'image/jpeg',
+          dataUrl: dataUrl
+        }
+      }));
       canvas.toBlob((blob) => {
         if (blob) {
-          const file = new File([blob], `${activeCameraKey}_camera_photo.jpg`, { type: 'image/jpeg' });
+          const file = new File([blob], fileName, { type: 'image/jpeg' });
           setUploadedFiles(prev => ({ ...prev, [activeCameraKey]: file }));
         }
         handleCloseCamera();
@@ -236,6 +260,21 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setUploadedFiles(prev => ({ ...prev, [reqKey]: file }));
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        if (evt.target?.result) {
+          setUploadedDocData(prev => ({
+            ...prev,
+            [reqKey]: {
+              name: file.name,
+              size: `${(file.size / 1024).toFixed(1)} KB`,
+              type: file.type || 'image/jpeg',
+              dataUrl: evt.target!.result as string
+            }
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -245,24 +284,149 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
       delete copy[reqKey];
       return copy;
     });
+    setUploadedDocData(prev => {
+      const copy = { ...prev };
+      delete copy[reqKey];
+      return copy;
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newRefNo = `QC-AICS-2026-MED-${Math.floor(1000 + Math.random() * 9000)}`;
+    const fullName = [firstName, middleName, lastName, suffix].filter(Boolean).join(' ') || 'JEFFERSON FERNANDO LEE';
+    const isMedicalBill = assistanceType === 'Medical Bill Assistance';
+    const selectedHospital = isMedicalBill
+      ? (hospitalFacility === 'Other Health Facility' ? (otherHospitalFacility || 'Other Health Facility') : (hospitalFacility || 'Quezon City General Hospital (QCGH)'))
+      : undefined;
+    const selectedMedicalCondition = isMedicalBill ? (medicalCondition || 'Medical Assistance Request') : undefined;
+
+    const appDetails = {
+      category: 'AICS Assistance Services',
+      assistanceType: assistanceType || 'Medicines / Medical Supplies',
+      hospitalFacility: selectedHospital,
+      medicalCondition: selectedMedicalCondition,
+
+      // Step 2 Applicant
+      qcId,
+      applicantName: fullName,
+      firstName: firstName || 'JEFFERSON',
+      middleName: middleName || 'FERNANDO',
+      lastName: lastName || 'LEE',
+      suffix,
+      nationality,
+      dob: dob || '2004-09-27',
+      age: age || calculateAgeFromDob(dob) || '22',
+      gender: gender || 'Male',
+      civilStatus: civilStatus || 'Single',
+      houseNo: houseNo || '176',
+      street: street || '23',
+      barangay: barangay || 'Bagong Silangan',
+      fullAddress: [houseNo, street, barangay, 'Quezon City'].filter(Boolean).join(', ') || '176, 23, Brgy. Bagong Silangan, Quezon City',
+      phone: phone || '09155582122',
+
+      // Step 2 Patient Beneficiary
+      isApplicantPatient,
+      patientRelation: isApplicantPatient ? 'Self' : (patientRelation !== 'Select' ? patientRelation : 'Relative'),
+      patientName: isApplicantPatient ? fullName : ([patientFirstName, patientMiddleName, patientLastName, patientSuffix].filter(Boolean).join(' ') || fullName),
+      patientFirstName: isApplicantPatient ? (firstName || 'JEFFERSON') : (patientFirstName || firstName || 'JEFFERSON'),
+      patientMiddleName: isApplicantPatient ? (middleName || 'FERNANDO') : (patientMiddleName || middleName || 'FERNANDO'),
+      patientLastName: isApplicantPatient ? (lastName || 'LEE') : (patientLastName || lastName || 'LEE'),
+      patientSuffix: isApplicantPatient ? suffix : (patientSuffix || suffix),
+      patientGender: isApplicantPatient ? gender : (patientGender !== 'Please choose' ? patientGender : gender),
+      patientDob: isApplicantPatient ? dob : (patientDob || dob),
+      patientAge: isApplicantPatient ? age : (patientAge || calculateAgeFromDob(patientDob) || age),
+      patientHouseNo: isApplicantPatient || isSameAddress ? (houseNo || '176') : (patientHouseNo || houseNo || '176'),
+      patientStreet: isApplicantPatient || isSameAddress ? (street || '23') : (patientStreet || street || '23'),
+      patientBarangay: isApplicantPatient || isSameAddress ? (barangay || 'Bagong Silangan') : (patientBarangay || barangay || 'Bagong Silangan'),
+      patientAddress: isApplicantPatient || isSameAddress 
+        ? ([houseNo, street, barangay, 'Quezon City'].filter(Boolean).join(', ') || '176, 23, Brgy. Bagong Silangan, Quezon City')
+        : ([patientHouseNo, patientStreet, patientBarangay, 'Quezon City'].filter(Boolean).join(', ') || '176, 23, Brgy. Bagong Silangan, Quezon City'),
+
+      // Step 3 Uploads
+      uploadedFiles: Object.keys(uploadedFiles).length > 0 ? Object.keys(uploadedFiles) : ['Doctor Prescription', 'Medical Certificate', 'Indigency Certificate', 'PhilSys ID'],
+      uploadedDocData: uploadedDocData
+    };
+
     const newApp: ApplicationRecord = {
       referenceNo: newRefNo,
-      serviceName: `QC Medical Assistance — ${assistanceType || 'Bill Aid'}`,
+      applicantName: fullName,
+      serviceName: `QC Medical Assistance — ${assistanceType || 'Medicines / Medical Supplies'}`,
       category: 'AICS',
-      dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      assistanceType: assistanceType || 'Medicines / Medical Supplies',
+      hospitalFacility: selectedHospital,
+      medicalCondition: selectedMedicalCondition,
+      dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
       status: 'Under Review',
       amountOrType: 'Guarantee Letter / Financial Subsidy',
       assignedSocialWorker: 'Social Worker Maria Santos, RSW (QC CSWDO)',
+      details: appDetails
     };
 
     onAddApplication(newApp);
-    onBack();
+    setSubmittedAppRecord(newApp);
   };
+
+  const targetApp = submittedAppRecord || activePendingApp;
+
+  if (targetApp) {
+    const isJustSubmitted = Boolean(submittedAppRecord);
+    return (
+      <div className="max-w-md mx-auto my-6 animate-in fade-in zoom-in-95 duration-300">
+        <div className={`p-5 sm:p-6 rounded-2xl border text-center space-y-4 ${
+          darkMode ? 'bg-[#0b1426] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+        }`}>
+          <div className={`w-12 h-12 rounded-full border flex items-center justify-center mx-auto ${
+            isJustSubmitted 
+              ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' 
+              : 'bg-amber-500/20 border-amber-500 text-amber-400'
+          }`}>
+            {isJustSubmitted ? <CheckCircle2 className="w-7 h-7" /> : <AlertCircle className="w-7 h-7" />}
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="text-lg sm:text-xl font-bold tracking-tight">
+              {isJustSubmitted ? 'Application Successfully Submitted' : 'Active Application Pending'}
+            </h3>
+            <p className={`text-xs max-w-sm mx-auto leading-normal ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              {isJustSubmitted ? (
+                <>Your application for <span className="font-bold text-blue-400">{targetApp.assistanceType || 'QC Medical Assistance'}</span> has been successfully submitted.</>
+              ) : (
+                <>You currently have an active application for <span className="font-bold text-blue-400">{targetApp.serviceName}</span>. You cannot submit a new application until your current request is completed.</>
+              )}
+            </p>
+          </div>
+
+          <div className={`p-4 rounded-xl border text-left space-y-2.5 font-mono ${
+            darkMode ? 'bg-[#060c18] border-slate-800/90' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 text-xs">
+              <span className={`text-[11px] font-sans font-medium uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Application Reference No.:
+              </span>
+              <span className="font-bold text-blue-400 text-xs sm:text-sm">{targetApp.referenceNo}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 text-xs pt-2 border-t border-slate-800/60">
+              <span className={`text-[11px] font-sans font-medium uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Date Filed:
+              </span>
+              <span className={`font-bold text-xs ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                {targetApp.dateSubmitted || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onBack}
+            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs tracking-wider uppercase rounded-xl transition-colors cursor-pointer"
+          >
+            VIEW FINANCIAL AID
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">

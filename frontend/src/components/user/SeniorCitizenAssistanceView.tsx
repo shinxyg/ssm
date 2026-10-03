@@ -255,7 +255,7 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
       referenceNo: refNo,
       serviceName: 'Senior Citizen Social Welfare Assistance (SWA)',
       category: 'Senior Citizen Sector',
-      dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
       status: 'Under Review',
       assignedSocialWorker: 'Maria Santos, RSW (Senior Sector Dept)',
       amountOrType: 'Financial Aid / Subsidy Grant',

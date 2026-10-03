@@ -52,11 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
     { id: 'senior', label: 'Senior Citizen Services', icon: UserCheck },
     { id: 'soloparent', label: 'Solo Parent Services', icon: Users },
     { id: 'childwelfare', label: 'Child Welfare Services', icon: Heart },
-  ];
-
-  const subLivelihoodItems = [
-    { id: 'livelihood-grants', label: 'Livelihood Program' },
-    { id: 'skills-training', label: 'Training Program' },
+    { id: 'livelihood', label: 'Livelihood & Training', icon: GraduationCap },
   ];
 
   return (
@@ -103,14 +99,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
               (item.id === 'pwd' && activeTab === 'pwd-form') ||
               (item.id === 'senior' && activeTab === 'senior-form') ||
               (item.id === 'soloparent' && (activeTab === 'soloparent-form' || activeTab === 'soloparent-financial-form' || activeTab === 'soloparent-edu-form')) ||
-              (item.id === 'aics' && (activeTab === 'aics-medical' || activeTab === 'aics-funeral'));
+              (item.id === 'aics' && (activeTab === 'aics-medical' || activeTab === 'aics-funeral')) ||
+              (item.id === 'livelihood' && (activeTab.startsWith('livelihood') || activeTab === 'skills-training'));
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center ${
-                  isOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
+                  isOpen ? 'justify-between px-4 py-3' : 'justify-center p-3'
                 } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group ${
                   isActive
                     ? 'bg-[#152747] text-white border-blue-500/30'
@@ -118,68 +115,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                 }`}
                 title={isOpen ? undefined : item.label}
               >
-                <Icon className={`w-4 h-4 shrink-0 transition-colors ${
-                  isActive 
-                    ? 'text-blue-400' 
-                    : 'text-[#94a3b8] group-hover:text-white'
-                }`} />
-                {isOpen && <span className="truncate">{item.label}</span>}
+                <div className="flex items-center gap-3.5 truncate">
+                  <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                    isActive 
+                      ? 'text-blue-400' 
+                      : 'text-[#94a3b8] group-hover:text-white'
+                  }`} />
+                  {isOpen && <span className="truncate">{item.label}</span>}
+                </div>
+                {isOpen && item.id === 'livelihood' && (
+                  <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-400' : 'text-slate-500'}`} />
+                )}
               </button>
             );
           })}
-
-          {/* Livelihood & Training */}
-          <div>
-            <button
-              type="button"
-              onClick={() => {
-                setLivelihoodOpen(!livelihoodOpen);
-                setActiveTab('livelihood');
-              }}
-              className={`w-full flex items-center ${
-                isOpen ? 'justify-between px-4 py-3' : 'justify-center p-3'
-              } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group ${
-                activeTab.startsWith('livelihood')
-                  ? 'bg-[#152747] text-white border-blue-500/30'
-                  : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
-              }`}
-              title={isOpen ? undefined : "Livelihood & Training"}
-            >
-              <div className="flex items-center gap-3.5">
-                <GraduationCap className={`w-4 h-4 shrink-0 transition-colors ${
-                  activeTab.startsWith('livelihood')
-                    ? 'text-blue-400'
-                    : 'text-[#94a3b8] group-hover:text-white'
-                }`} />
-                {isOpen && <span className="truncate">Livelihood & Training</span>}
-              </div>
-              {isOpen && (
-                livelihoodOpen 
-                  ? <ChevronUp className="w-3.5 h-3.5 text-blue-400" /> 
-                  : <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-              )}
-            </button>
-
-            {/* Sub-menu */}
-            {isOpen && livelihoodOpen && (
-              <div className="ml-10 mt-1 space-y-1">
-                {subLivelihoodItems.map((sub) => (
-                  <button
-                    key={sub.id}
-                    type="button"
-                    onClick={() => setActiveTab(sub.id)}
-                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                      activeTab === sub.id
-                        ? 'text-blue-400 bg-[#132342]'
-                        : 'text-[#94a3b8] hover:text-slate-200 hover:bg-[#101c33]'
-                    }`}
-                  >
-                    {sub.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
 
           {/* Financial Aid Disbursement */}
           <button

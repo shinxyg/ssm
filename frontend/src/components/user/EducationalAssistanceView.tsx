@@ -238,7 +238,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         ? 'Child Welfare Services Aid'
         : 'AICS Educational Financial Aid - Children with Disability',
       category: mode === 'soloparent' ? 'Solo Parent Services' : 'AICS Assistance',
-      dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
       status: 'Ready for Payout',
       assignedSocialWorker: 'Maria Santos, RSW (QC Social Services)',
       amountOrType: mode === 'soloparent' ? '₱5,000 Solo Parent Educational Grant' : '₱5,000 Educational Grant',

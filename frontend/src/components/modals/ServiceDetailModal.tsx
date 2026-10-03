@@ -49,7 +49,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
       referenceNo: newRefNo,
       serviceName: service.title,
       category: service.category.toUpperCase(),
-      dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
       status: 'Under Review',
       amountOrType: service.benefitAmount || 'Financial Grant',
       assignedSocialWorker: 'Social Worker Maria Santos, RSW',

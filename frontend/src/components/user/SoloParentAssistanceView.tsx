@@ -256,7 +256,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
         referenceNo: refNum,
         serviceName: 'Solo Parent Financial Subsidy Program',
         category: 'soloparent',
-        dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
         status: 'Under Review',
         amountOrType: 'Solo Parent Welfare Grant',
         assignedSocialWorker: 'Ms. Jocelyn Reyes, RSW (Solo Parent Welfare Division)',

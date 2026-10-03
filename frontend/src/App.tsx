@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { HeroBanner } from './components/user/HeroBanner';
@@ -7,6 +7,7 @@ import { ServiceCatalog } from './components/user/ServiceCatalog';
 import { ModuleCardGrid } from './components/user/ModuleCardGrid';
 import { LivelihoodProgramView } from './components/user/LivelihoodProgramView';
 import { TrainingProgramView } from './components/user/TrainingProgramView';
+import { DisbursementView } from './components/user/DisbursementView';
 import { TrackApplicationsModal } from './components/modals/TrackApplicationsModal';
 import { EligibilityFinderModal } from './components/modals/EligibilityFinderModal';
 import { ServiceDetailModal } from './components/modals/ServiceDetailModal';
@@ -74,8 +75,59 @@ export default function App() {
   // Dynamic application state
   const [applications, setApplications] = useState<ApplicationRecord[]>(initialApplications);
 
-  const handleAddApplication = (newApp: ApplicationRecord) => {
-    setApplications((prev) => [newApp, ...prev]);
+  // Fetch applications from PostgreSQL DB on mount, focus, and interval polling
+  const fetchDBApplications = () => {
+    fetch('http://localhost:5000/api/aics/applications')
+      .then(res => res.json())
+      .then((dbApps: ApplicationRecord[]) => {
+        if (Array.isArray(dbApps)) {
+          setApplications(dbApps);
+        }
+      })
+      .catch(err => console.log('Notice: Backend API offline or error fetching DB apps:', err));
+  };
+
+  useEffect(() => {
+    fetchDBApplications();
+    const interval = setInterval(fetchDBApplications, 2000);
+    window.addEventListener('focus', fetchDBApplications);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', fetchDBApplications);
+    };
+  }, []);
+
+  const handleAddApplication = async (newApp: ApplicationRecord) => {
+    // Update local state immediately
+    setApplications((prev) => [newApp, ...prev.filter(a => a.referenceNo !== newApp.referenceNo)]);
+
+    // Persist to PostgreSQL database
+    try {
+      const res = await fetch('http://localhost:5000/api/aics/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newApp)
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        console.log('✅ Successfully persisted application to PostgreSQL DB:', saved);
+      }
+    } catch (err) {
+      console.error('❌ Failed to save application to PostgreSQL DB:', err);
+    }
+  };
+
+  const handleUpdateStatus = async (refNo: string, newStatus: ApplicationRecord['status']) => {
+    setApplications(prev => prev.map(app => app.referenceNo === refNo ? { ...app, status: newStatus } : app));
+    try {
+      await fetch(`http://localhost:5000/api/aics/applications/${encodeURIComponent(refNo)}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+    } catch (err) {
+      console.error('Error updating status in DB:', err);
+    }
   };
 
   const handleApplyFromModule = (title: string, description: string) => {
@@ -418,6 +470,7 @@ export default function App() {
             userName="System Admin"
             userSubtitle="Administrator"
             userInitials="AD"
+            applications={applications}
           />
 
           {/* Admin Main Content Area */}
@@ -427,7 +480,7 @@ export default function App() {
             ) : adminTab === 'reports' ? (
               <ReportsAnalyticsView darkMode={darkMode} applications={applications} />
             ) : adminTab === 'aics' ? (
-              <AdminAicsView darkMode={darkMode} applications={applications} />
+              <AdminAicsView darkMode={darkMode} applications={applications} onUpdateStatus={handleUpdateStatus} />
             ) : adminTab === 'pwd-senior' ? (
               <AdminPwdSeniorView darkMode={darkMode} />
             ) : adminTab === 'solo-child' ? (
@@ -435,13 +488,21 @@ export default function App() {
             ) : adminTab === 'livelihood' ? (
               <AdminLivelihoodView darkMode={darkMode} />
             ) : adminTab === 'disbursement' ? (
-              <AdminDisbursementView darkMode={darkMode} />
+              <AdminDisbursementView 
+                darkMode={darkMode} 
+                applications={applications} 
+                onUpdateStatus={handleUpdateStatus}
+              />
             ) : adminTab === 'beneficiaries' ? (
               <AdminBeneficiaryView darkMode={darkMode} />
             ) : adminTab === 'cases' ? (
               <AdminCaseView darkMode={darkMode} />
             ) : adminTab === 'appointments' ? (
-              <AdminAppointmentView darkMode={darkMode} />
+              <AdminAppointmentView 
+                darkMode={darkMode} 
+                applications={applications} 
+                onUpdateStatus={handleUpdateStatus}
+              />
             ) : adminTab === 'activity' ? (
               <AdminActivityView darkMode={darkMode} />
             ) : (
@@ -476,6 +537,7 @@ export default function App() {
           onNavigateToProfile={() => setActiveTab('profile')}
           onNavigateToLogin={() => setActiveTab('login')}
           userRole="user"
+          applications={applications}
         />
 
         {/* Main Content Area (Independent Viewport Scroll with GPU Acceleration) */}
@@ -535,6 +597,7 @@ export default function App() {
               onBack={() => setActiveTab('aics')}
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
+              applications={applications}
             />
           ) : activeTab === 'aics-funeral' ? (
             /* Dedicated QC Funeral Assistance 4-Step Form View */
@@ -605,6 +668,13 @@ export default function App() {
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
             />
+          ) : activeTab === 'payout' ? (
+            /* Dedicated Financial Aid Disbursement View connecting all 4 Modules */
+            <DisbursementView
+              darkMode={darkMode}
+              onNavigateToModule={(tabKey) => setActiveTab(tabKey)}
+              applications={applications}
+            />
           ) : activeTab === 'history' ? (
             /* Application History View */
             <section className={`border rounded-2xl p-6 shadow-xl space-y-6 ${
@@ -662,16 +732,6 @@ export default function App() {
                         <div className="text-xs font-bold text-amber-500">{app.amountOrType}</div>
                         <span className="text-[10px] text-emerald-600 font-semibold">{app.status}</span>
                       </div>
-
-                      {app.status === 'Ready for Payout' && (
-                        <button 
-                          onClick={() => setIsTrackModalOpen(true)}
-                          className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600 border border-blue-500/40 text-blue-500 hover:text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all"
-                        >
-                          <QrCode className="w-4 h-4 text-blue-500" />
-                          <span>View QR</span>
-                        </button>
-                      )}
                     </div>
                   </div>
                 ))}

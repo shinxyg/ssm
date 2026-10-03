@@ -10,16 +10,25 @@
   }
 }
 
-/* Lock background scrolling on body, main, and sidebar when modal is active */
-body.modal-open,
+/* Lock background scrolling & hide background scrollbars when modal is active */
 body.modal-open main,
-body.modal-open aside,
-body.modal-open div[class*="overflow-y-auto"] {
+body.modal-open aside {
   overflow: hidden !important;
 }
 
+body.modal-open main::-webkit-scrollbar-thumb,
+body.modal-open aside::-webkit-scrollbar-thumb {
+  background: transparent !important;
+  border: none !important;
+}
 
-/* Custom High-Visibility Scrollbar */
+body.modal-open main::-webkit-scrollbar-track,
+body.modal-open aside::-webkit-scrollbar-track {
+  background: transparent !important;
+  border-left: none !important;
+}
+
+/* Custom High-Visibility Scrollbar for Main Page */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -35,6 +44,28 @@ body.modal-open div[class*="overflow-y-auto"] {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #3b82f6;
+}
+
+/* Explicit Custom Scrollbar for Inner Modal Content Box */
+.custom-modal-scroll {
+  scrollbar-width: thin !important;
+  scrollbar-color: #3b82f6 #0f172a !important;
+}
+.custom-modal-scroll::-webkit-scrollbar {
+  width: 8px !important;
+  display: block !important;
+}
+.custom-modal-scroll::-webkit-scrollbar-track {
+  background: #0f172a !important;
+  border-radius: 4px !important;
+}
+.custom-modal-scroll::-webkit-scrollbar-thumb {
+  background: #3b82f6 !important;
+  border-radius: 4px !important;
+  border: none !important;
+}
+.custom-modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #60a5fa !important;
 }
 
 /* Firefox scrollbar styling */
