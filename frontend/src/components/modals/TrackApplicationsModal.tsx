@@ -97,14 +97,14 @@ export const TrackApplicationsModal: React.FC<TrackApplicationsModalProps> = ({
                 <div className="text-right">
                   <span
                     className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
-                      app.status === 'Ready for Payout'
+                      app.status === 'Ready for Payout' || app.status === 'RELEASED / COMPLETED' || app.status === 'Completed'
                         ? darkMode ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600/50' : 'bg-emerald-100 text-emerald-800 border-emerald-300'
                         : app.status === 'Approved'
                         ? darkMode ? 'bg-blue-950/80 text-blue-300 border-blue-600/50' : 'bg-blue-100 text-blue-800 border-blue-300'
                         : darkMode ? 'bg-amber-950/80 text-amber-300 border-amber-600/50' : 'bg-amber-100 text-amber-800 border-amber-300'
                     }`}
                   >
-                    {app.status === 'Ready for Payout' || app.status === 'Approved' ? (
+                    {app.status === 'Ready for Payout' || app.status === 'Approved' || app.status === 'RELEASED / COMPLETED' || app.status === 'Completed' ? (
                       <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                     ) : (
                       <Clock className="w-3 h-3 text-amber-500" />
@@ -117,36 +117,10 @@ export const TrackApplicationsModal: React.FC<TrackApplicationsModalProps> = ({
 
               {/* Progress Stepper */}
               <div className={`pt-2 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-                <div className={`flex items-center justify-between text-[11px] mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                <div className={`flex items-center justify-between text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                   <span>Assigned Worker: <strong className={darkMode ? 'text-slate-200' : 'text-slate-800'}>{app.assignedSocialWorker}</strong></span>
                   <span>Amount / Type: <strong className={darkMode ? 'text-amber-300' : 'text-amber-600 font-bold'}>{app.amountOrType}</strong></span>
                 </div>
-
-                {app.status === 'Ready for Payout' && (
-                  <div className={`mt-3 p-3 border rounded-xl flex items-center justify-between ${
-                    darkMode ? 'bg-blue-950/50 border-blue-600/30' : 'bg-blue-50 border-blue-200'
-                  }`}>
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 bg-white p-1 rounded border border-slate-200">
-                        <QrCode className="w-full h-full text-slate-900" />
-                      </div>
-                      <div>
-                        <div className={`text-xs font-bold flex items-center gap-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                          <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
-                          Official Payout Claim Voucher
-                        </div>
-                        <div className={`text-[10px] ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>Present this QR voucher at City Treasury / Partner Bank</div>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => alert(`Downloading Claim Voucher ${app.referenceNo}.pdf`)}
-                      className="inline-flex items-center gap-1 text-[11px] font-bold bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg shadow"
-                    >
-                      <Download className="w-3 h-3" />
-                      Voucher
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           ))}

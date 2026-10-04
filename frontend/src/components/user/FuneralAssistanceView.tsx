@@ -39,6 +39,136 @@ const calculateDeceasedAge = (dobString: string, dodString?: string): string => 
   return calculatedAge >= 0 ? String(calculatedAge) : '';
 };
 
+const burialDocRequirements = [
+  {
+    key: 'referral_form',
+    title: 'REFERRAL FORM (OPTIONAL) – ORIGINAL COPY',
+    subtitle: 'Maaaring manggaling sa Barangay, hospital, o accredited partner funeral service provider.',
+    isOptional: true,
+  },
+  {
+    key: 'death_cert',
+    title: 'DEATH CERTIFICATE – ORIGINAL CERTIFIED TRUE COPY *',
+    subtitle: '',
+    isOptional: false,
+  },
+  {
+    key: 'funeral_contract',
+    title: 'NOTARIZED FUNERAL CONTRACT – ORIGINAL COPY *',
+    subtitle: 'Mula sa QC-accredited/partner funeral home.',
+    isOptional: false,
+  },
+  {
+    key: 'indigency',
+    title: 'BARANGAY CERTIFICATE OF INDIGENCY – ORIGINAL COPY *',
+    subtitle: 'Dapat ang purpose ay “Burial/Funeral Assistance.”',
+    isOptional: false,
+  },
+  {
+    key: 'government_id',
+    title: 'VALID ID NG INFORMANT/NEAREST KIN *',
+    subtitle: 'Preferably QC ID.',
+    isOptional: false,
+  },
+];
+
+const ACCREDITED_FUNERAL_HOMES: Record<string, string[]> = {
+  'District 1': [
+    'Kristiana Funeral Services',
+    'Elcielo Funeral'
+  ],
+  'District 2': [
+    'Blessed Memorial Homes',
+    'Catalonia Funeral Homes',
+    'Heart of Mary Funeral Services',
+    'Nieto Funeral Services',
+    'St. Fiacre Funeral Services',
+    'Vivs Funeral Homes',
+    'Rizalde Funeral Services',
+    'Kaagapay mo Karamay Funeral Homes',
+    'Precious JP Funeral Services',
+    'St. Jacob Funeral Homes'
+  ],
+  'District 3': [
+    'Bonita Memorial Homes',
+    'St. James Memorial Chapel',
+    'Amber Green Funeral Services',
+    'St. Ignatius Funeral Homes Inc.',
+    'Loyola Memorial Chapels and Crematorium Inc. – Commonwealth',
+    'Dayao Funeral Home Inc.'
+  ],
+  'District 4': [
+    'La Funeraria Paz, Inc.',
+    'Wyn Funeral Services',
+    'Aijel Funeral Services'
+  ],
+  'District 5': [
+    'A & J Biglang Awa Funeral Homes',
+    'Mananghaya Funeral Services',
+    'D. Imperial Funeral Homes'
+  ],
+  'District 6': [
+    'Ka Andres Memorial Chapel',
+    'Ever Memorial Services',
+    'Memory Funeral Services',
+    'Cinco Estrellas Memorial Chapel Inc.',
+    'Sauyo Funeral Service'
+  ]
+};
+
+const QC_BARANGAY_DISTRICT_MAP: Record<string, string> = {
+  // District 1
+  'alicia': 'District 1', 'bagong pag-asa': 'District 1', 'bahay toro': 'District 1', 'balingasa': 'District 1',
+  'bungad': 'District 1', 'damar': 'District 1', 'damayan': 'District 1', 'del monte': 'District 1',
+  'doña josefa': 'District 1', 'katipunan': 'District 1', 'mariblo': 'District 1', 'masambong': 'District 1',
+  'n.s. amoranto': 'District 1', 'nayong kanluran': 'District 1', 'paang bundok': 'District 1', 'paltok': 'District 1',
+  'paraiso': 'District 1', 'phil-am': 'District 1', 'ramon magsaysay': 'District 1', 'salvacion': 'District 1',
+  'san antonio': 'District 1', 'san isidro labrador': 'District 1', 'san jose': 'District 1', 'santa cruz': 'District 1',
+  'santa teresita': 'District 1', 'santo cristo': 'District 1', 'santo niño': 'District 1', 'siena': 'District 1',
+  'talayan': 'District 1', 'vasra': 'District 1', 'veterans village': 'District 1', 'west kamias': 'District 1',
+
+  // District 2
+  'bagong silangan': 'District 2', 'batasan hills': 'District 2', 'commonwealth': 'District 2',
+  'holy spirit': 'District 2', 'payatas': 'District 2',
+
+  // District 3
+  'amihan': 'District 3', 'bagumbayan': 'District 3', 'bayanihan': 'District 3',
+  'blue ridge a': 'District 3', 'blue ridge b': 'District 3', 'camp aguinaldo': 'District 3', 'claro': 'District 3',
+  'dioquino zobel': 'District 3', 'duyan-duyan': 'District 3', 'e. rodriguez': 'District 3', 'east kamias': 'District 3',
+  'escopa i': 'District 3', 'escopa ii': 'District 3', 'escopa iii': 'District 3', 'escopa iv': 'District 3',
+  'kaunlaran': 'District 3', 'libis': 'District 3', 'loyola heights': 'District 3', 'mangga': 'District 3',
+  'marilag': 'District 3', 'masagana': 'District 3', 'matandang balara': 'District 3', 'milagrosa': 'District 3',
+  'pansol': 'District 3', 'quirino 2-a': 'District 3', 'quirino 2-b': 'District 3', 'quirino 2-c': 'District 3',
+  'quirino 3-a': 'District 3', 'san roque': 'District 3', 'silangan': 'District 3', 'socorro': 'District 3',
+  'tagumpay': 'District 3', 'ugong norte': 'District 3', 'villa maria clara': 'District 3', 'white plains': 'District 3',
+
+  // District 4
+  'central': 'District 4', 'damayang lagi': 'District 4', 'doña imelda': 'District 4', 'horseshoe': 'District 4',
+  'immaculada concepcion': 'District 4', 'kalusugan': 'District 4', 'kamuning': 'District 4', 'kristong hari': 'District 4',
+  'laging handa': 'District 4', 'malaya': 'District 4', 'mariana': 'District 4', 'obrero': 'District 4',
+  'paligsahan': 'District 4', 'pinagkaisahan': 'District 4', 'pinyahan': 'District 4', 'roxas': 'District 4',
+  'sacred heart': 'District 4', 'san isidro': 'District 4', 'san martin de porres': 'District 4', 'santol': 'District 4',
+  'sikatuna village': 'District 4', 'south trinity': 'District 4', 'tatalon': 'District 4', 'teachers village east': 'District 4',
+  'teachers village west': 'District 4', 'u.p. campus': 'District 4', 'u.p. village': 'District 4', 'valencia': 'District 4',
+
+  // District 5
+  'bagbag': 'District 5', 'capri': 'District 5', 'fairview': 'District 5', 'greater lagro': 'District 5',
+  'gulod': 'District 5', 'kaligayahan': 'District 5', 'nagkaisang nayon': 'District 5', 'novaliches proper': 'District 5',
+  'pasong putik proper': 'District 5', 'san agustin': 'District 5', 'san bartolome': 'District 5', 'santa lucia': 'District 5',
+  'santa monica': 'District 5',
+
+  // District 6
+  'apolonio samson': 'District 6', 'baesa': 'District 6', 'balon-bato': 'District 6', 'culiat': 'District 6',
+  'new era': 'District 6', 'pasong tamo': 'District 6', 'sangandaan': 'District 6', 'sauyo': 'District 6',
+  'tandang sora': 'District 6', 'unang sigaw': 'District 6'
+};
+
+const getDistrictFromBarangay = (brgyName: string): string => {
+  if (!brgyName) return '';
+  const normalized = brgyName.trim().toLowerCase();
+  return QC_BARANGAY_DISTRICT_MAP[normalized] || '';
+};
+
 export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
   onBack,
   onAddApplication,
@@ -106,6 +236,9 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
   const [deceasedStreet, setDeceasedStreet] = useState<string>('');
   const [deceasedBarangay, setDeceasedBarangay] = useState<string>('');
 
+  const [funeralDistrict, setFuneralDistrict] = useState<string>('');
+  const [funeralHomeName, setFuneralHomeName] = useState<string>('');
+
   // Auto-calculate applicant age from DOB
   React.useEffect(() => {
     if (dob) {
@@ -124,17 +257,32 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
     setDeceasedAge(calcAge);
   }, [deceasedDob, deceasedDateOfDeath]);
 
-  // Auto sync address when "Same as applicant's address" is checked
+  // Auto sync / clear address when "Same as applicant's address" is checked / unchecked & detect district
   React.useEffect(() => {
     if (sameAsApplicantAddress) {
       setDeceasedHouseNo(houseNo);
       setDeceasedStreet(street);
       setDeceasedBarangay(barangay);
+      const detected = getDistrictFromBarangay(barangay);
+      if (detected) {
+        setFuneralDistrict(detected);
+      }
     }
   }, [sameAsApplicantAddress, houseNo, street, barangay]);
 
+  // Auto-detect district when deceasedBarangay changes
+  React.useEffect(() => {
+    if (deceasedBarangay) {
+      const detected = getDistrictFromBarangay(deceasedBarangay);
+      if (detected) {
+        setFuneralDistrict(detected);
+      }
+    }
+  }, [deceasedBarangay]);
+
   // Step 3 Form States
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File }>({});
+  const [uploadedDocData, setUploadedDocData] = useState<{ [key: string]: { name: string; size: string; type: string; dataUrl: string } }>({});
 
   // Step 4 Form States
   const [isCertified, setIsCertified] = useState<boolean>(false);
@@ -216,6 +364,19 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
         if (blob) {
           const file = new File([blob], `${activeCameraKey}_camera_photo.jpg`, { type: 'image/jpeg' });
           setUploadedFiles(prev => ({ ...prev, [activeCameraKey]: file }));
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setUploadedDocData(prev => ({
+              ...prev,
+              [activeCameraKey]: {
+                name: file.name,
+                size: `${(file.size / 1024).toFixed(1)} KB`,
+                type: file.type,
+                dataUrl: reader.result as string
+              }
+            }));
+          };
+          reader.readAsDataURL(file);
         }
         handleCloseCamera();
       }, 'image/jpeg', 0.9);
@@ -226,11 +387,29 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setUploadedFiles(prev => ({ ...prev, [reqKey]: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUploadedDocData(prev => ({
+          ...prev,
+          [reqKey]: {
+            name: file.name,
+            size: `${(file.size / 1024).toFixed(1)} KB`,
+            type: file.type,
+            dataUrl: reader.result as string
+          }
+        }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleRemoveFile = (reqKey: string) => {
     setUploadedFiles(prev => {
+      const copy = { ...prev };
+      delete copy[reqKey];
+      return copy;
+    });
+    setUploadedDocData(prev => {
       const copy = { ...prev };
       delete copy[reqKey];
       return copy;
@@ -246,8 +425,8 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
     const appDetails = {
       category: 'AICS Funeral & Burial Assistance Services',
       assistanceType: 'Funeral / Burial Aid',
-      hospitalFacility: selectedFuneralHome || 'Accredited Funeral Home Partner',
-      medicalCondition: `Burial Assistance Request (${selectedFuneralHome || 'Partner Funeral Parlor'})`,
+      hospitalFacility: funeralHomeName || selectedFuneralHome || 'Accredited Funeral Home Partner',
+      medicalCondition: `Burial Assistance Request (${funeralHomeName || selectedFuneralHome || 'Partner Funeral Parlor'})`,
 
       // Step 2 Applicant
       qcId,
@@ -271,23 +450,44 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
       isApplicantPatient: false,
       patientRelation: relationToDeceased || 'Deceased Family Member',
       patientName: deceasedName,
+      patientFirstName: deceasedFirstName,
+      patientMiddleName: deceasedMiddleName,
+      patientLastName: deceasedLastName,
+      patientSuffix: deceasedSuffix,
       patientGender: deceasedGender || 'N/A',
       patientDob: deceasedDob || 'N/A',
       patientAge: deceasedAge || 'N/A',
-      patientAddress: `Brgy. ${barangay || 'Bagong Silangan'}, Quezon City`,
+      patientAddress: [deceasedHouseNo, deceasedStreet, deceasedBarangay, 'Quezon City'].filter(Boolean).join(', ') || `Brgy. ${barangay || 'Bagong Silangan'}, Quezon City`,
+
+      // Funeral Assistance Specific Fields
+      funeralDistrict: funeralDistrict || 'District 2',
+      funeralHomeName: funeralHomeName || selectedFuneralHome || 'NIETO FUNERAL SERVICES',
+      selectedFuneralHome: selectedFuneralHome || funeralHomeName || 'NIETO FUNERAL SERVICES',
+      deceasedDateOfDeath,
+      deceasedCremationOrBurial,
+      burialLocationSite,
+      otherBurialLocation,
+      cremationLocationSite,
+      otherCremationLocation,
+      deceasedPlaceOfDeath,
+      deceasedDateOfBurial,
+      deceasedHouseNo,
+      deceasedStreet,
+      deceasedBarangay,
 
       // Step 3 Uploads
-      uploadedFiles: Object.keys(uploadedFiles).length > 0 ? Object.keys(uploadedFiles) : ['Death Certificate', 'Indigency Certificate', 'Funeral Contract', 'PhilSys ID']
+      uploadedFiles: Object.keys(uploadedFiles).length > 0 ? Object.keys(uploadedFiles) : ['Death Certificate', 'Indigency Certificate', 'Funeral Contract', 'PhilSys ID'],
+      uploadedDocData: uploadedDocData
     };
 
     const newApp: ApplicationRecord = {
       referenceNo: newRefNo,
       applicantName: fullName,
-      serviceName: `QC Funeral Assistance — Guarantee Letter (${selectedFuneralHome || 'Partner Funeral Parlor'})`,
+      serviceName: `QC Funeral Assistance — Guarantee Letter (${funeralHomeName || selectedFuneralHome || 'Partner Funeral Parlor'})`,
       category: 'AICS',
       assistanceType: 'Funeral / Burial Aid',
-      hospitalFacility: selectedFuneralHome || 'Accredited Funeral Home Partner',
-      medicalCondition: `Burial Assistance Request (${selectedFuneralHome || 'Partner Funeral Parlor'})`,
+      hospitalFacility: funeralHomeName || selectedFuneralHome || 'Accredited Funeral Home Partner',
+      medicalCondition: `Burial Assistance Request (${funeralHomeName || selectedFuneralHome || 'Partner Funeral Parlor'})`,
       dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
       status: 'Under Review',
       amountOrType: 'P25,000 Guarantee Voucher / Funeral Aid',
@@ -565,7 +765,7 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
                   onClick={() => handleNextStep(2)}
                   className={`px-8 py-3 rounded-xl font-extrabold text-xs tracking-wider uppercase transition-all ${
                     isStep1Complete
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white hover:scale-[1.02]'
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white'
                       : darkMode
                       ? 'bg-[#18243c] text-slate-500 cursor-not-allowed border border-slate-800'
                       : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
@@ -993,7 +1193,26 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
                     <input
                       type="checkbox"
                       checked={sameAsApplicantAddress}
-                      onChange={(e) => setSameAsApplicantAddress(e.target.checked)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSameAsApplicantAddress(checked);
+                        if (checked) {
+                          setDeceasedHouseNo(houseNo);
+                          setDeceasedStreet(street);
+                          setDeceasedBarangay(barangay);
+                          const detected = getDistrictFromBarangay(barangay);
+                          if (detected) {
+                            setFuneralDistrict(detected);
+                          }
+                        } else {
+                          // Clear auto-filled address & funeral fields when unchecked
+                          setDeceasedHouseNo('');
+                          setDeceasedStreet('');
+                          setDeceasedBarangay('');
+                          setFuneralDistrict('');
+                          setFuneralHomeName('');
+                        }
+                      }}
                       className={`w-4 h-4 text-blue-600 rounded ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
                     />
                     <span>Same as applicant's address</span>
@@ -1039,6 +1258,80 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
                     />
                   </div>
                 </div>
+
+                {/* Accredited Funeral Home Details Section */}
+                <div className={`mt-6 pt-5 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                  <div className="mb-4">
+                    <h4 className={`text-xs font-extrabold uppercase tracking-wider ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                      Accredited Funeral Home Details
+                    </h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {/* Funeral Home District Dropdown */}
+                    <div>
+                      <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                        Funeral Home District *
+                      </label>
+                      <select
+                        value={funeralDistrict}
+                        onChange={(e) => {
+                          setFuneralDistrict(e.target.value);
+                          setFuneralHomeName('');
+                        }}
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-medium ${
+                          darkMode
+                            ? 'bg-[#0f1c38] border border-slate-700 text-white'
+                            : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
+                        }`}
+                      >
+                        <option value="">Select District</option>
+                        <option value="District 1">District 1</option>
+                        <option value="District 2">District 2</option>
+                        <option value="District 3">District 3</option>
+                        <option value="District 4">District 4</option>
+                        <option value="District 5">District 5</option>
+                        <option value="District 6">District 6</option>
+                      </select>
+                      {funeralDistrict && (
+                        <span className="text-[10px] text-blue-400 mt-1 block font-semibold">
+                          ✓ Auto-detected / Selected: {funeralDistrict}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Accredited Funeral Home Dropdown */}
+                    <div>
+                      <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                        Accredited Funeral Home *
+                      </label>
+                      <select
+                        value={funeralHomeName}
+                        onChange={(e) => setFuneralHomeName(e.target.value)}
+                        disabled={!funeralDistrict}
+                        className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-medium ${
+                          !funeralDistrict
+                            ? darkMode
+                              ? 'bg-slate-900/50 border border-slate-800 text-slate-500 cursor-not-allowed'
+                              : 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed'
+                            : darkMode
+                            ? 'bg-[#0f1c38] border border-slate-700 text-white'
+                            : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
+                        }`}
+                      >
+                        <option value="">
+                          {funeralDistrict ? 'Select Funeral Home' : 'Please select a District first'}
+                        </option>
+                        {funeralDistrict &&
+                          ACCREDITED_FUNERAL_HOMES[funeralDistrict]?.map((home) => (
+                            <option key={home} value={home}>
+                              {home}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Bottom Navigation Buttons */}
@@ -1075,14 +1368,7 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
               </div>
 
               <div className="space-y-4">
-                {[
-                  { key: 'referral_form', title: 'REFERRAL FORM MULA SA BARANGAY, HOSPITAL O FUNERAL *' },
-                  { key: 'death_cert', title: 'CERTIFIED TRUE COPY NG DEATH CERTIFICATE *' },
-                  { key: 'funeral_contract', title: 'NOTARIZED FUNERAL CONTRACT (ORIHINAL NA KOPYA; NAKATALA ANG MGA SERBISYO AT HALAGA) *' },
-                  { key: 'indigency', title: 'CERTIFICATE OF INDIGENCY (ORIHINAL NA KOPYA; PARA SA FUNERAL/BURIAL ASSISTANCE) *' },
-                  { key: 'government_id', title: 'ANUMANG BALIDONG GOVERNMENT ID (MAS MAINAM KUNG QC ID) *' },
-                  { key: 'deceased_id', title: 'PHOTOCOPY NG BALIDONG ID NG NAMATAY, MAS MAINAM KUNG QCID *' },
-                ].map((doc) => {
+                {burialDocRequirements.map((doc) => {
                   const uploaded = uploadedFiles[doc.key];
                   const previewUrl = uploaded ? URL.createObjectURL(uploaded) : null;
                   return (
@@ -1099,14 +1385,19 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
                       }`}
                     >
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs font-extrabold tracking-wide block uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-xs font-extrabold tracking-wide uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                             {doc.title}
                           </span>
                           {uploaded && (
                             <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-500/20 shrink-0" />
                           )}
                         </div>
+                        {doc.subtitle && (
+                          <p className={`text-[11px] font-medium mt-1 ${darkMode ? 'text-blue-300/90' : 'text-blue-700'}`}>
+                            • {doc.subtitle}
+                          </p>
+                        )}
                         <span className={`text-[11px] block mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                           Allowed file types: JPG, JPEG, PNG, WEBP (or capture using Camera)
                         </span>
@@ -1403,6 +1694,14 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
                           <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>BARANGAY</span>
                           <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{deceasedBarangay || 'N/A'}</span>
                         </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FUNERAL HOME DISTRICT</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{funeralDistrict || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>ACCREDITED FUNERAL HOME</span>
+                          <span className="font-extrabold text-amber-500">{funeralHomeName || 'N/A'}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1425,24 +1724,22 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
                     </button>
                   </div>
                   <div className="p-5 space-y-4">
-                    {[
-                      { key: 'referral_form', title: 'REFERRAL FORM MULA SA BARANGAY, HOSPITAL O FUNERAL *' },
-                      { key: 'death_cert', title: 'CERTIFIED TRUE COPY NG DEATH CERTIFICATE *' },
-                      { key: 'funeral_contract', title: 'NOTARIZED FUNERAL CONTRACT (ORIHINAL NA KOPYA; NAKATALA ANG MGA SERBISYO AT HALAGA) *' },
-                      { key: 'indigency', title: 'CERTIFICATE OF INDIGENCY (ORIHINAL NA KOPYA; PARA SA FUNERAL/BURIAL ASSISTANCE) *' },
-                      { key: 'government_id', title: 'ANUMANG BALIDONG GOVERNMENT ID (MAS MAINAM KUNG QC ID) *' },
-                      { key: 'deceased_id', title: 'PHOTOCOPY NG BALIDONG ID NG NAMATAY, MAS MAINAM KUNG QCID *' },
-                    ].map((doc) => {
+                    {burialDocRequirements.map((doc) => {
                       const file = uploadedFiles[doc.key];
                       const previewUrl = file ? URL.createObjectURL(file) : null;
                       return (
                         <div key={doc.key} className="space-y-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className={`text-xs font-extrabold uppercase tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                               {doc.title}
                             </span>
                             {file && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
                           </div>
+                          {doc.subtitle && (
+                            <p className={`text-[11px] font-medium ${darkMode ? 'text-blue-300/80' : 'text-blue-600'}`}>
+                              • {doc.subtitle}
+                            </p>
+                          )}
                           {previewUrl ? (
                             <div className="pt-1">
                               <div className={`w-36 border rounded-2xl p-2.5 flex flex-col items-center shadow-lg ${
@@ -1490,7 +1787,7 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-xl hover:scale-[1.02] transition-all"
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-xl transition-all"
                 >
                   SUBMIT
                 </button>
@@ -1518,16 +1815,30 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
             
             <div className={`space-y-3 text-xs max-h-[60vh] overflow-y-auto pr-2 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
               <p className="leading-relaxed">
-                The Funeral and Burial Assistance Program under Ordinance 2865 S-2019 provides financial aid through a Certificate of Guarantee to accredited partner funeral homes, covering service packages up to Php 25,000.
+                The Funeral and Burial Assistance Program under Ordinance 2865 S-2019 provides financial aid through a Guarantee Letter (GL) to accredited partner funeral homes, covering service packages up to Php 25,000.
               </p>
               <div className="space-y-2 pt-2">
                 <span className={`font-bold uppercase tracking-wider block ${darkMode ? 'text-white' : 'text-slate-900'}`}>Standard Requirements:</span>
-                <ul className={`list-disc list-inside space-y-1.5 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                  <li>Registered Death Certificate (Signed by City Civil Registrar or Physician)</li>
-                  <li>Official Funeral Contract / Statement of Account from Funeral Home</li>
-                  <li>Barangay Certificate of Indigency of Applicant</li>
-                  <li>Valid Government Photo ID of Applicant</li>
-                  <li>Proof of relationship to deceased (Birth/Marriage Certificate)</li>
+                <ul className={`list-disc list-inside space-y-2 ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                  <li>
+                    <strong>Referral Form (optional) – original copy</strong>
+                    <span className="block text-[11px] text-blue-300/80 ml-4 font-normal">• Maaaring manggaling sa Barangay, hospital, o accredited partner funeral service provider.</span>
+                  </li>
+                  <li>
+                    <strong>Death Certificate – original Certified True Copy</strong>
+                  </li>
+                  <li>
+                    <strong>Notarized Funeral Contract – original copy</strong>
+                    <span className="block text-[11px] text-blue-300/80 ml-4 font-normal">• Mula sa QC-accredited/partner funeral home.</span>
+                  </li>
+                  <li>
+                    <strong>Barangay Certificate of Indigency – original copy</strong>
+                    <span className="block text-[11px] text-blue-300/80 ml-4 font-normal">• Dapat ang purpose ay “Burial/Funeral Assistance.”</span>
+                  </li>
+                  <li>
+                    <strong>Valid ID ng informant/nearest kin</strong>
+                    <span className="block text-[11px] text-blue-300/80 ml-4 font-normal">• Preferably QC ID.</span>
+                  </li>
                 </ul>
               </div>
             </div>

@@ -92,6 +92,23 @@ export const initDB = async () => {
       ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_street_name VARCHAR(150);
       ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_barangay VARCHAR(150);
       ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS nationality VARCHAR(50) DEFAULT 'FILIPINO';
+      
+      -- Funeral Assistance Explicit DB Columns (Step 1 & Step 2)
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS deceased_date_of_death VARCHAR(50);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS deceased_cremation_or_burial VARCHAR(50);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS deceased_place_of_death TEXT;
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS deceased_date_of_burial VARCHAR(50);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS burial_location_site TEXT;
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS cremation_location_site TEXT;
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS funeral_district VARCHAR(50);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS funeral_home_name VARCHAR(255);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS initial_funeral_choice VARCHAR(255);
+      
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS scheduled_payout_date VARCHAR(50);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS scheduled_payout_time VARCHAR(50);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS appointment_date VARCHAR(50);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS appointment_time VARCHAR(50);
+      
       ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS details JSONB;
 
       DROP TABLE IF EXISTS aics_documents CASCADE;

@@ -37,7 +37,7 @@ interface AppointmentEntry {
 interface AdminAppointmentViewProps {
   darkMode?: boolean;
   applications?: ApplicationRecord[];
-  onUpdateStatus?: (refNo: string, newStatus: ApplicationRecord['status']) => void;
+  onUpdateStatus?: (refNo: string, newStatus: ApplicationRecord['status'], extraFields?: Record<string, any>) => void;
 }
 
 export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({ 
@@ -97,11 +97,30 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
     return timeStr;
   };
 
+  const getCurrentTimeString = (): string => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  const getCurrentDateString = (): string => {
+    const now = new Date();
+    return now.toISOString().split('T')[0];
+  };
+
   // Form state for scheduling modal
-  const [schedDate, setSchedDate] = useState<string>('');
-  const [schedTime, setSchedTime] = useState<string>('09:00');
+  const [schedDate, setSchedDate] = useState<string>(getCurrentDateString());
+  const [schedTime, setSchedTime] = useState<string>(getCurrentTimeString());
   const [schedVenue] = useState<string>('SSDD Medical Assistance Desk, QC Hall');
   const [schedNotes] = useState<string>('Please bring original Statement of Account (SOA) and valid ID.');
+
+  useEffect(() => {
+    if (schedulingApp) {
+      setSchedDate(getCurrentDateString());
+      setSchedTime(getCurrentTimeString());
+    }
+  }, [schedulingApp]);
 
   // Fetch appointments from PostgreSQL Backend API on mount
   useEffect(() => {
@@ -242,7 +261,18 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
     }
 
     setDbAppointments((prev) => [newAppt, ...prev.filter((a) => a.referenceNo !== newAppt.referenceNo)]);
-    if (onUpdateStatus) onUpdateStatus(schedulingApp.referenceNo, 'Interview Scheduled');
+    if (onUpdateStatus) {
+      onUpdateStatus(schedulingApp.referenceNo, 'Interview Scheduled', {
+        appointmentDate: schedDate,
+        appointmentTime: schedTime,
+        appointmentDetails: {
+          appointmentDate: schedDate,
+          appointmentTime: schedTime,
+          venue: schedVenue,
+          notes: schedNotes
+        }
+      });
+    }
     setSchedulingApp(null);
   };
 
@@ -357,7 +387,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                   {filteredList.map((app) => {
                     const name = (app as any).applicantName || app.details?.applicantName || 'Juan Dela Cruz';
                     const appt = app.appointmentDetails;
-                    const isMedical = (app.serviceName.toLowerCase().includes('medical bill') || app.serviceName.toLowerCase().includes('hospital') || app.assistanceType?.toLowerCase().includes('medical bill')) && !app.serviceName.toLowerCase().includes('medicine') && !(app.assistanceType || '').toLowerCase().includes('medicine');
+                    const isGLPrintable = (app.serviceName.toLowerCase().includes('medical bill') || app.serviceName.toLowerCase().includes('hospital') || app.assistanceType?.toLowerCase().includes('medical bill') || app.serviceName.toLowerCase().includes('funeral') || app.serviceName.toLowerCase().includes('burial') || app.referenceNo.includes('FUN')) && !app.serviceName.toLowerCase().includes('medicine') && !(app.assistanceType || '').toLowerCase().includes('medicine');
 
                     return (
                       <tr key={app.referenceNo} className="hover:bg-[#142036] transition-colors">
@@ -433,9 +463,9 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                             <div className="inline-flex items-center justify-end gap-2 whitespace-nowrap">
                               <span className="text-emerald-400 font-extrabold text-xs inline-flex items-center gap-1 bg-emerald-950/60 border border-emerald-700/40 px-3 py-1.5 rounded-xl whitespace-nowrap">
                                 <Check className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>{app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed' ? 'Released' : 'Approved'}</span>
+                                <span>Approved</span>
                               </span>
-                              {isMedical && (
+                              {isGLPrintable && (
                                 <button
                                   type="button"
                                   onClick={() => setPrintingGL(app)}
@@ -493,9 +523,9 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
       </div>
 
       {/* SCHEDULING MODAL */}
-      {schedulingApp && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0f172a] border border-slate-700/80 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+      {schedulingApp && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-[#030712]/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#0f172a] border border-slate-700/80 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 font-sans">
             <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-[#131f37]">
               <div>
                 <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider">{schedulingApp.referenceNo}</span>
@@ -584,13 +614,14 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* SOCIAL WORKER PHYSICAL ASSESSMENT & DECISION MODAL */}
-      {assessmentApp && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0f172a] border border-slate-700/80 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95">
+      {assessmentApp && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-[#030712]/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#0f172a] border border-slate-700/80 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 font-sans">
             <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-[#131f37]">
               <div>
                 <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider">{assessmentApp.referenceNo}</span>
@@ -644,16 +675,24 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                   Reject
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onUpdateStatus) onUpdateStatus(assessmentApp.referenceNo, 'Referred to Partner Agency');
-                    setAssessmentApp(null);
-                  }}
-                  className="px-4 py-2 bg-amber-950/70 hover:bg-amber-900 border border-amber-700/60 text-amber-300 font-bold text-xs rounded-xl transition-colors"
-                >
-                  Refer to Agency
-                </button>
+                {!(
+                  (assessmentApp.serviceName || '').toLowerCase().includes('funeral') ||
+                  (assessmentApp.serviceName || '').toLowerCase().includes('burial') ||
+                  (assessmentApp.referenceNo || '').includes('FUN') ||
+                  ((assessmentApp as any).category || '').toLowerCase().includes('funeral') ||
+                  ((assessmentApp as any).assistanceType || '').toLowerCase().includes('funeral')
+                ) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onUpdateStatus) onUpdateStatus(assessmentApp.referenceNo, 'Referred to Partner Agency');
+                      setAssessmentApp(null);
+                    }}
+                    className="px-4 py-2 bg-amber-950/70 hover:bg-amber-900 border border-amber-700/60 text-amber-300 font-bold text-xs rounded-xl transition-colors"
+                  >
+                    Refer to Agency
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -668,12 +707,13 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* PRINTABLE OFFICIAL GUARANTEE LETTER (GL) MODAL PORTAL */}
       {printingGL && createPortal(
-        <div id="printable-gl-portal" className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+        <div id="printable-gl-portal" className="fixed inset-0 z-[99999] bg-[#030712]/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
           <style>{`
             @media print {
               #root, nav, sidebar, header, .no-print {
@@ -717,115 +757,232 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
           `}</style>
 
           <div id="printable-gl-card" className="bg-white text-slate-900 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl p-8 font-sans border border-slate-300">
-            {/* HEADER */}
-            <div className="text-center space-y-1 border-b pb-4 border-slate-300">
-              <div className="flex items-center justify-center gap-3">
-                <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-12 h-12 object-contain" />
-                <div>
-                  <h2 className="text-base font-black tracking-tight uppercase text-slate-900">REPUBLIC OF THE PHILIPPINES</h2>
-                  <h3 className="text-xs font-bold text-slate-700">QUEZON CITY GOVERNMENT</h3>
-                  <h4 className="text-[11px] font-extrabold text-blue-900 uppercase">SOCIAL SERVICES & DEVELOPMENT DEPARTMENT (SSDD)</h4>
-                </div>
-              </div>
-              <div className="pt-2">
-                <span className="inline-block px-4 py-1 bg-blue-50 border border-blue-300 text-blue-950 text-xs font-black rounded-lg tracking-widest uppercase">
-                  OFFICIAL GUARANTEE LETTER (GL)
-                </span>
-              </div>
-            </div>
-
-            {/* CONTROL NO & DATE */}
-            <div className="flex justify-between items-center py-3 border-b border-slate-200 text-xs font-mono">
+            {[
+              printingGL.serviceName,
+              printingGL.assistanceType,
+              printingGL.category,
+              (printingGL.details as any)?.category,
+              (printingGL.details as any)?.assistanceType,
+              (printingGL.details as any)?.serviceName
+            ].some(str => typeof str === 'string' && (str.toLowerCase().includes('funeral') || str.toLowerCase().includes('burial'))) ? (
+              /* OFFICIAL CERTIFICATE OF GUARANTEE FOR FUNERAL ASSISTANCE */
               <div>
-                <span className="text-slate-500 font-bold block text-[10px]">GL CONTROL NO.:</span>
-                <span className="font-black text-blue-900 text-sm">GL-2026-99210</span>
-              </div>
-              <div className="text-right">
-                <span className="text-slate-500 font-bold block text-[10px]">DATE ISSUED:</span>
-                <span className="font-bold text-slate-800">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-              </div>
-            </div>
-
-            {/* DETAILS CONTENT */}
-            <div className="py-4 space-y-3.5 text-xs">
-              {/* PATIENT INFORMATION */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1 print:bg-white print:border-slate-300">
-                <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-wider">PATIENT INFORMATION (BENEFICIARY):</h4>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-slate-500 text-[10px] block uppercase font-bold">• Patient / Applicant Name:</span>
-                    <span className="font-extrabold text-slate-900 text-sm">{(printingGL as any).applicantName || printingGL.details?.applicantName || 'Jefferson Fernando Lee'}</span>
+                {/* HEADER */}
+                <div className="text-center space-y-1 border-b pb-4 border-slate-300">
+                  <div className="relative flex items-center justify-center min-h-[56px] py-1">
+                    <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-14 h-14 object-contain absolute left-0 top-0" />
+                    <div className="text-center w-full px-16">
+                      <h2 className="text-base font-black tracking-tight uppercase text-slate-900">REPUBLIC OF THE PHILIPPINES</h2>
+                      <h3 className="text-xs font-bold text-slate-700">QUEZON CITY GOVERNMENT</h3>
+                      <h4 className="text-[11px] font-extrabold text-blue-900 uppercase">SOCIAL SERVICES AND DEVELOPMENT DEPARTMENT (SSDD)</h4>
+                      <p className="text-[10px] text-slate-500 font-medium">City Hall Compound, Elliptical Road, Quezon City</p>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block uppercase font-bold">• Control / Reference No:</span>
-                    <span className="font-bold font-mono text-blue-900">{printingGL.referenceNo}</span>
+                  <div className="pt-3">
+                    <h1 className="text-base font-black text-slate-900 tracking-wider uppercase">CERTIFICATE OF GUARANTEE</h1>
+                    <h2 className="text-xs font-extrabold text-blue-900 uppercase">(GUARANTEE LETTER)</h2>
                   </div>
                 </div>
-              </div>
 
-              {/* ASSISTANCE DETAILS */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2 print:bg-white print:border-slate-300">
-                <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-wider">ASSISTANCE DETAILS:</h4>
-                <p className="text-[11px] text-slate-600 italic">This patient is hereby approved to receive assistance for:</p>
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                {/* CONTROL NO & DATE */}
+                <div className="flex justify-between items-center py-3 border-b border-slate-200 text-xs font-mono">
                   <div>
-                    <span className="text-slate-500 text-[10px] block uppercase font-bold">• TYPE OF ASSISTANCE:</span>
-                    <span className="font-extrabold text-blue-900">{printingGL.serviceName || 'Medical Bill Assistance'}</span>
+                    <span className="text-slate-500 font-bold block text-[10px]">CONTROL NO. :</span>
+                    <span className="font-black text-blue-900 text-sm">
+                      {printingGL.referenceNo?.replace('REF-', 'QC-GL-2026-FUN-') || 'QC-GL-2026-FUN-8842'}
+                    </span>
                   </div>
-                  {!(printingGL.serviceName || '').toLowerCase().includes('medicine') && (
+                  <div className="text-right">
+                    <span className="text-slate-500 font-bold block text-[10px]">DATE:</span>
+                    <span className="font-bold text-slate-800">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                </div>
+
+                {/* PROGRAM & ORDINANCE */}
+                <div className="py-2.5 px-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1 my-3">
+                  <p><span className="font-bold text-slate-600 uppercase text-[10px]">PROGRAM     :</span> <span className="font-extrabold text-slate-900">QC AICS - Burial & Funeral Assistance Program</span></p>
+                  <p><span className="font-bold text-slate-600 uppercase text-[10px]">ORDINANCE   :</span> <span className="font-semibold text-slate-800">QC Ordinance No. SP-2865, S-2019</span></p>
+                </div>
+
+                {/* TO THE MANAGEMENT OF */}
+                <div className="py-2 text-xs space-y-1">
+                  <p className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">TO THE MANAGEMENT OF:</p>
+                  <div className="pl-4 border-l-2 border-blue-600 space-y-0.5">
+                    <p><span className="font-bold text-slate-600">Partner Funeral Home :</span> <span className="font-extrabold text-slate-900 uppercase">{(printingGL.details as any)?.funeralHomeName || (printingGL.details as any)?.hospital || printingGL.hospitalFacility || 'NIETO FUNERAL SERVICES'}</span></p>
+                    <p><span className="font-bold text-slate-600">Address              :</span> <span className="font-medium text-slate-800">{(printingGL.details as any)?.funeralDistrict ? `${(printingGL.details as any)?.funeralDistrict}, Quezon City` : 'Novaliches, Quezon City, Metro Manila'}</span></p>
+                  </div>
+                </div>
+
+                <div className="py-2 text-xs leading-relaxed">
+                  <p className="font-bold text-slate-900 mb-2">GREETINGS:</p>
+                  <p className="text-slate-700 text-justify">
+                    This is to certify that the Quezon City Government, through the Social Services and Development Department (SSDD), guarantees financial assistance for the funeral and burial services rendered to:
+                  </p>
+                </div>
+
+                {/* BENEFICIARY DETAILS */}
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1.5 my-2 text-xs font-mono">
+                  <p><span className="font-bold text-slate-600 uppercase">• NAME OF DECEASED     :</span> <span className="font-black text-slate-900">{(printingGL.details as any)?.patientFirstName ? `${(printingGL.details as any)?.patientFirstName} ${(printingGL.details as any)?.patientMiddleName || ''} ${(printingGL.details as any)?.patientLastName}`.toUpperCase() : 'MARIO FERNANDO LEE'}</span></p>
+                  <p><span className="font-bold text-slate-600 uppercase">• NAME OF APPLICANT    :</span> <span className="font-extrabold text-slate-900">{(printingGL.applicantName || 'JEFFERSON FERNANDO LEE').toUpperCase()} ({(printingGL.details as any)?.patientRelationship || 'Son / Nearest Kin'})</span></p>
+                  <p><span className="font-bold text-slate-600 uppercase">• ADDRESS              :</span> <span className="font-medium text-slate-900">{(printingGL.details as any)?.houseNo || '176'} {(printingGL.details as any)?.streetName || '23'}, Brgy. {(printingGL.details as any)?.barangay || 'Bagong Silangan'}, Quezon City</span></p>
+                </div>
+
+                {/* APPROVED FINANCIAL ASSISTANCE */}
+                <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl space-y-1.5 my-3">
+                  <h4 className="text-[11px] font-black uppercase text-blue-900 tracking-wider text-center border-b border-blue-200 pb-1">APPROVED FINANCIAL ASSISTANCE</h4>
+                  <div className="space-y-1 text-xs">
+                    <p><span className="font-bold text-slate-700">• APPROVED AMOUNT      :</span> <span className="font-black text-sm text-blue-950">₱ _____________________________</span> <span className="text-[10px] text-slate-500 block italic pl-4">(Amount to be assigned after SSDD Social Worker Classification & Assessment)</span></p>
+                    <p><span className="font-bold text-slate-700">• ASSISTANCE COVERAGE  :</span> <span className="font-medium text-slate-800">Standard Funeral Casket, Body Preparation, Embalming, Chapel Viewing, Hearse Transport & Burial Service Package (Up to ₱25,000 maximum)</span></p>
+                  </div>
+                </div>
+
+                {/* TERMS AND CONDITIONS */}
+                <div className="text-[10px] space-y-1 my-3 text-slate-700">
+                  <p className="font-bold uppercase text-slate-900 text-[11px]">TERMS AND CONDITIONS:</p>
+                  <ol className="list-decimal pl-4 space-y-0.5 leading-tight">
+                    <li>This Certificate of Guarantee (GL) is non-transferable and shall be honored ONLY by accredited partner funeral service providers of Quezon City.</li>
+                    <li>The accredited funeral service provider shall deduct the approved guarantee amount specified above from the total billing invoice of the beneficiary.</li>
+                    <li>For billing reimbursement, the service provider must submit the following to the SSDD Main Office:
+                      <ul className="list-alpha pl-4 font-mono text-[9px] text-slate-600">
+                        <li>a. Original Copy of this Certificate of Guarantee (GL)</li>
+                        <li>b. Statement of Account / Official Funeral Contract</li>
+                        <li>c. Certified True Copy of Registered Death Certificate</li>
+                        <li>d. Photocopy of Valid QC ID of the Applicant / Informant</li>
+                      </ul>
+                    </li>
+                  </ol>
+                </div>
+
+                {/* SIGNATORIES */}
+                <div className="grid grid-cols-2 gap-8 pt-12 text-xs">
+                  <div>
+                    <div className="border-b border-slate-800 w-full mb-1"></div>
+                    <span className="text-[9px] text-slate-500 block font-bold text-center">Quezon City SSDD</span>
+                  </div>
+                  <div>
+                    <div className="border-b border-slate-800 w-full mb-1"></div>
+                    <span className="text-[9px] text-slate-500 block font-bold text-center">Social Services and Development Department</span>
+                  </div>
+                </div>
+
+                <div className="text-center pt-4 border-t border-slate-200 mt-4">
+                  <p className="text-[10px] font-bold italic text-slate-600">"Faithful Service for the Citizens of Quezon City"</p>
+                </div>
+              </div>
+            ) : (
+              /* STANDARD MEDICAL GUARANTEE LETTER */
+              <div>
+                {/* HEADER */}
+                <div className="text-center space-y-1 border-b pb-4 border-slate-300">
+                  <div className="flex items-center justify-center gap-3">
+                    <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-12 h-12 object-contain" />
                     <div>
-                      <span className="text-slate-500 text-[10px] block uppercase font-bold">• MEDICAL CONDITION / DIAGNOSIS:</span>
+                      <h2 className="text-base font-black tracking-tight uppercase text-slate-900">REPUBLIC OF THE PHILIPPINES</h2>
+                      <h3 className="text-xs font-bold text-slate-700">QUEZON CITY GOVERNMENT</h3>
+                      <h4 className="text-[11px] font-extrabold text-blue-900 uppercase">SOCIAL SERVICES & DEVELOPMENT DEPARTMENT (SSDD)</h4>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <span className="inline-block px-4 py-1 bg-blue-50 border border-blue-300 text-blue-950 text-xs font-black rounded-lg tracking-widest uppercase">
+                      OFFICIAL GUARANTEE LETTER (GL)
+                    </span>
+                  </div>
+                </div>
+
+                {/* CONTROL NO & DATE */}
+                <div className="flex justify-between items-center py-3 border-b border-slate-200 text-xs font-mono">
+                  <div>
+                    <span className="text-slate-500 font-bold block text-[10px]">GL CONTROL NO.:</span>
+                    <span className="font-black text-blue-900 text-sm">GL-2026-99210</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-slate-500 font-bold block text-[10px]">DATE ISSUED:</span>
+                    <span className="font-bold text-slate-800">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                </div>
+
+                {/* DETAILS CONTENT */}
+                <div className="py-4 space-y-3.5 text-xs">
+                  {/* PATIENT INFORMATION */}
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1 print:bg-white print:border-slate-300">
+                    <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-wider">PATIENT INFORMATION (BENEFICIARY):</h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-slate-500 text-[10px] block uppercase font-bold">• Patient / Applicant Name:</span>
+                        <span className="font-extrabold text-slate-900 text-sm">{(printingGL as any).applicantName || printingGL.details?.applicantName || 'Jefferson Fernando Lee'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 text-[10px] block uppercase font-bold">• Control / Reference No:</span>
+                        <span className="font-bold font-mono text-blue-900">{printingGL.referenceNo}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ASSISTANCE DETAILS */}
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2 print:bg-white print:border-slate-300">
+                    <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-wider">ASSISTANCE DETAILS:</h4>
+                    <p className="text-[11px] text-slate-600 italic">This patient is hereby approved to receive assistance for:</p>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <span className="text-slate-500 text-[10px] block uppercase font-bold">• TYPE OF ASSISTANCE:</span>
+                        <span className="font-extrabold text-blue-900">{printingGL.serviceName || 'Medical Bill Assistance'}</span>
+                      </div>
+                      {!(printingGL.serviceName || '').toLowerCase().includes('medicine') && (
+                        <div>
+                          <span className="text-slate-500 text-[10px] block uppercase font-bold">• MEDICAL CONDITION / DIAGNOSIS:</span>
+                          <span className="font-extrabold text-slate-900">
+                            {(printingGL.details as any)?.medicalCondition || 
+                             (printingGL.details as any)?.condition || 
+                             (printingGL.details as any)?.reason || 
+                             (printingGL.details as any)?.diagnosis || 
+                             (printingGL.details as any)?.medicalDetails || 
+                             'Medical Condition / Confinement'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* AMOUNT OF ASSISTANCE */}
+                  <div className="p-3.5 bg-amber-50/60 border border-amber-200 rounded-xl space-y-1.5 print:bg-white print:border-slate-300">
+                    <h4 className="text-[11px] font-black uppercase text-amber-900 tracking-wider">AMOUNT OF ASSISTANCE:</h4>
+                    <div className="space-y-1 font-mono text-xs">
+                      <p><span className="font-bold">• Amount in Words:</span> _______________________________________________________</p>
+                      <p><span className="font-bold">• Amount in Figures:</span> <span className="font-black text-sm text-slate-900">₱ __________________</span></p>
+                    </div>
+                  </div>
+
+                  {/* SERVICE PROVIDER DETAILS */}
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1 print:bg-white print:border-slate-300">
+                    <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-wider">SERVICE PROVIDER DETAILS:</h4>
+                    <div>
+                      <span className="text-slate-500 text-[10px] block uppercase font-bold">• ACCREDITED PARTNER HOSPITAL / FACILITY:</span>
                       <span className="font-extrabold text-slate-900">
-                        {(printingGL.details as any)?.medicalCondition || 
-                         (printingGL.details as any)?.condition || 
-                         (printingGL.details as any)?.reason || 
-                         (printingGL.details as any)?.diagnosis || 
-                         (printingGL.details as any)?.medicalDetails || 
-                         'Medical Condition / Confinement'}
+                        {(printingGL.details as any)?.hospital || 
+                         (printingGL.details as any)?.healthFacility || 
+                         (printingGL.details as any)?.facility || 
+                         (printingGL.details as any)?.hospitalName || 
+                         'East Avenue Medical Center'}
                       </span>
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              {/* AMOUNT OF ASSISTANCE */}
-              <div className="p-3.5 bg-amber-50/60 border border-amber-200 rounded-xl space-y-1.5 print:bg-white print:border-slate-300">
-                <h4 className="text-[11px] font-black uppercase text-amber-900 tracking-wider">AMOUNT OF ASSISTANCE:</h4>
-                <div className="space-y-1 font-mono text-xs">
-                  <p><span className="font-bold">• Amount in Words:</span> _______________________________________________________</p>
-                  <p><span className="font-bold">• Amount in Figures:</span> <span className="font-black text-sm text-slate-900">₱ __________________</span></p>
+                  {/* SIGNATORIES */}
+                  <div className="grid grid-cols-2 gap-8 pt-10 text-center text-xs">
+                    <div>
+                      <div className="border-b border-slate-800 w-full mb-1.5"></div>
+                      <div className="font-medium text-slate-800 text-xs">Maria Santos, RSW</div>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">Prepared and Certified by (Social Worker)</span>
+                    </div>
+                    <div>
+                      <div className="border-b border-slate-800 w-full mb-1.5"></div>
+                      <div className="font-medium text-slate-800 text-xs">SSDD Department Head</div>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">Approved by (Authorized Signatory)</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              {/* SERVICE PROVIDER DETAILS */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1 print:bg-white print:border-slate-300">
-                <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-wider">SERVICE PROVIDER DETAILS:</h4>
-                <div>
-                  <span className="text-slate-500 text-[10px] block uppercase font-bold">• ACCREDITED PARTNER HOSPITAL / FACILITY:</span>
-                  <span className="font-extrabold text-slate-900">
-                    {(printingGL.details as any)?.hospital || 
-                     (printingGL.details as any)?.healthFacility || 
-                     (printingGL.details as any)?.facility || 
-                     (printingGL.details as any)?.hospitalName || 
-                     'East Avenue Medical Center'}
-                  </span>
-                </div>
-              </div>
-
-              {/* SIGNATORIES */}
-              <div className="grid grid-cols-2 gap-8 pt-10 text-center text-xs">
-                <div>
-                  <div className="border-b border-slate-800 w-full mb-1.5"></div>
-                  <div className="font-medium text-slate-800 text-xs">Maria Santos, RSW</div>
-                  <span className="text-[10px] text-slate-500 block mt-0.5">Prepared and Certified by (Social Worker)</span>
-                </div>
-                <div>
-                  <div className="border-b border-slate-800 w-full mb-1.5"></div>
-                  <div className="font-medium text-slate-800 text-xs">SSDD Department Head</div>
-                  <span className="text-[10px] text-slate-500 block mt-0.5">Approved by (Authorized Signatory)</span>
-                </div>
-              </div>
-            </div>
+            )}
 
             {/* FOOTER BAR (HIDDEN IN PRINT) */}
             <div className="pt-4 border-t border-slate-200 flex justify-end items-center gap-2 no-print">

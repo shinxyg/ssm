@@ -332,16 +332,38 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
                   <span>ASSISTANCE CATEGORY & DETAILS</span>
                   <span className="text-[9px] font-mono text-slate-400">INPUTTED BY USER</span>
                 </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div>
                     <span className="text-slate-400 text-[10px] font-semibold uppercase">Category / Program</span>
                     <div className="font-extrabold text-white mt-0.5">{selectedApp.details?.category || selectedApp.category || 'AICS Assistance'}</div>
                   </div>
                   <div>
                     <span className="text-slate-400 text-[10px] font-semibold uppercase">Assistance Type</span>
-                    <div className="font-extrabold text-blue-300 mt-0.5">{selectedApp.details?.assistanceType || selectedApp.assistanceType || selectedApp.serviceName}</div>
+                    <div className="font-extrabold text-white mt-0.5">{selectedApp.details?.assistanceType || selectedApp.assistanceType || selectedApp.serviceName}</div>
                   </div>
-                  {!(
+                  {[
+                    selectedApp.serviceName,
+                    selectedApp.assistanceType,
+                    selectedApp.category,
+                    selectedApp.details?.category,
+                    selectedApp.details?.assistanceType,
+                    selectedApp.details?.serviceName
+                  ].some(str => typeof str === 'string' && (str.toLowerCase().includes('funeral') || str.toLowerCase().includes('burial'))) ? (
+                    <>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase">Relation to Deceased</span>
+                        <div className="font-bold text-white mt-0.5">
+                          {selectedApp.details?.patientRelation || selectedApp.details?.relationToDeceased || 'Sibling'}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase">Burial / Funeral Details</span>
+                        <div className="font-medium text-slate-300 mt-0.5">
+                          {selectedApp.details?.medicalCondition || selectedApp.medicalCondition || 'Burial Assistance Request'}
+                        </div>
+                      </div>
+                    </>
+                  ) : !(
                     (selectedApp.details?.assistanceType || selectedApp.assistanceType || selectedApp.serviceName || '').toLowerCase().includes('medicine')
                   ) && (
                     <>
@@ -362,7 +384,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
                 </div>
               </div>
 
-              {/* STEP 2: APPLICANT & PATIENT PERSONAL INFORMATION (HINIMAY / INDIVIDUAL FIELDS) */}
+              {/* STEP 2: APPLICANT & PATIENT/DECEASED PERSONAL INFORMATION */}
               <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-4">
                 <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
                   <span>APPLICANT PERSONAL INFORMATION (INDIVIDUAL FIELDS)</span>
@@ -426,76 +448,181 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
                   </div>
                 </div>
 
-                {/* Patient Sub-Card (Hinimay / Individual Fields) */}
-                <div className="mt-3 pt-3 border-t border-slate-800/80 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-200 uppercase tracking-wider block">PATIENT BENEFICIARY DETAILS (INDIVIDUAL FIELDS):</span>
-                    <span className="text-[9px] font-bold text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-700 font-mono">
-                      {selectedApp.details?.isApplicantPatient ? 'APPLICANT IS PATIENT' : 'PATIENT IS BENEFICIARY'}
-                    </span>
-                  </div>
+                {/* Patient / Deceased Sub-Card */}
+                {(() => {
+                  const isFuneralRecord = [
+                    selectedApp.serviceName,
+                    selectedApp.assistanceType,
+                    selectedApp.category,
+                    selectedApp.details?.category,
+                    selectedApp.details?.assistanceType,
+                    selectedApp.details?.serviceName
+                  ].some(str => typeof str === 'string' && (str.toLowerCase().includes('funeral') || str.toLowerCase().includes('burial')));
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                    <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold">Relationship to Patient:</span>
-                      <div className="font-bold text-slate-200 text-xs mt-0.5">
-                        {selectedApp.details?.isApplicantPatient ? 'Self' : (selectedApp.details?.patientRelation || 'Self')}
+                  return (
+                    <div className="mt-3 pt-3 border-t border-slate-800/80 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-200 uppercase tracking-wider block">
+                          {isFuneralRecord ? 'DECEASED BENEFICIARY DETAILS (INDIVIDUAL FIELDS):' : 'PATIENT BENEFICIARY DETAILS (INDIVIDUAL FIELDS):'}
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-700 font-mono">
+                          {isFuneralRecord ? 'DECEASED BENEFICIARY' : (selectedApp.details?.isApplicantPatient ? 'APPLICANT IS PATIENT' : 'PATIENT IS BENEFICIARY')}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                        {isFuneralRecord && (
+                          <>
+                            <div>
+                              <span className="text-slate-400 text-[9px] uppercase font-semibold">Funeral Home District:</span>
+                              <div className="font-bold text-white text-xs mt-0.5">
+                                {selectedApp.details?.funeralDistrict || 'District 2'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[9px] uppercase font-semibold">Accredited Funeral Home:</span>
+                              <div className="font-bold text-white text-xs mt-0.5">
+                                {selectedApp.details?.funeralHomeName || selectedApp.details?.selectedFuneralHome || selectedApp.hospitalFacility || 'Vivs Funeral Homes'}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                        {!isFuneralRecord && (
+                          <div>
+                            <span className="text-slate-400 text-[9px] uppercase font-semibold">Relationship to Patient:</span>
+                            <div className="font-bold text-slate-200 text-xs mt-0.5">
+                              {selectedApp.details?.isApplicantPatient ? 'Self' : (selectedApp.details?.patientRelation || 'Self')}
+                            </div>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-slate-400 text-[9px] uppercase font-semibold">
+                            First Name:
+                          </span>
+                          <div className="font-bold text-slate-200 text-xs mt-0.5">
+                            {selectedApp.details?.isApplicantPatient && !isFuneralRecord ? (selectedApp.details?.firstName || 'JEFFERSON') : (selectedApp.details?.patientFirstName || selectedApp.details?.firstName || 'Deceased')}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[9px] uppercase font-semibold">
+                            Middle Name:
+                          </span>
+                          <div className="font-bold text-slate-200 text-xs mt-0.5">
+                            {selectedApp.details?.isApplicantPatient && !isFuneralRecord ? (selectedApp.details?.middleName || 'FERNANDO') : (selectedApp.details?.patientMiddleName || selectedApp.details?.middleName || 'N/A')}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[9px] uppercase font-semibold">
+                            Last Name:
+                          </span>
+                          <div className="font-bold text-slate-200 text-xs mt-0.5">
+                            {selectedApp.details?.isApplicantPatient && !isFuneralRecord ? (selectedApp.details?.lastName || 'LEE') : (selectedApp.details?.patientLastName || selectedApp.details?.lastName || 'N/A')}
+                          </div>
+                        </div>
+                        {isFuneralRecord && (
+                          <div>
+                            <span className="text-slate-400 text-[9px] uppercase font-semibold">Suffix:</span>
+                            <div className="font-semibold text-slate-300 text-xs mt-0.5">
+                              {selectedApp.details?.patientSuffix || 'N/A'}
+                            </div>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-slate-400 text-[9px] uppercase font-semibold">
+                            Gender:
+                          </span>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">
+                            {selectedApp.details?.isApplicantPatient && !isFuneralRecord ? (selectedApp.details?.gender || 'Male') : (selectedApp.details?.patientGender || 'N/A')}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[9px] uppercase font-semibold">
+                            DOB & Age:
+                          </span>
+                          <div className="font-mono text-slate-300 text-xs mt-0.5">
+                            {selectedApp.details?.patientDob ? `${selectedApp.details?.patientDob} (${selectedApp.details?.patientAge || ''} yrs)` : (selectedApp.details?.dob ? `${selectedApp.details?.dob} (${selectedApp.details?.age || ''} yrs)` : 'N/A')}
+                          </div>
+                        </div>
+                        {isFuneralRecord && (
+                          <>
+                            <div>
+                              <span className="text-slate-400 text-[9px] uppercase font-semibold">Date of Death:</span>
+                              <div className="font-mono text-slate-200 text-xs mt-0.5">
+                                {selectedApp.details?.deceasedDateOfDeath || 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[9px] uppercase font-semibold">Place of Death:</span>
+                              <div className="font-semibold text-slate-200 text-xs mt-0.5">
+                                {selectedApp.details?.deceasedPlaceOfDeath || 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[9px] uppercase font-semibold">Cremation or Burial:</span>
+                              <div className="font-bold text-white text-xs mt-0.5">
+                                {selectedApp.details?.deceasedCremationOrBurial || 'Burial'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[9px] uppercase font-semibold">
+                                {(selectedApp.details?.deceasedCremationOrBurial || '').toLowerCase() === 'cremation' ? 'Where will it be cremated:' : 'Where will it be buried:'}
+                              </span>
+                              <div className="font-semibold text-slate-200 text-xs mt-0.5 truncate">
+                                {(selectedApp.details?.deceasedCremationOrBurial || '').toLowerCase() === 'cremation'
+                                  ? (selectedApp.details?.cremationLocationSite || selectedApp.details?.burialLocationSite || 'N/A')
+                                  : (selectedApp.details?.burialLocationSite || selectedApp.details?.cremationLocationSite || 'N/A')}
+                              </div>
+                            </div>
+                            {((selectedApp.details?.deceasedCremationOrBurial || '').toLowerCase() === 'cremation'
+                              ? (selectedApp.details?.cremationLocationSite || '').toLowerCase().includes('other')
+                              : (selectedApp.details?.burialLocationSite || '').toLowerCase().includes('other')) && (
+                              <div>
+                                <span className="text-slate-400 text-[9px] uppercase font-semibold text-amber-400">
+                                  {(selectedApp.details?.deceasedCremationOrBurial || '').toLowerCase() === 'cremation' ? 'Specify Cremation Location:' : 'Specify Burial Location:'}
+                                </span>
+                                <div className="font-bold text-amber-300 text-xs mt-0.5">
+                                  {((selectedApp.details?.deceasedCremationOrBurial || '').toLowerCase() === 'cremation'
+                                    ? selectedApp.details?.otherCremationLocation
+                                    : selectedApp.details?.otherBurialLocation) || 'Specified'}
+                                </div>
+                              </div>
+                            )}
+                            <div>
+                              <span className="text-slate-400 text-[9px] uppercase font-semibold">Date of Burial:</span>
+                              <div className="font-mono text-slate-200 text-xs mt-0.5">
+                                {selectedApp.details?.deceasedDateOfBurial || 'N/A'}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                        <div>
+                          <span className="text-slate-400 text-[9px] uppercase font-semibold">
+                            House / Bldg No.
+                          </span>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">
+                            {selectedApp.details?.patientHouseNo || selectedApp.details?.houseNo || 'N/A'}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[9px] uppercase font-semibold">
+                            Street Name
+                          </span>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">
+                            {selectedApp.details?.patientStreet || selectedApp.details?.patientStreetName || selectedApp.details?.street || 'N/A'}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[9px] uppercase font-semibold">
+                            Barangay
+                          </span>
+                          <div className="font-bold text-slate-200 text-xs mt-0.5">
+                            {selectedApp.details?.patientBarangay || selectedApp.details?.barangay || 'N/A'}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold">Patient First Name:</span>
-                      <div className="font-bold text-slate-200 text-xs mt-0.5">
-                        {selectedApp.details?.isApplicantPatient ? (selectedApp.details?.firstName || 'JEFFERSON') : (selectedApp.details?.patientFirstName || selectedApp.details?.firstName || 'JEFFERSON')}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold">Patient Middle Name:</span>
-                      <div className="font-bold text-slate-200 text-xs mt-0.5">
-                        {selectedApp.details?.isApplicantPatient ? (selectedApp.details?.middleName || 'FERNANDO') : (selectedApp.details?.patientMiddleName || selectedApp.details?.middleName || 'FERNANDO')}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold">Patient Last Name:</span>
-                      <div className="font-bold text-slate-200 text-xs mt-0.5">
-                        {selectedApp.details?.isApplicantPatient ? (selectedApp.details?.lastName || 'LEE') : (selectedApp.details?.patientLastName || selectedApp.details?.lastName || 'LEE')}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold">Patient Gender:</span>
-                      <div className="font-semibold text-slate-300 text-xs mt-0.5">
-                        {selectedApp.details?.isApplicantPatient ? (selectedApp.details?.gender || 'Male') : (selectedApp.details?.patientGender || 'Male')}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold">Patient DOB & Age:</span>
-                      <div className="font-mono text-slate-300 text-xs mt-0.5">
-                        {selectedApp.details?.isApplicantPatient ? `${selectedApp.details?.dob || '2004-09-27'} (${selectedApp.details?.age || '22'} yrs)` : `${selectedApp.details?.patientDob || '2004-09-27'} (${selectedApp.details?.patientAge || '22'} yrs)`}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold">Patient House / Bldg No.</span>
-                      <div className="font-semibold text-slate-300 text-xs mt-0.5">
-                        {selectedApp.details?.isApplicantPatient ? (selectedApp.details?.houseNo || '176') : (selectedApp.details?.patientHouseNo || selectedApp.details?.houseNo || '176')}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold">Patient Street Name</span>
-                      <div className="font-semibold text-slate-300 text-xs mt-0.5">
-                        {selectedApp.details?.isApplicantPatient ? (selectedApp.details?.street || '23') : (selectedApp.details?.patientStreet || selectedApp.details?.patientStreetName || selectedApp.details?.street || '23')}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold">Patient Barangay</span>
-                      <div className="font-bold text-slate-200 text-xs mt-0.5">
-                        {selectedApp.details?.isApplicantPatient ? (selectedApp.details?.barangay || 'Bagong Silangan') : (selectedApp.details?.patientBarangay || selectedApp.details?.barangay || 'Bagong Silangan')}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold">Patient City</span>
-                      <div className="font-medium text-slate-300 text-xs mt-0.5">Quezon City</div>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
               </div>
 
               {/* STEP 3: UPLOADED DOCUMENTS (INSPECTION) */}
@@ -507,308 +634,479 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
                 </div>
 
                 <div className="flex flex-col gap-2.5">
-                  {selectedApp.serviceName.toLowerCase().includes('medicine') ? (
-                    <>
-                      {/* Doc 1: Medical Certificate */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const doc = selectedApp.details?.uploadedDocData?.med_cert;
-                          const url = typeof doc === 'string' ? doc : doc?.dataUrl;
-                          setInspectingDoc({ 
-                            title: "Medical Certificate / Clinical Abstract",
-                            type: "Medical Certificate",
-                            url: url,
-                            docObj: doc
-                          });
-                        }}
-                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <FileCheck2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-[11px] font-extrabold text-white block truncate">
-                              Medical Certificate / Clinical Abstract
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono block">
-                              {selectedApp.details?.uploadedDocData?.med_cert 
-                                ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.med_cert === 'object' ? selectedApp.details.uploadedDocData.med_cert.name || 'Photo Attached' : 'Photo Attached'}` 
-                                : 'Pending Citizen Upload'}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
+                  {(() => {
+                    const isFuneralRecord = [
+                      selectedApp.serviceName,
+                      selectedApp.assistanceType,
+                      selectedApp.category,
+                      selectedApp.details?.category,
+                      selectedApp.details?.assistanceType,
+                      selectedApp.details?.serviceName
+                    ].some(str => typeof str === 'string' && (str.toLowerCase().includes('funeral') || str.toLowerCase().includes('burial')));
 
-                      {/* Doc 2: Doctor Prescription */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const doc = selectedApp.details?.uploadedDocData?.reseta;
-                          const url = typeof doc === 'string' ? doc : doc?.dataUrl;
-                          setInspectingDoc({ 
-                            title: "Doctor Prescription / Medicine Prescription",
-                            type: "Reseta",
-                            url: url,
-                            docObj: doc
-                          });
-                        }}
-                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <Pill className="w-4 h-4 text-amber-400 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-[11px] font-extrabold text-white block truncate">
-                              Doctor Prescription / Medicine Prescription
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono block">
-                              {selectedApp.details?.uploadedDocData?.reseta 
-                                ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.reseta === 'object' ? selectedApp.details.uploadedDocData.reseta.name || 'Photo Attached' : 'Photo Attached'}` 
-                                : 'Pending Citizen Upload'}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
+                    if (isFuneralRecord) {
+                      return (
+                        <>
+                          {/* Doc 1: Referral Form */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const doc = selectedApp.details?.uploadedDocData?.referral_form;
+                              const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                              setInspectingDoc({ 
+                                title: "Referral Form (Optional) – Original Copy",
+                                type: "Referral Form",
+                                url: url,
+                                docObj: doc
+                              });
+                            }}
+                            className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                              <div className="truncate">
+                                <span className="text-[11px] font-extrabold text-white block truncate">
+                                  Referral Form (Optional) – Original Copy
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono block">
+                                  {selectedApp.details?.uploadedDocData?.referral_form 
+                                    ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.referral_form === 'object' ? selectedApp.details.uploadedDocData.referral_form.name || 'Photo Attached' : 'Photo Attached'}` 
+                                    : 'Optional Document / Pending Upload'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
 
-                      {/* Doc 3: Barangay Certificate of Indigency */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const doc = selectedApp.details?.uploadedDocData?.indigency;
-                          const url = typeof doc === 'string' ? doc : doc?.dataUrl;
-                          setInspectingDoc({ 
-                            title: "Barangay Certificate of Indigency",
-                            type: "Indigency Certificate",
-                            url: url,
-                            docObj: doc
-                          });
-                        }}
-                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <FileText className="w-4 h-4 text-purple-400 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-[11px] font-extrabold text-white block truncate">
-                              Barangay Certificate of Indigency
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono block">
-                              {selectedApp.details?.uploadedDocData?.indigency 
-                                ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.indigency === 'object' ? selectedApp.details.uploadedDocData.indigency.name || 'Photo Attached' : 'Photo Attached'}` 
-                                : 'Pending Citizen Upload'}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
+                          {/* Doc 2: Death Certificate */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const doc = selectedApp.details?.uploadedDocData?.death_cert;
+                              const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                              setInspectingDoc({ 
+                                title: "Death Certificate – Original Certified True Copy",
+                                type: "Death Certificate",
+                                url: url,
+                                docObj: doc
+                              });
+                            }}
+                            className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <FileCheck2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                              <div className="truncate">
+                                <span className="text-[11px] font-extrabold text-white block truncate">
+                                  Death Certificate – Original Certified True Copy
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono block">
+                                  {selectedApp.details?.uploadedDocData?.death_cert 
+                                    ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.death_cert === 'object' ? selectedApp.details.uploadedDocData.death_cert.name || 'Photo Attached' : 'Photo Attached'}` 
+                                    : 'Pending Citizen Upload'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
 
-                      {/* Doc 4: Patient QC ID */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const doc = selectedApp.details?.uploadedDocData?.qcid_patient;
-                          const url = typeof doc === 'string' ? doc : doc?.dataUrl;
-                          setInspectingDoc({ 
-                            title: "Patient QC ID / Government ID",
-                            type: "QC ID",
-                            url: url,
-                            docObj: doc
-                          });
-                        }}
-                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <ImageIcon className="w-4 h-4 text-blue-400 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-[11px] font-extrabold text-white block truncate">
-                              Patient QC ID (Card Photo)
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono block">
-                              {selectedApp.details?.uploadedDocData?.qcid_patient 
-                                ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.qcid_patient === 'object' ? selectedApp.details.uploadedDocData.qcid_patient.name || 'Photo Attached' : 'Photo Attached'}` 
-                                : 'Pending Citizen Upload'}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
+                          {/* Doc 3: Notarized Funeral Contract */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const doc = selectedApp.details?.uploadedDocData?.funeral_contract;
+                              const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                              setInspectingDoc({ 
+                                title: "Notarized Funeral Contract – Original Copy",
+                                type: "Funeral Contract",
+                                url: url,
+                                docObj: doc
+                              });
+                            }}
+                            className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <Building2 className="w-4 h-4 text-amber-400 shrink-0" />
+                              <div className="truncate">
+                                <span className="text-[11px] font-extrabold text-white block truncate">
+                                  Notarized Funeral Contract – Original Copy
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono block">
+                                  {selectedApp.details?.uploadedDocData?.funeral_contract 
+                                    ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.funeral_contract === 'object' ? selectedApp.details.uploadedDocData.funeral_contract.name || 'Photo Attached' : 'Photo Attached'}` 
+                                    : 'Pending Citizen Upload'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
 
-                      {/* Doc 5: Authorization Letter */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const doc = selectedApp.details?.uploadedDocData?.authorization;
-                          const url = typeof doc === 'string' ? doc : doc?.dataUrl;
-                          setInspectingDoc({ 
-                            title: "Authorization / Personal Letter",
-                            type: "Authorization Letter",
-                            url: url,
-                            docObj: doc
-                          });
-                        }}
-                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <FileText className="w-4 h-4 text-teal-400 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-[11px] font-extrabold text-white block truncate">
-                              Authorization / Personal Letter
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono block">
-                              {selectedApp.details?.uploadedDocData?.authorization 
-                                ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.authorization === 'object' ? selectedApp.details.uploadedDocData.authorization.name || 'Photo Attached' : 'Photo Attached'}` 
-                                : 'Pending Citizen Upload'}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {/* Medical Bill Aid 5 Docs */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const doc = selectedApp.details?.uploadedDocData?.reseta || selectedApp.details?.uploadedDocData?.med_cert;
-                          const url = typeof doc === 'string' ? doc : doc?.dataUrl;
-                          setInspectingDoc({ 
-                            title: "Hospital Statement of Account (SOA)",
-                            type: "Hospital SOA",
-                            url: url,
-                            docObj: doc
-                          });
-                        }}
-                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <Building2 className="w-4 h-4 text-blue-400 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-[11px] font-extrabold text-white block truncate">
-                              Hospital Statement of Account
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono block">
-                              {selectedApp.details?.uploadedDocData?.reseta 
-                                ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.reseta === 'object' ? selectedApp.details.uploadedDocData.reseta.name || 'Photo Attached' : 'Photo Attached'}` 
-                                : 'Pending Citizen Upload'}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
+                          {/* Doc 4: Barangay Certificate of Indigency */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const doc = selectedApp.details?.uploadedDocData?.indigency;
+                              const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                              setInspectingDoc({ 
+                                title: "Barangay Certificate of Indigency – Original Copy",
+                                type: "Indigency Certificate",
+                                url: url,
+                                docObj: doc
+                              });
+                            }}
+                            className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <FileText className="w-4 h-4 text-purple-400 shrink-0" />
+                              <div className="truncate">
+                                <span className="text-[11px] font-extrabold text-white block truncate">
+                                  Barangay Certificate of Indigency – Original Copy
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono block">
+                                  {selectedApp.details?.uploadedDocData?.indigency 
+                                    ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.indigency === 'object' ? selectedApp.details.uploadedDocData.indigency.name || 'Photo Attached' : 'Photo Attached'}` 
+                                    : 'Pending Citizen Upload'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const doc = selectedApp.details?.uploadedDocData?.med_cert;
-                          const url = typeof doc === 'string' ? doc : doc?.dataUrl;
-                          setInspectingDoc({ 
-                            title: "Medical Certificate / Clinical Summary",
-                            type: "Medical Certificate",
-                            url: url,
-                            docObj: doc
-                          });
-                        }}
-                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <FileCheck2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-[11px] font-extrabold text-white block truncate">
-                              Medical Certificate / Clinical Abstract
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono block">
-                              {selectedApp.details?.uploadedDocData?.med_cert 
-                                ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.med_cert === 'object' ? selectedApp.details.uploadedDocData.med_cert.name || 'Photo Attached' : 'Photo Attached'}` 
-                                : 'Pending Citizen Upload'}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
+                          {/* Doc 5: Valid ID of Informant */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const doc = selectedApp.details?.uploadedDocData?.government_id || selectedApp.details?.uploadedDocData?.qcid_patient;
+                              const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                              setInspectingDoc({ 
+                                title: "Valid ID of Informant / Nearest Kin",
+                                type: "Valid ID",
+                                url: url,
+                                docObj: doc
+                              });
+                            }}
+                            className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <ImageIcon className="w-4 h-4 text-teal-400 shrink-0" />
+                              <div className="truncate">
+                                <span className="text-[11px] font-extrabold text-white block truncate">
+                                  Valid ID of Informant / Nearest Kin
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono block">
+                                  {(selectedApp.details?.uploadedDocData?.government_id || selectedApp.details?.uploadedDocData?.qcid_patient) 
+                                    ? `✓ Uploaded: ${typeof (selectedApp.details?.uploadedDocData?.government_id || selectedApp.details?.uploadedDocData?.qcid_patient) === 'object' ? (selectedApp.details?.uploadedDocData?.government_id || selectedApp.details?.uploadedDocData?.qcid_patient).name || 'Photo Attached' : 'Photo Attached'}` 
+                                    : 'Pending Citizen Upload'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                        </>
+                      );
+                    }
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const doc = selectedApp.details?.uploadedDocData?.indigency;
-                          const url = typeof doc === 'string' ? doc : doc?.dataUrl;
-                          setInspectingDoc({ 
-                            title: "Barangay Certificate of Indigency",
-                            type: "Indigency Certificate",
-                            url: url,
-                            docObj: doc
-                          });
-                        }}
-                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <FileText className="w-4 h-4 text-purple-400 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-[11px] font-extrabold text-white block truncate">
-                              Barangay Certificate of Indigency
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono block">
-                              {selectedApp.details?.uploadedDocData?.indigency 
-                                ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.indigency === 'object' ? selectedApp.details.uploadedDocData.indigency.name || 'Photo Attached' : 'Photo Attached'}` 
-                                : 'Pending Citizen Upload'}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
+                    if (selectedApp.serviceName.toLowerCase().includes('medicine')) {
+                      return (
+                        <>
+                          {/* Doc 1: Medical Certificate */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const doc = selectedApp.details?.uploadedDocData?.med_cert;
+                              const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                              setInspectingDoc({ 
+                                title: "Medical Certificate / Clinical Abstract",
+                                type: "Medical Certificate",
+                                url: url,
+                                docObj: doc
+                              });
+                            }}
+                            className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <FileCheck2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                              <div className="truncate">
+                                <span className="text-[11px] font-extrabold text-white block truncate">
+                                  Medical Certificate / Clinical Abstract
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono block">
+                                  {selectedApp.details?.uploadedDocData?.med_cert 
+                                    ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.med_cert === 'object' ? selectedApp.details.uploadedDocData.med_cert.name || 'Photo Attached' : 'Photo Attached'}` 
+                                    : 'Pending Citizen Upload'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const doc = selectedApp.details?.uploadedDocData?.qcid_patient;
-                          const url = typeof doc === 'string' ? doc : doc?.dataUrl;
-                          setInspectingDoc({ 
-                            title: "Valid Government ID (PhilSys / Voter ID)",
-                            type: "Government ID",
-                            url: url,
-                            docObj: doc
-                          });
-                        }}
-                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <ImageIcon className="w-4 h-4 text-amber-400 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-[11px] font-extrabold text-white block truncate">
-                              Valid Government Photo ID (PhilSys)
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono block">
-                              {selectedApp.details?.uploadedDocData?.qcid_patient 
-                                ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.qcid_patient === 'object' ? selectedApp.details.uploadedDocData.qcid_patient.name || 'Photo Attached' : 'Photo Attached'}` 
-                                : 'Pending Citizen Upload'}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
+                          {/* Doc 2: Doctor Prescription */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const doc = selectedApp.details?.uploadedDocData?.reseta;
+                              const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                              setInspectingDoc({ 
+                                title: "Doctor Prescription / Medicine Prescription",
+                                type: "Reseta",
+                                url: url,
+                                docObj: doc
+                              });
+                            }}
+                            className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <Pill className="w-4 h-4 text-amber-400 shrink-0" />
+                              <div className="truncate">
+                                <span className="text-[11px] font-extrabold text-white block truncate">
+                                  Doctor Prescription / Medicine Prescription
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono block">
+                                  {selectedApp.details?.uploadedDocData?.reseta 
+                                    ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.reseta === 'object' ? selectedApp.details.uploadedDocData.reseta.name || 'Photo Attached' : 'Photo Attached'}` 
+                                    : 'Pending Citizen Upload'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
 
-                      {/* Doc 5: Authorization Letter */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const doc = selectedApp.details?.uploadedDocData?.authorization;
-                          const url = typeof doc === 'string' ? doc : doc?.dataUrl;
-                          setInspectingDoc({ 
-                            title: "Authorization / Personal Letter",
-                            type: "Authorization Letter",
-                            url: url,
-                            docObj: doc
-                          });
-                        }}
-                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                      >
-                        <div className="flex items-center gap-2.5 overflow-hidden">
-                          <FileText className="w-4 h-4 text-teal-400 shrink-0" />
-                          <div className="truncate">
-                            <span className="text-[11px] font-extrabold text-white block truncate">
-                              Authorization / Personal Letter
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono block">
-                              {selectedApp.details?.uploadedDocData?.authorization 
-                                ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.authorization === 'object' ? selectedApp.details.uploadedDocData.authorization.name || 'Photo Attached' : 'Photo Attached'}` 
-                                : 'Pending Citizen Upload'}
-                            </span>
+                          {/* Doc 3: Barangay Certificate of Indigency */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const doc = selectedApp.details?.uploadedDocData?.indigency;
+                              const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                              setInspectingDoc({ 
+                                title: "Barangay Certificate of Indigency",
+                                type: "Indigency Certificate",
+                                url: url,
+                                docObj: doc
+                              });
+                            }}
+                            className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <FileText className="w-4 h-4 text-purple-400 shrink-0" />
+                              <div className="truncate">
+                                <span className="text-[11px] font-extrabold text-white block truncate">
+                                  Barangay Certificate of Indigency
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono block">
+                                  {selectedApp.details?.uploadedDocData?.indigency 
+                                    ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.indigency === 'object' ? selectedApp.details.uploadedDocData.indigency.name || 'Photo Attached' : 'Photo Attached'}` 
+                                    : 'Pending Citizen Upload'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+
+                          {/* Doc 4: Patient QC ID */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const doc = selectedApp.details?.uploadedDocData?.qcid_patient;
+                              const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                              setInspectingDoc({ 
+                                title: "Patient QC ID / Government ID",
+                                type: "QC ID",
+                                url: url,
+                                docObj: doc
+                              });
+                            }}
+                            className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <ImageIcon className="w-4 h-4 text-blue-400 shrink-0" />
+                              <div className="truncate">
+                                <span className="text-[11px] font-extrabold text-white block truncate">
+                                  Patient QC ID (Card Photo)
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono block">
+                                  {selectedApp.details?.uploadedDocData?.qcid_patient 
+                                    ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.qcid_patient === 'object' ? selectedApp.details.uploadedDocData.qcid_patient.name || 'Photo Attached' : 'Photo Attached'}` 
+                                    : 'Pending Citizen Upload'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+
+                          {/* Doc 5: Authorization Letter */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const doc = selectedApp.details?.uploadedDocData?.authorization;
+                              const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                              setInspectingDoc({ 
+                                title: "Authorization / Personal Letter",
+                                type: "Authorization Letter",
+                                url: url,
+                                docObj: doc
+                              });
+                            }}
+                            className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <FileText className="w-4 h-4 text-teal-400 shrink-0" />
+                              <div className="truncate">
+                                <span className="text-[11px] font-extrabold text-white block truncate">
+                                  Authorization / Personal Letter
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono block">
+                                  {selectedApp.details?.uploadedDocData?.authorization 
+                                    ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.authorization === 'object' ? selectedApp.details.uploadedDocData.authorization.name || 'Photo Attached' : 'Photo Attached'}` 
+                                    : 'Pending Citizen Upload'}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                        </>
+                      );
+                    }
+
+                    return (
+                      <>
+                        {/* Medical Bill Aid 5 Docs */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const doc = selectedApp.details?.uploadedDocData?.reseta || selectedApp.details?.uploadedDocData?.med_cert;
+                            const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                            setInspectingDoc({ 
+                              title: "Hospital Statement of Account (SOA)",
+                              type: "Hospital SOA",
+                              url: url,
+                              docObj: doc
+                            });
+                          }}
+                          className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                        >
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <Building2 className="w-4 h-4 text-blue-400 shrink-0" />
+                            <div className="truncate">
+                              <span className="text-[11px] font-extrabold text-white block truncate">
+                                Hospital Statement of Account
+                              </span>
+                              <span className="text-[9px] text-slate-400 font-mono block">
+                                {selectedApp.details?.uploadedDocData?.reseta 
+                                  ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.reseta === 'object' ? selectedApp.details.uploadedDocData.reseta.name || 'Photo Attached' : 'Photo Attached'}` 
+                                  : 'Pending Citizen Upload'}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    </>
-                  )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const doc = selectedApp.details?.uploadedDocData?.med_cert;
+                            const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                            setInspectingDoc({ 
+                              title: "Medical Certificate / Clinical Summary",
+                              type: "Medical Certificate",
+                              url: url,
+                              docObj: doc
+                            });
+                          }}
+                          className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                        >
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <FileCheck2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <div className="truncate">
+                              <span className="text-[11px] font-extrabold text-white block truncate">
+                                Medical Certificate / Clinical Abstract
+                              </span>
+                              <span className="text-[9px] text-slate-400 font-mono block">
+                                {selectedApp.details?.uploadedDocData?.med_cert 
+                                  ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.med_cert === 'object' ? selectedApp.details.uploadedDocData.med_cert.name || 'Photo Attached' : 'Photo Attached'}` 
+                                  : 'Pending Citizen Upload'}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const doc = selectedApp.details?.uploadedDocData?.indigency;
+                            const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                            setInspectingDoc({ 
+                              title: "Barangay Certificate of Indigency",
+                              type: "Indigency Certificate",
+                              url: url,
+                              docObj: doc
+                            });
+                          }}
+                          className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                        >
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <FileText className="w-4 h-4 text-purple-400 shrink-0" />
+                            <div className="truncate">
+                              <span className="text-[11px] font-extrabold text-white block truncate">
+                                Barangay Certificate of Indigency
+                              </span>
+                              <span className="text-[9px] text-slate-400 font-mono block">
+                                {selectedApp.details?.uploadedDocData?.indigency 
+                                  ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.indigency === 'object' ? selectedApp.details.uploadedDocData.indigency.name || 'Photo Attached' : 'Photo Attached'}` 
+                                  : 'Pending Citizen Upload'}
+                                </span>
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const doc = selectedApp.details?.uploadedDocData?.qcid_patient;
+                            const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                            setInspectingDoc({ 
+                              title: "Valid Government ID (PhilSys / Voter ID)",
+                              type: "Government ID",
+                              url: url,
+                              docObj: doc
+                            });
+                          }}
+                          className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                        >
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <ImageIcon className="w-4 h-4 text-amber-400 shrink-0" />
+                            <div className="truncate">
+                              <span className="text-[11px] font-extrabold text-white block truncate">
+                                Valid Government Photo ID (PhilSys)
+                              </span>
+                              <span className="text-[9px] text-slate-400 font-mono block">
+                                {selectedApp.details?.uploadedDocData?.qcid_patient 
+                                  ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.qcid_patient === 'object' ? selectedApp.details.uploadedDocData.qcid_patient.name || 'Photo Attached' : 'Photo Attached'}` 
+                                  : 'Pending Citizen Upload'}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+
+                        {/* Doc 5: Authorization Letter */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const doc = selectedApp.details?.uploadedDocData?.authorization;
+                            const url = typeof doc === 'string' ? doc : doc?.dataUrl;
+                            setInspectingDoc({ 
+                              title: "Authorization / Personal Letter",
+                              type: "Authorization Letter",
+                              url: url,
+                              docObj: doc
+                            });
+                          }}
+                          className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                        >
+                          <div className="flex items-center gap-2.5 overflow-hidden">
+                            <FileText className="w-4 h-4 text-teal-400 shrink-0" />
+                            <div className="truncate">
+                              <span className="text-[11px] font-extrabold text-white block truncate">
+                                Authorization / Personal Letter
+                              </span>
+                              <span className="text-[9px] text-slate-400 font-mono block">
+                                {selectedApp.details?.uploadedDocData?.authorization 
+                                  ? `✓ Uploaded: ${typeof selectedApp.details.uploadedDocData.authorization === 'object' ? selectedApp.details.uploadedDocData.authorization.name || 'Photo Attached' : 'Photo Attached'}` 
+                                  : 'Pending Citizen Upload'}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 

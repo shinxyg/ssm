@@ -6,15 +6,16 @@ export const initialServices: ServiceItem[] = [
     id: 'aics-funeral',
     title: 'Burial / Funeral Assistance',
     category: 'aics',
-    description: 'The Funeral and Burial Assistance Program under Ordinance 2865 S-2019 provides financial aid through a Certificate of Guarantee to accredited partner funeral homes, covering service packages up to Php25,000.',
+    description: 'The Funeral and Burial Assistance Program under Ordinance 2865 S-2019 provides financial aid through a Guarantee Letter (GL) to accredited partner funeral homes, covering service packages up to Php25,000.',
     requirements: [
-      'Registered Death Certificate',
-      'Funeral Contract / Official Receipt',
-      'Certificate of Indigency of Claimant',
-      'Valid Government Photo ID'
+      'Referral Form (optional) – original copy (mula sa Barangay, hospital, o accredited funeral home)',
+      'Death Certificate – original Certified True Copy',
+      'Notarized Funeral Contract – original copy (mula sa QC-accredited/partner funeral home)',
+      'Barangay Certificate of Indigency – original copy (purpose: "Burial/Funeral Assistance")',
+      'Valid ID ng informant/nearest kin (preferably QC ID)'
     ],
     processingTime: '24 Hours',
-    benefitAmount: 'Up to ₱25,000 Guarantee Certificate',
+    benefitAmount: 'Up to ₱25,000 Guarantee Letter (GL)',
     iconName: 'funeral',
     badge: 'Urgent Aid'
   },

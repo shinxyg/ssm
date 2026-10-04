@@ -248,7 +248,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-blue-600/25 transition-all hover:scale-[1.01] mt-1 cursor-pointer"
+              className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-blue-600/25 transition-all mt-1 cursor-pointer"
             >
               {isRegisterMode ? 'Register' : 'Login'}
             </button>

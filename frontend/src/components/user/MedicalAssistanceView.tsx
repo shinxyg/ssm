@@ -664,7 +664,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   onClick={() => handleNextStep(2)}
                   className={`px-8 py-3 rounded-xl font-extrabold text-xs tracking-wider uppercase transition-all ${
                     assistanceType
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white hover:scale-[1.02]'
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white'
                       : darkMode
                       ? 'bg-[#18243c] text-slate-500 cursor-not-allowed border border-slate-800'
                       : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
@@ -1501,7 +1501,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-xl hover:scale-[1.02] transition-all"
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-xl transition-all"
                 >
                   SUBMIT
                 </button>

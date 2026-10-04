@@ -93,6 +93,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
         <nav className="space-y-1">
           {mainNavItems.map((item) => {
             const Icon = item.icon;
+            const isLivelihood = item.id === 'livelihood';
             const isActive = 
               activeTab === item.id ||
               (item.id === 'childwelfare' && activeTab === 'aics-educational') ||
@@ -100,33 +101,74 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
               (item.id === 'senior' && activeTab === 'senior-form') ||
               (item.id === 'soloparent' && (activeTab === 'soloparent-form' || activeTab === 'soloparent-financial-form' || activeTab === 'soloparent-edu-form')) ||
               (item.id === 'aics' && (activeTab === 'aics-medical' || activeTab === 'aics-funeral')) ||
-              (item.id === 'livelihood' && (activeTab.startsWith('livelihood') || activeTab === 'skills-training'));
+              (isLivelihood && (activeTab.startsWith('livelihood') || activeTab === 'skills-training'));
+
             return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center ${
-                  isOpen ? 'justify-between px-4 py-3' : 'justify-center p-3'
-                } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group ${
-                  isActive
-                    ? 'bg-[#152747] text-white border-blue-500/30'
-                    : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
-                }`}
-                title={isOpen ? undefined : item.label}
-              >
-                <div className="flex items-center gap-3.5 truncate">
-                  <Icon className={`w-4 h-4 shrink-0 transition-colors ${
-                    isActive 
-                      ? 'text-blue-400' 
-                      : 'text-[#94a3b8] group-hover:text-white'
-                  }`} />
-                  {isOpen && <span className="truncate">{item.label}</span>}
-                </div>
-                {isOpen && item.id === 'livelihood' && (
-                  <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-400' : 'text-slate-500'}`} />
+              <div key={item.id} className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isLivelihood) {
+                      setLivelihoodOpen(!livelihoodOpen);
+                      if (!activeTab.startsWith('livelihood') && activeTab !== 'skills-training') {
+                        setActiveTab('livelihood');
+                      }
+                    } else {
+                      setActiveTab(item.id);
+                    }
+                  }}
+                  className={`w-full flex items-center ${
+                    isOpen ? 'justify-between px-4 py-3' : 'justify-center p-3'
+                  } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group ${
+                    isActive
+                      ? 'bg-[#152747] text-white border-blue-500/30'
+                      : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
+                  }`}
+                  title={isOpen ? undefined : item.label}
+                >
+                  <div className="flex items-center gap-3.5 truncate">
+                    <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                      isActive 
+                        ? 'text-blue-400' 
+                        : 'text-[#94a3b8] group-hover:text-white'
+                    }`} />
+                    {isOpen && <span className="truncate">{item.label}</span>}
+                  </div>
+                  {isOpen && isLivelihood && (
+                    livelihoodOpen 
+                      ? <ChevronUp className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-400' : 'text-slate-500'}`} />
+                      : <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-400' : 'text-slate-500'}`} />
+                  )}
+                </button>
+
+                {/* Sub-menu items for Livelihood & Training */}
+                {isOpen && isLivelihood && livelihoodOpen && (
+                  <div className="pl-9 pr-2 py-1 space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('livelihood')}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        activeTab === 'livelihood' || activeTab.startsWith('livelihood-')
+                          ? 'bg-blue-600/30 text-blue-300 font-extrabold border border-blue-500/40 shadow-sm'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      }`}
+                    >
+                      Livelihood Program
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('skills-training')}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        activeTab === 'skills-training'
+                          ? 'bg-blue-600/30 text-blue-300 font-extrabold border border-blue-500/40 shadow-sm'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      }`}
+                    >
+                      Skills Training Program
+                    </button>
+                  </div>
                 )}
-              </button>
+              </div>
             );
           })}
 

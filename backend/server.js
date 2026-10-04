@@ -44,6 +44,64 @@ app.post('/api/send-email', async (req, res) => {
     res.status(500).json({ error: 'Failed to send email', details: err.message });
   }
 });
+// Helper to check if current real-time clock >= scheduled date & time
+const isScheduledTimeReached = (dStr, tStr) => {
+  if (!dStr || !tStr) return false;
+  try {
+    let year, month, day;
+    if (typeof dStr === 'string' && dStr.includes('-')) {
+      const parts = dStr.split('-');
+      year = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10) - 1;
+      day = parseInt(parts[2], 10);
+    } else {
+      const dt = new Date(dStr);
+      if (isNaN(dt.getTime())) return false;
+      year = dt.getFullYear();
+      month = dt.getMonth();
+      day = dt.getDate();
+    }
+
+    let hours = 0, minutes = 0;
+    if (typeof tStr === 'string' && tStr.includes(':')) {
+      const isPM = tStr.toUpperCase().includes('PM');
+      const isAM = tStr.toUpperCase().includes('AM');
+      const cleanTime = tStr.replace(/(AM|PM|\s)/gi, '');
+      const tParts = cleanTime.split(':');
+      hours = parseInt(tParts[0], 10);
+      minutes = parseInt(tParts[1], 10);
+      if (isPM && hours < 12) hours += 12;
+      if (isAM && hours === 12) hours = 0;
+    }
+
+    const schedDate = new Date(year, month, day, hours, minutes, 0, 0);
+    const now = new Date();
+    return now.getTime() >= schedDate.getTime();
+  } catch (e) {
+    return false;
+  }
+};
+
+// Automatic 1-second interval to auto-release payouts when exact scheduled date & time is reached
+setInterval(async () => {
+  try {
+    const result = await pool.query(`
+      SELECT reference_no, scheduled_payout_date, scheduled_payout_time, status 
+      FROM aics_applications 
+      WHERE (status = 'Payout Scheduled' OR status = 'Ready for Payout' OR status = 'Approved') 
+        AND scheduled_payout_date IS NOT NULL 
+        AND scheduled_payout_time IS NOT NULL
+    `);
+    for (const row of result.rows) {
+      if (isScheduledTimeReached(row.scheduled_payout_date, row.scheduled_payout_time)) {
+        console.log(`⏰ [AUTO-TRIGGER] Scheduled payout time reached for ${row.reference_no}! Auto-updating status to RELEASED / COMPLETED`);
+        await pool.query(`UPDATE aics_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+      }
+    }
+  } catch (err) {
+    // ignore
+  }
+}, 1000);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -80,6 +138,16 @@ app.get('/api/aics/applications', async (req, res) => {
       hospitalFacility: row.hospital_facility,
       medicalCondition: row.medical_condition,
       status: row.status,
+      scheduledPayoutDate: row.scheduled_payout_date,
+      scheduledPayoutTime: row.scheduled_payout_time,
+      appointmentDate: row.appointment_date,
+      appointmentTime: row.appointment_time,
+      appointmentDetails: {
+        appointmentDate: row.appointment_date || row.scheduled_payout_date,
+        appointmentTime: row.appointment_time || row.scheduled_payout_time,
+        venue: 'QC Hall SSDD Desk 3, Ground Flr High-Rise Bldg',
+        assignedWorker: row.assigned_social_worker || 'Maria Santos, RSW'
+      },
       amountOrType: row.assistance_type || 'Guarantee Letter / Financial Subsidy',
       assignedSocialWorker: row.assigned_social_worker,
       benefitDocumentType: row.benefit_document_type,
@@ -173,6 +241,17 @@ app.post('/api/aics/applications', async (req, res) => {
     const defaultBenefit = benefitDocumentType || (astType === 'Medicines / Medical Supplies'
       ? 'Medicine Gift Certificate / Pharmacy Voucher'
       : 'Hospital Guarantee Letter (GL)');
+
+    const deceasedDateOfDeath = details?.deceasedDateOfDeath || '';
+    const deceasedCremationOrBurial = details?.deceasedCremationOrBurial || '';
+    const deceasedPlaceOfDeath = details?.deceasedPlaceOfDeath || '';
+    const deceasedDateOfBurial = details?.deceasedDateOfBurial || '';
+    const burialLocationSite = details?.burialLocationSite || '';
+    const cremationLocationSite = details?.cremationLocationSite || '';
+    const funeralDistrict = details?.funeralDistrict || '';
+    const funeralHomeName = details?.funeralHomeName || hosp || '';
+    const initialFuneralChoice = details?.selectedFuneralHome || '';
+
     const savedDetails = JSON.stringify(details || { applicantName: name, hospitalFacility: hosp, medicalCondition: cond, category: cat, assistanceType: astType });
 
     const query = `
@@ -180,9 +259,17 @@ app.post('/api/aics/applications', async (req, res) => {
       (
         reference_no, applicant_name, first_name, middle_name, last_name, suffix, dob, age, gender, civil_status, house_no, street_name, barangay, phone_number,
         is_patient_self, patient_relationship, patient_first_name, patient_middle_name, patient_last_name, patient_suffix, patient_gender, patient_dob, patient_age, patient_house_no, patient_street_name, patient_barangay,
-        service_name, category, assistance_type, hospital_facility, medical_condition, status, assigned_social_worker, benefit_document_type, details
+        service_name, category, assistance_type, hospital_facility, medical_condition, status, assigned_social_worker, benefit_document_type,
+        deceased_date_of_death, deceased_cremation_or_burial, deceased_place_of_death, deceased_date_of_burial, burial_location_site, cremation_location_site, funeral_district, funeral_home_name, initial_funeral_choice,
+        details
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+        $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26,
+        $27, $28, $29, $30, $31, $32, $33, $34,
+        $35, $36, $37, $38, $39, $40, $41, $42, $43,
+        $44
+      )
       ON CONFLICT (reference_no) DO UPDATE SET
         applicant_name = EXCLUDED.applicant_name,
         first_name = EXCLUDED.first_name,
@@ -213,6 +300,15 @@ app.post('/api/aics/applications', async (req, res) => {
         hospital_facility = EXCLUDED.hospital_facility,
         medical_condition = EXCLUDED.medical_condition,
         status = EXCLUDED.status,
+        deceased_date_of_death = EXCLUDED.deceased_date_of_death,
+        deceased_cremation_or_burial = EXCLUDED.deceased_cremation_or_burial,
+        deceased_place_of_death = EXCLUDED.deceased_place_of_death,
+        deceased_date_of_burial = EXCLUDED.deceased_date_of_burial,
+        burial_location_site = EXCLUDED.burial_location_site,
+        cremation_location_site = EXCLUDED.cremation_location_site,
+        funeral_district = EXCLUDED.funeral_district,
+        funeral_home_name = EXCLUDED.funeral_home_name,
+        initial_funeral_choice = EXCLUDED.initial_funeral_choice,
         details = EXCLUDED.details,
         updated_at = NOW()
       RETURNING *;
@@ -220,7 +316,9 @@ app.post('/api/aics/applications', async (req, res) => {
     const values = [
       refNo, name, firstName, middleName, lastName, suffix, dob, age, gender, civilStatus, houseNo, streetName, barangay, phoneNumber,
       isPatientSelf, patientRel, patientFirst, patientMiddle, patientLast, patientSuf, patientGender, patientDob, patientAge, patientHouse, patientStreet, patientBrgy,
-      sName, cat, astType, hosp, cond, appStatus, worker, defaultBenefit, savedDetails
+      sName, cat, astType, hosp, cond, appStatus, worker, defaultBenefit,
+      deceasedDateOfDeath, deceasedCremationOrBurial, deceasedPlaceOfDeath, deceasedDateOfBurial, burialLocationSite, cremationLocationSite, funeralDistrict, funeralHomeName, initialFuneralChoice,
+      savedDetails
     ];
 
     const result = await pool.query(query, values);
@@ -274,43 +372,32 @@ app.post('/api/aics/applications', async (req, res) => {
   }
 });
 
-// PUT update application status in PostgreSQL DB
+// PUT update application status & scheduled dates/times in PostgreSQL DB
 app.put('/api/aics/applications/:refNo/status', async (req, res) => {
   const { refNo } = req.params;
-  const { status } = req.body;
-  try {
-    const result = await pool.query(
-      'UPDATE aics_applications SET status = $1, updated_at = NOW() WHERE reference_no = $2 RETURNING *',
-      [status, refNo]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Application not found' });
-    }
-    console.log(`✅ Updated status for ${refNo} to "${status}" in DB`);
-    res.json({ success: true, status: result.rows[0].status });
-  } catch (err) {
-    console.error('Error updating status in DB:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
+  const { status, scheduledPayoutDate, scheduledPayoutTime, appointmentDate, appointmentTime, appointmentDetails } = req.body;
 
-// PUT update status of an application in PostgreSQL DB
-app.put('/api/aics/applications/:refNo/status', async (req, res) => {
-  const { refNo } = req.params;
-  const { status } = req.body;
+  const apptDate = appointmentDate || appointmentDetails?.appointmentDate || null;
+  const apptTime = appointmentTime || appointmentDetails?.appointmentTime || null;
 
   try {
     const query = `
       UPDATE aics_applications 
-      SET status = $1, updated_at = NOW() 
-      WHERE reference_no = $2 
+      SET status = $1, 
+          scheduled_payout_date = COALESCE($2, scheduled_payout_date),
+          scheduled_payout_time = COALESCE($3, scheduled_payout_time),
+          appointment_date = COALESCE($4, appointment_date),
+          appointment_time = COALESCE($5, appointment_time),
+          updated_at = NOW() 
+      WHERE reference_no = $6 
       RETURNING *;
     `;
-    const result = await pool.query(query, [status, refNo]);
+    const result = await pool.query(query, [status, scheduledPayoutDate || null, scheduledPayoutTime || null, apptDate, apptTime, refNo]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Application not found' });
     }
     const row = result.rows[0];
+    console.log(`✅ Updated status for ${refNo} to "${status}" (Appt: ${row.appointment_date} ${row.appointment_time}, Payout: ${row.scheduled_payout_date} ${row.scheduled_payout_time}) in DB`);
     const formatted = {
       referenceNo: row.reference_no,
       applicantName: row.applicant_name,
@@ -318,6 +405,16 @@ app.put('/api/aics/applications/:refNo/status', async (req, res) => {
       category: row.category,
       assistanceType: row.assistance_type,
       status: row.status,
+      scheduledPayoutDate: row.scheduled_payout_date,
+      scheduledPayoutTime: row.scheduled_payout_time,
+      appointmentDate: row.appointment_date,
+      appointmentTime: row.appointment_time,
+      appointmentDetails: {
+        appointmentDate: row.appointment_date || row.scheduled_payout_date,
+        appointmentTime: row.appointment_time || row.scheduled_payout_time,
+        venue: 'QC Hall SSDD Desk 3, Ground Flr High-Rise Bldg',
+        assignedWorker: row.assigned_social_worker || 'Maria Santos, RSW'
+      },
       amountOrType: row.assistance_type || 'Guarantee Letter / Financial Subsidy',
       assignedSocialWorker: row.assigned_social_worker,
       benefitDocumentType: row.benefit_document_type,
@@ -330,6 +427,7 @@ app.put('/api/aics/applications/:refNo/status', async (req, res) => {
     };
     res.json(formatted);
   } catch (err) {
+    console.error('Error updating status in DB:', err);
     res.status(500).json({ error: err.message });
   }
 });

@@ -15,6 +15,34 @@ interface NavbarProps {
   applications?: ApplicationRecord[];
 }
 
+// Isolated ClockDisplay component so 1-second ticks DO NOT re-render Navbar or Main Page
+const ClockDisplay: React.FC<{ darkMode: boolean }> = React.memo(({ darkMode }) => {
+  const [timeStr, setTimeStr] = useState<string>('');
+  const [dateStr, setDateStr] = useState<string>('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setTimeStr(now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      setDateStr(now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="text-right hidden sm:flex flex-col justify-center">
+      <div className={`text-xs sm:text-[13px] font-extrabold font-mono tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+        {timeStr || '04:18:49 PM'}
+      </div>
+      <div className={`text-[10px] font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+        {dateStr || 'Fri, Oct 2'}
+      </div>
+    </div>
+  );
+});
+
 export const Navbar: React.FC<NavbarProps> = ({ 
   activeSection,
   darkMode,
@@ -27,8 +55,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   userInitials,
   applications = [],
 }) => {
-  const [timeStr, setTimeStr] = useState<string>('');
-  const [dateStr, setDateStr] = useState<string>('');
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
 
@@ -180,16 +206,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     setDismissedIds(allIds);
   };
 
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setTimeStr(now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      setDateStr(now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  useEffect(() => {}, []);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -223,14 +240,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Right Controls & User Profile Matching Reference Screenshot */}
       <div className="flex items-center gap-4 pr-1">
         {/* Real-time Clock */}
-        <div className="text-right hidden sm:flex flex-col justify-center">
-          <div className={`text-xs sm:text-[13px] font-extrabold font-mono tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-            {timeStr || '04:18:49 PM'}
-          </div>
-          <div className={`text-[10px] font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-            {dateStr || 'Fri, Oct 2'}
-          </div>
-        </div>
+        <ClockDisplay darkMode={darkMode} />
 
         {/* Theme Toggle Button */}
         <button

@@ -118,7 +118,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         {/* Special Blue Glow Pill: Assistance & Eligibility Finder */}
         <button
           onClick={onOpenEligibilityModal}
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/40 border border-blue-400/50 transition-all transform hover:scale-105"
+          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/40 border border-blue-400/50 transition-all"
         >
           <HeartHandshake className="w-3.5 h-3.5" />
           <span>Assistance & Eligibility Finder</span>

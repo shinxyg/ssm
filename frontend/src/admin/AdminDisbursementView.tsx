@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Search, 
   CheckCircle2, 
@@ -17,7 +18,7 @@ import type { ApplicationRecord } from '../types';
 interface AdminDisbursementViewProps {
   darkMode?: boolean;
   applications?: ApplicationRecord[];
-  onUpdateStatus?: (refNo: string, newStatus: ApplicationRecord['status']) => void;
+  onUpdateStatus?: (refNo: string, newStatus: ApplicationRecord['status'], extraFields?: Record<string, any>) => void;
 }
 
 export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({ 
@@ -25,12 +26,42 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
   applications = [],
   onUpdateStatus
 }) => {
+  const getCurrentTimeString = (): string => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  const getCurrentDateString = (): string => {
+    const now = new Date();
+    return now.toISOString().split('T')[0];
+  };
+
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [tabFilter, setTabFilter] = useState<'ALL' | 'PENDING' | 'RELEASED'>('ALL');
   const [releasingRecord, setReleasingRecord] = useState<ApplicationRecord | null>(null);
-  const [releaseDate, setReleaseDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [releaseTime, setReleaseTime] = useState<string>('09:00');
+  const [releaseDate, setReleaseDate] = useState<string>(getCurrentDateString());
+  const [releaseTime, setReleaseTime] = useState<string>(getCurrentTimeString());
   const [scheduledPayoutTimes, setScheduledPayoutTimes] = useState<Record<string, { date: string; time: string }>>({});
+
+  // Sync modal date & time to current real-time clock when modal is opened for a record
+  React.useEffect(() => {
+    if (releasingRecord) {
+      const existing = scheduledPayoutTimes[releasingRecord.referenceNo] || ((releasingRecord as any).scheduledPayoutDate ? {
+        date: (releasingRecord as any).scheduledPayoutDate,
+        time: (releasingRecord as any).scheduledPayoutTime
+      } : null);
+
+      if (existing && existing.date && existing.time) {
+        setReleaseDate(existing.date);
+        setReleaseTime(existing.time);
+      } else {
+        setReleaseDate(getCurrentDateString());
+        setReleaseTime(getCurrentTimeString());
+      }
+    }
+  }, [releasingRecord]);
 
   // Helper to format 24-hour time string into 12-hour AM/PM format
   const formatTo12Hour = (timeStr?: string): string => {
@@ -61,6 +92,7 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
       const st = app.status;
       return (
         st === 'Ready for Payout' || 
+        st === 'Payout Scheduled' ||
         st === 'RELEASED / COMPLETED' || 
         (st as string) === 'Completed' ||
         st === 'Approved by Admin'
@@ -79,9 +111,10 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
 
       disbursementRecords.forEach((app) => {
         if (app.status !== 'RELEASED / COMPLETED' && (app.status as string) !== 'Completed') {
-          const sched = scheduledPayoutTimes[app.referenceNo];
-          if (sched) {
-            if (sched.date < currentDateStr || (sched.date === currentDateStr && sched.time <= currentTimeStr)) {
+          const schedDate = (app as any).scheduledPayoutDate || scheduledPayoutTimes[app.referenceNo]?.date;
+          const schedTime = (app as any).scheduledPayoutTime || scheduledPayoutTimes[app.referenceNo]?.time;
+          if (schedDate && schedTime) {
+            if (schedDate < currentDateStr || (schedDate === currentDateStr && schedTime <= currentTimeStr)) {
               if (onUpdateStatus) {
                 onUpdateStatus(app.referenceNo, 'RELEASED / COMPLETED' as any);
               }
@@ -115,7 +148,7 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
   }, [disbursementRecords, tabFilter, searchQuery]);
 
   // Summary Metrics
-  const pendingCount = disbursementRecords.filter((a) => a.status === 'Ready for Payout' || a.status === 'Approved by Admin').length;
+  const pendingCount = disbursementRecords.filter((a) => a.status === 'Ready for Payout' || a.status === 'Payout Scheduled' || a.status === 'Approved by Admin').length;
   const releasedCount = disbursementRecords.filter((a) => a.status === 'RELEASED / COMPLETED' || (a.status as string) === 'Completed').length;
 
   const handleConfirmRelease = (immediate = false) => {
@@ -127,8 +160,11 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
           ...prev,
           [releasingRecord.referenceNo]: { date: releaseDate, time: releaseTime }
         }));
-        // Update status to Payout Scheduled if not already
-        onUpdateStatus(releasingRecord.referenceNo, 'Ready for Payout' as any);
+        // Update status to Payout Scheduled with date & time!
+        onUpdateStatus(releasingRecord.referenceNo, 'Payout Scheduled' as any, {
+          scheduledPayoutDate: releaseDate,
+          scheduledPayoutTime: releaseTime
+        });
       }
       setReleasingRecord(null);
     }
@@ -267,8 +303,10 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
                 filteredRecords.map((app) => {
                   const isReleased = app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed';
                   const name = (app as any).applicantName || app.details?.applicantName || 'Juan Dela Cruz';
-                  const hasSchedule = !!scheduledPayoutTimes[app.referenceNo];
                   const schedInfo = scheduledPayoutTimes[app.referenceNo];
+                  const payoutDate = schedInfo?.date || (app as any).scheduledPayoutDate || (app as any).scheduled_payout_date;
+                  const payoutTime = schedInfo?.time || (app as any).scheduledPayoutTime || (app as any).scheduled_payout_time;
+                  const hasSchedule = !!(payoutDate && payoutTime);
 
                   let benefitText = 'Hospital Guarantee Letter (GL)';
                   let locationText = 'Quezon City General Hospital (QCGH)';
@@ -302,22 +340,46 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border whitespace-nowrap ${
                           isReleased
                             ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30'
-                            : 'bg-amber-950/60 text-amber-400 border-amber-500/30'
+                            : hasSchedule
+                            ? 'bg-amber-950/60 text-amber-400 border-amber-500/30'
+                            : 'bg-blue-950/60 text-blue-300 border-blue-500/30'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isReleased ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
-                          <span>{isReleased ? 'RELEASED / COMPLETED' : hasSchedule ? `PAYOUT SCHEDULED (${schedInfo.date} ${formatTo12Hour(schedInfo.time)})` : 'PAYOUT SCHEDULED'}</span>
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isReleased ? 'bg-emerald-400' : hasSchedule ? 'bg-amber-400' : 'bg-blue-400'}`}></span>
+                          <span>
+                            {isReleased
+                              ? 'RELEASED / COMPLETED'
+                              : hasSchedule
+                              ? `PAYOUT SCHEDULED (${payoutDate} ${formatTo12Hour(payoutTime)})`
+                              : 'READY FOR PAYOUT SCHEDULE'}
+                          </span>
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         {!isReleased ? (
-                          <button
-                            type="button"
-                            onClick={() => setReleasingRecord(app)}
-                            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md transition-all inline-flex items-center gap-1.5 whitespace-nowrap"
-                          >
-                            <Clock className="w-3.5 h-3.5 shrink-0" />
-                            <span>{hasSchedule ? 'Edit Payout Schedule' : 'Set Payout Date & Time'}</span>
-                          </button>
+                          hasSchedule ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="text-[11px] font-extrabold text-amber-400 italic whitespace-nowrap inline-flex items-center gap-1.5 bg-amber-950/40 border border-amber-500/30 px-3 py-1.5 rounded-xl">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                <span>Payout Scheduled</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setReleasingRecord(app)}
+                                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[11px] font-bold border border-slate-700 transition-all"
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setReleasingRecord(app)}
+                              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md transition-all inline-flex items-center gap-1.5 whitespace-nowrap"
+                            >
+                              <Clock className="w-3.5 h-3.5 shrink-0" />
+                              <span>Set Payout Date & Time</span>
+                            </button>
+                          )
                         ) : (
                           <span className="text-[11px] font-semibold text-emerald-400 italic whitespace-nowrap">✓ Released & Archived</span>
                         )}
@@ -342,8 +404,8 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
       </div>
 
       {/* CONFIRMATION & PAYOUT DATE MODAL */}
-      {releasingRecord && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      {releasingRecord && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-[#030712]/90 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-[#0e1726] border border-slate-700/80 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-5 text-slate-100 font-sans">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
@@ -431,7 +493,8 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

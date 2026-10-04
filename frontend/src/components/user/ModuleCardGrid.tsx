@@ -24,7 +24,7 @@ export const ModuleCardGrid: React.FC<ModuleCardGridProps> = ({ activeTab, onApp
             {
               title: 'Burial / Funeral Assistance',
               description:
-                'The Funeral and Burial Assistance Program under Ordinance 2865 S-2019 provides financial aid through a Certificate of Guarantee to accredited partner funeral homes, covering service packages up to Php25,000.',
+                'The Funeral and Burial Assistance Program under Ordinance 2865 S-2019 provides financial aid through a Guarantee Letter (GL) to accredited partner funeral homes, covering service packages up to Php25,000.',
             },
             {
               title: 'Medical Assistance',

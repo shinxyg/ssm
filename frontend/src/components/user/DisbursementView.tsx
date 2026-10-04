@@ -6,6 +6,7 @@ import {
   UserCheck, 
   FileText, 
   Download, 
+  Eye,
   X, 
   CheckCircle2, 
   AlertCircle, 
@@ -23,13 +24,58 @@ interface DisbursementViewProps {
   applications?: ApplicationRecord[];
 }
 
+const formatTo12Hour = (timeStr: string) => {
+  if (!timeStr) return '';
+  const [hoursStr, minutesStr] = timeStr.split(':');
+  let hours = parseInt(hoursStr, 10);
+  if (isNaN(hours)) return timeStr;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const minutes = minutesStr ? minutesStr.padStart(2, '0') : '00';
+  return `${hours}:${minutes} ${ampm}`;
+};
+
 export const DisbursementView: React.FC<DisbursementViewProps> = ({
   darkMode = true,
   onNavigateToModule,
   applications = [],
 }) => {
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>('ALL');
-  const [viewingSlipApp, setViewingSlipApp] = useState<ApplicationRecord | null>(null);
+  const [expandedRef, setExpandedRef] = useState<string | null>(null);
+  const [dbAppointments, setDbAppointments] = useState<any[]>([]);
+
+  // Fetch appointments registry from PostgreSQL DB with fast state comparison
+  React.useEffect(() => {
+    const fetchAppts = () => {
+      fetch('http://localhost:5000/api/appointments')
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setDbAppointments(prev => {
+              if (prev.length === data.length) {
+                let isMatch = true;
+                for (let i = 0; i < prev.length; i++) {
+                  if (
+                    prev[i].referenceNo !== data[i].referenceNo &&
+                    prev[i].reference_no !== data[i].reference_no
+                  ) {
+                    isMatch = false;
+                    break;
+                  }
+                }
+                if (isMatch) return prev;
+              }
+              return data;
+            });
+          }
+        })
+        .catch(() => {});
+    };
+    fetchAppts();
+    const interval = setInterval(fetchAppts, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Filter Applications to show all user applications so records NEVER vanish
   const activeApplications = useMemo(() => {
@@ -162,12 +208,53 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
           <div className="grid grid-cols-1 gap-4">
             {filteredActiveApps.map((app) => {
               const statusText = (app.status as string) || 'Pending';
-              const isScheduled = statusText === 'Approved' || statusText === 'Ready for Payout' || statusText === 'Interview Scheduled' || statusText === 'Approved by Admin';
+              const name = (app as any).applicantName || app.details?.applicantName || 'Juan Dela Cruz';
+
+              const appt = (app as any).appointmentDetails;
+              const dbAppt = dbAppointments.find((a) => (a.reference_no || a.referenceNo) === app.referenceNo);
+
+              // 1. Payout Schedule (Set exclusively in Financial Aid Disbursement)
+              const rawPayoutDate = (app as any).scheduledPayoutDate || (app as any).scheduled_payout_date;
+              const rawPayoutTime = (app as any).scheduledPayoutTime || (app as any).scheduled_payout_time;
+
+              // 2. Interview Schedule (Set exclusively in Appointments Registry)
+              const rawInterviewDate = (app as any).appointmentDate || (app as any).appointment_date || appt?.appointmentDate || dbAppt?.appointment_date || dbAppt?.appointmentDate || dbAppt?.date;
+              const rawInterviewTime = (app as any).appointmentTime || (app as any).appointment_time || appt?.appointmentTime || dbAppt?.appointment_time || dbAppt?.appointmentTime || dbAppt?.time;
+
+              const hasExplicitPayoutSched = !!(rawPayoutDate || rawPayoutTime) || statusText === 'Payout Scheduled';
+
+              const isPayoutScheduled = (statusText === 'Ready for Payout' || statusText === 'Approved by Admin' || statusText === 'Payout Scheduled') && hasExplicitPayoutSched;
+              const isInterviewScheduled = (statusText === 'Approved' || statusText === 'Interview Scheduled' || statusText === 'Pending Appointment') && !hasExplicitPayoutSched;
+              const isScheduled = hasExplicitPayoutSched || isInterviewScheduled;
               const isReferred = statusText === 'Referred to Partner Agency' || statusText === 'Referred';
               const isRejected = statusText === 'Rejected' || statusText === 'Disapproved';
               const isReleased = statusText === 'RELEASED / COMPLETED' || statusText === 'Completed';
 
-              const name = (app as any).applicantName || app.details?.applicantName || 'Juan Dela Cruz';
+              const formatScheduleDate = (dStr?: string) => {
+                if (!dStr) return '';
+                if (dStr.includes('•')) return dStr;
+                try {
+                  const parts = dStr.split('-');
+                  if (parts.length === 3) {
+                    const y = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10) - 1;
+                    const d = parseInt(parts[2], 10);
+                    const dt = new Date(y, m, d);
+                    if (!isNaN(dt.getTime())) {
+                      return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    }
+                  }
+                } catch (e) {
+                  // ignore
+                }
+                return dStr;
+              };
+
+              const payoutDateFormatted = formatScheduleDate(rawPayoutDate);
+              const payoutTimeFormatted = rawPayoutTime ? formatTo12Hour(rawPayoutTime) : '';
+
+              const interviewDateFormatted = formatScheduleDate(rawInterviewDate) || 'Oct 4, 2026';
+              const interviewTimeFormatted = rawInterviewTime ? formatTo12Hour(rawInterviewTime) : '';
 
               let statusBadgeStyle = 'bg-amber-950/80 text-amber-400 border-amber-500/40';
               let statusDotStyle = 'bg-amber-400';
@@ -177,6 +264,16 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                 statusBadgeStyle = 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40';
                 statusDotStyle = 'bg-emerald-400';
                 statusLabel = 'RELEASED / COMPLETED';
+              } else if (isPayoutScheduled) {
+                statusBadgeStyle = 'bg-amber-950/80 text-amber-300 border-amber-500/40';
+                statusDotStyle = 'bg-amber-400';
+                statusLabel = payoutDateFormatted
+                  ? `PAYOUT SCHEDULED (${payoutDateFormatted.toUpperCase()}${payoutTimeFormatted ? ` • ${payoutTimeFormatted}` : ''})`
+                  : 'PAYOUT SCHEDULED';
+              } else if (statusText === 'Ready for Payout' || statusText === 'Approved by Admin') {
+                statusBadgeStyle = 'bg-blue-950/80 text-blue-300 border-blue-500/40';
+                statusDotStyle = 'bg-blue-400';
+                statusLabel = 'READY FOR PAYOUT SCHEDULE';
               } else if (isReferred) {
                 statusBadgeStyle = 'bg-purple-950/80 text-purple-300 border-purple-500/40';
                 statusDotStyle = 'bg-purple-400';
@@ -185,22 +282,28 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                 statusBadgeStyle = 'bg-rose-950/80 text-rose-300 border-rose-500/40';
                 statusDotStyle = 'bg-rose-400';
                 statusLabel = 'REJECTED';
-              } else if (isScheduled) {
+              } else if (isInterviewScheduled) {
                 statusBadgeStyle = 'bg-blue-950/80 text-blue-300 border-blue-500/40';
                 statusDotStyle = 'bg-blue-400';
                 statusLabel = 'INTERVIEW SCHEDULED';
               }
 
               let processExplanation = 'Admin is currently reviewing your uploaded documents (SOA / Doctor Prescription). Please await further updates.';
-              if (isScheduled) {
-                processExplanation = 'Your physical interview has been scheduled at the Quezon City Hall SSDD Assessment Area.';
+              if (isReleased) {
+                processExplanation = `Your ${app.serviceName} has been successfully released and processed. Thank you!`;
+              } else if (isPayoutScheduled) {
+                processExplanation = `Your Financial Aid Payout has been scheduled for release on ${payoutDateFormatted || 'assigned date'}${payoutTimeFormatted ? ` at ${payoutTimeFormatted}` : ''}. Please present your ID at the SSDD releasing desk upon claiming.`;
+              } else if (statusText === 'Ready for Payout' || statusText === 'Approved by Admin') {
+                processExplanation = 'Your financial aid request is approved and ready for disbursement. The SSDD Treasury is currently setting your official payout date & time schedule.';
+              } else if (isInterviewScheduled) {
+                processExplanation = `Your physical interview has been scheduled for ${interviewDateFormatted}${interviewTimeFormatted ? ` at ${interviewTimeFormatted}` : ''} at Quezon City Hall SSDD Assessment Area.`;
               } else if (isReferred) {
                 processExplanation = 'Your case has been officially referred to DSWD / PCSO for additional financial aid evaluation.';
               } else if (isRejected) {
                 processExplanation = 'Your application has been disapproved. This record will remain preserved in your Application History.';
-              } else if (isReleased) {
-                processExplanation = 'Your Medical Financial Assistance has been successfully released and processed. Thank you!';
               }
+
+              const isExpanded = expandedRef === app.referenceNo;
 
               return (
                 <div
@@ -227,7 +330,19 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                     <div className="p-3 rounded-xl bg-[#080f1e] border border-slate-800 space-y-1">
                       <span className="text-slate-400 text-[10px] font-semibold uppercase block">Applicant Info</span>
                       <div className="font-bold text-white">{name}</div>
-                      <div className="text-slate-400 text-[11px] font-mono">Date Filed: {app.dateSubmitted}</div>
+                      <div className="text-slate-400 text-[11px] font-mono space-y-0.5">
+                        <div>Date Filed: {app.dateSubmitted}</div>
+                        {hasExplicitPayoutSched && (
+                          <div className={`font-bold text-[11px] mt-0.5 ${isReleased ? 'text-emerald-400' : 'text-amber-400'}`}>
+                            Payout Sched: {payoutDateFormatted || 'Date Pending'}{payoutTimeFormatted ? ` • ${payoutTimeFormatted}` : ''}
+                          </div>
+                        )}
+                        {isInterviewScheduled && !hasExplicitPayoutSched && (
+                          <div className="text-blue-400 font-bold text-[11px] mt-0.5">
+                            Interview Sched: {interviewDateFormatted}{interviewTimeFormatted ? ` • ${interviewTimeFormatted}` : ''}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#080f1e] border border-slate-800 space-y-1">
@@ -263,14 +378,120 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                     {isScheduled && (
                       <button
                         type="button"
-                        onClick={() => setViewingSlipApp(app)}
-                        className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold shadow-md transition-all flex items-center gap-2 shrink-0"
+                        onClick={() => setExpandedRef(isExpanded ? null : app.referenceNo)}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-extrabold shadow-md transition-all flex items-center gap-2 shrink-0 ${
+                          isExpanded
+                            ? 'bg-slate-700 hover:bg-slate-600 text-white'
+                            : 'bg-blue-600 hover:bg-blue-500 text-white'
+                        }`}
                       >
-                        <Download className="w-4 h-4" />
-                        <span>Download Appointment Slip</span>
+                        <Eye className="w-4 h-4" />
+                        <span>{isExpanded ? 'Hide Schedule Slip' : isPayoutScheduled ? 'View Payout Schedule Slip' : 'View Appointment Slip'}</span>
                       </button>
                     )}
                   </div>
+
+                  {/* INLINE EXPANDABLE APPOINTMENT SLIP */}
+                  {isExpanded && (() => {
+                    const isFuneral = app.serviceName.toLowerCase().includes('funeral') || app.serviceName.toLowerCase().includes('burial');
+
+                    return (
+                      <div className="mt-4 p-5 rounded-2xl bg-[#09152b] border border-blue-500/40 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-3 gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-7 h-7 object-contain" />
+                            <div>
+                              <h5 className="text-xs font-black text-white tracking-wider uppercase">
+                                {isPayoutScheduled ? 'OFFICIAL PAYOUT SCHEDULE SLIP' : 'OFFICIAL APPOINTMENT ASSESSMENT SLIP'}
+                              </h5>
+                              <span className="text-[10px] text-blue-400 font-mono">APT CONTROL NO: {app.referenceNo.replace('QC-AICS-2026-', 'APT-2026-')}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                          {/* SCHEDULE BOX */}
+                          <div className="p-4 rounded-xl bg-blue-950/40 border border-blue-800/50 space-y-2.5">
+                            <h6 className="text-[11px] font-black uppercase text-blue-300 tracking-wider flex items-center gap-1.5">
+                              <span>{isPayoutScheduled ? '💵 PAYOUT RELEASE SCHEDULE DETAILS' : '📅 INTERVIEW SCHEDULE DETAILS'}</span>
+                            </h6>
+                            <div className="space-y-1.5 text-xs">
+                              <div>
+                                <span className="text-slate-400 text-[10px] block uppercase font-bold">SCHEDULED DATE:</span>
+                                <span className="font-extrabold text-white text-sm">
+                                  {(isPayoutScheduled ? (payoutDateFormatted || 'Date Pending') : interviewDateFormatted).toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 text-[10px] block uppercase font-bold">TIME SLOT:</span>
+                                <span className="font-extrabold text-blue-400">
+                                  {isPayoutScheduled ? (payoutTimeFormatted || 'Time Pending') : interviewTimeFormatted}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 text-[10px] block uppercase font-bold">OFFICE VENUE:</span>
+                                <span className="font-bold text-slate-200">QC Hall SSDD Desk 3, Ground Flr High-Rise Bldg</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 text-[10px] block uppercase font-bold">ASSIGNED SOCIAL WORKER:</span>
+                                <span className="font-extrabold text-white">{app.assignedSocialWorker || 'Maria Santos, RSW'}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* REQUIREMENTS CHECKLIST */}
+                          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                            <h6 className="text-[11px] font-black uppercase text-slate-300 tracking-wider">📋 REQUIRED ORIGINAL DOCUMENTS TO BRING</h6>
+                            <ul className="space-y-1.5 text-xs text-slate-200 font-medium">
+                              {isFuneral ? (
+                                <>
+                                  <li className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                    <span>Death Certificate - Original Certified True Copy</span>
+                                  </li>
+                                  <li className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                    <span>Statement of Account / Official Funeral Contract</span>
+                                  </li>
+                                  <li className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                    <span>Barangay Certificate of Indigency</span>
+                                  </li>
+                                  <li className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                    <span>Valid Photo ID of Informant / Nearest Kin (PhilSys / QC ID / UMID)</span>
+                                  </li>
+                                </>
+                              ) : (
+                                <>
+                                  <li className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                    <span>Original Hospital Statement of Account (SOA) / Doctor&apos;s Prescription</span>
+                                  </li>
+                                  <li className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                    <span>Original Medical Certificate / Clinical Summary</span>
+                                  </li>
+                                  <li className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                    <span>Barangay Certificate of Indigency</span>
+                                  </li>
+                                  <li className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                    <span>Valid Government Issued Photo ID (PhilSys / Comelec / UMID)</span>
+                                  </li>
+                                </>
+                              )}
+                            </ul>
+                          </div>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/30 text-[11px] text-amber-300 font-medium">
+                          NOTICE: Please arrive 15 minutes prior to your scheduled time and report to the SSDD Reception Desk for verification of your name and Appointment Control No.
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}
@@ -287,116 +508,6 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
           </div>
         )}
       </div>
-
-      {/* APPOINTMENT SLIP MODAL (NO QR CODE) */}
-      {viewingSlipApp && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white text-slate-900 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl p-8 font-sans border border-slate-300">
-            {/* Header */}
-            <div className="text-center space-y-1 border-b pb-4 border-slate-300">
-              <div className="flex items-center justify-center gap-3">
-                <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-12 h-12 object-contain" />
-                <div>
-                  <h2 className="text-base font-black tracking-tight uppercase text-slate-900">REPUBLIC OF THE PHILIPPINES</h2>
-                  <h3 className="text-xs font-bold text-slate-700">QUEZON CITY GOVERNMENT</h3>
-                  <h4 className="text-[11px] font-extrabold text-blue-900 uppercase">SOCIAL SERVICES & DEVELOPMENT DEPARTMENT (SSDD)</h4>
-                </div>
-              </div>
-              <div className="pt-2">
-                <span className="inline-block px-4 py-1 bg-blue-50 border border-blue-300 text-blue-950 text-xs font-black rounded-lg tracking-widest uppercase">
-                  OFFICIAL APPOINTMENT ASSESSMENT SLIP
-                </span>
-              </div>
-            </div>
-
-            {/* Reference info */}
-            <div className="flex justify-between items-center py-3 border-b border-slate-200 text-xs font-mono">
-              <div>
-                <span className="text-slate-500 font-bold block text-[10px]">APPOINTMENT CONTROL NO:</span>
-                <span className="font-black text-blue-900 text-sm">APT-2026-8819</span>
-              </div>
-              <div className="text-right">
-                <span className="text-slate-500 font-bold block text-[10px]">APPLICATION REF NO:</span>
-                <span className="font-bold text-slate-800">{viewingSlipApp.referenceNo}</span>
-              </div>
-            </div>
-
-            {/* Schedule Box */}
-            <div className="py-4 space-y-4 text-xs">
-              <div className="bg-blue-50/80 p-4 rounded-xl border border-blue-200 space-y-2">
-                <h4 className="text-[11px] font-black uppercase text-blue-900 tracking-wider">📅 INTERVIEW SCHEDULE DETAILS:</h4>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-slate-500 text-[10px] block uppercase font-bold">SCHEDULED DATE:</span>
-                    <span className="font-extrabold text-slate-900 text-sm">NOVEMBER 12, 2026 (Thursday)</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block uppercase font-bold">TIME SLOT:</span>
-                    <span className="font-extrabold text-blue-900">09:00 AM - 10:00 AM</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block uppercase font-bold">OFFICE VENUE:</span>
-                    <span className="font-bold text-slate-800">QC Hall SSDD Desk 3, Ground Flr High-Rise Bldg</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 text-[10px] block uppercase font-bold">ASSIGNED SOCIAL WORKER:</span>
-                    <span className="font-extrabold text-slate-900">{viewingSlipApp.assignedSocialWorker || 'Maria Santos, RSW'}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Requirements Checklist */}
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-                <h4 className="text-[11px] font-black uppercase text-slate-700 tracking-wider">📋 REQUIRED ORIGINAL DOCUMENTS TO BRING:</h4>
-                <ul className="space-y-1 text-xs text-slate-800 font-medium">
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Original Hospital Statement of Account (SOA) / Doctor's Prescription</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Original Medical Certificate / Clinical Summary</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Barangay Certificate of Indigency</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Valid Government Issued Photo ID (PhilSys / Comelec / UMID)</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 font-semibold">
-                NOTICE: Please arrive 15 minutes prior to your scheduled time and report to the SSDD Reception Desk for verification of your name and Appointment Control No.
-              </div>
-            </div>
-
-            {/* Footer Buttons */}
-            <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
-              <span className="text-[10px] text-slate-500 font-mono">CONFIRMED BY SSDD SYSTEM</span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setViewingSlipApp(null)}
-                  className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-xl"
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-md"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>PRINT / DOWNLOAD SLIP</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

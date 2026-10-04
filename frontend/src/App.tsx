@@ -75,13 +75,30 @@ export default function App() {
   // Dynamic application state
   const [applications, setApplications] = useState<ApplicationRecord[]>(initialApplications);
 
-  // Fetch applications from PostgreSQL DB on mount, focus, and interval polling
+  // Fetch applications from PostgreSQL DB with fast O(1) state comparison
   const fetchDBApplications = () => {
     fetch('http://localhost:5000/api/aics/applications')
       .then(res => res.json())
       .then((dbApps: ApplicationRecord[]) => {
         if (Array.isArray(dbApps)) {
-          setApplications(dbApps);
+          setApplications(prev => {
+            if (prev.length === dbApps.length) {
+              let isMatch = true;
+              for (let i = 0; i < prev.length; i++) {
+                if (
+                  prev[i].referenceNo !== dbApps[i].referenceNo ||
+                  prev[i].status !== dbApps[i].status ||
+                  (prev[i] as any).scheduledPayoutDate !== (dbApps[i] as any).scheduledPayoutDate ||
+                  (prev[i] as any).scheduledPayoutTime !== (dbApps[i] as any).scheduledPayoutTime
+                ) {
+                  isMatch = false;
+                  break;
+                }
+              }
+              if (isMatch) return prev;
+            }
+            return dbApps;
+          });
         }
       })
       .catch(err => console.log('Notice: Backend API offline or error fetching DB apps:', err));
@@ -89,7 +106,7 @@ export default function App() {
 
   useEffect(() => {
     fetchDBApplications();
-    const interval = setInterval(fetchDBApplications, 2000);
+    const interval = setInterval(fetchDBApplications, 3000);
     window.addEventListener('focus', fetchDBApplications);
     return () => {
       clearInterval(interval);
@@ -117,13 +134,13 @@ export default function App() {
     }
   };
 
-  const handleUpdateStatus = async (refNo: string, newStatus: ApplicationRecord['status']) => {
-    setApplications(prev => prev.map(app => app.referenceNo === refNo ? { ...app, status: newStatus } : app));
+  const handleUpdateStatus = async (refNo: string, newStatus: ApplicationRecord['status'], extraFields?: Record<string, any>) => {
+    setApplications(prev => prev.map(app => app.referenceNo === refNo ? { ...app, status: newStatus, ...(extraFields || {}) } : app));
     try {
       await fetch(`http://localhost:5000/api/aics/applications/${encodeURIComponent(refNo)}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus, ...(extraFields || {}) })
       });
     } catch (err) {
       console.error('Error updating status in DB:', err);
