@@ -294,6 +294,18 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      if (mode === 'soloparent') {
+        await fetch('http://localhost:5000/api/solo-parent/applications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...payload,
+            referenceNo: newRef,
+            soloParentCategory: 'Educational Assistance Grant',
+            assistanceType: 'Solo Parent Educational Assistance Program',
+          })
+        });
+      }
     } catch (err) {
       console.warn("Educational Assistance API post warning:", err);
     }

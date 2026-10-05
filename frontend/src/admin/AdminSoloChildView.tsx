@@ -82,11 +82,49 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
 
   const fetchApplications = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/solo-parent/applications');
-      if (res.ok) {
-        const data = await res.json();
-        setApplications(data);
+      const [spRes, eduRes] = await Promise.all([
+        fetch('http://localhost:5000/api/solo-parent/applications').catch(() => null),
+        fetch('http://localhost:5000/api/educational/applications').catch(() => null),
+      ]);
+      let combined: SoloParentApplication[] = [];
+      if (spRes && spRes.ok) {
+        const spData = await spRes.json();
+        combined = [...spData];
       }
+      if (eduRes && eduRes.ok) {
+        const eduData = await eduRes.json();
+        const soloEduApps = eduData
+          .filter((app: any) => app.is_solo_educational_beneficiary || app.category === 'Solo Parent Services' || (app.service_name || '').includes('Solo Parent'))
+          .map((app: any) => ({
+            id: app.id,
+            reference_no: app.reference_no,
+            applicant_name: app.applicant_name,
+            first_name: app.first_name,
+            middle_name: app.middle_name,
+            last_name: app.last_name,
+            suffix: app.suffix,
+            nationality: app.nationality,
+            dob: app.dob,
+            age: app.age,
+            phone_number: app.phone_number,
+            email_address: app.email_address,
+            solo_parent_category: 'Educational Assistance Grant',
+            monthly_income: app.monthly_family_income,
+            status: app.status || 'Pending Document Validation',
+            disapproval_reason: app.disapproval_reason,
+            uploaded_documents: app.uploaded_documents,
+            details: app.details,
+            date_submitted: app.date_submitted
+          }));
+
+        const existingRefNos = new Set(combined.map(a => a.reference_no));
+        soloEduApps.forEach((eduApp: any) => {
+          if (!existingRefNos.has(eduApp.reference_no)) {
+            combined.push(eduApp);
+          }
+        });
+      }
+      setApplications(combined);
     } catch (err) {
       console.error('Error fetching solo parent applications:', err);
     } finally {
