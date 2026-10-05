@@ -23,6 +23,10 @@ export interface ApplicationRecord {
   status: 'Approved' | 'Under Review' | 'Pending Documents' | 'Ready for Payout' | 'Rejected' | 'Disqualified' | 'Appointment Scheduled' | 'Completed' | 'Released' | (string & {});
   amountOrType: string;
   assignedSocialWorker: string;
-  qrCodeData?: string;
+  disapprovalReason?: string;
+  appointmentDate?: string;
+  appointmentTime?: string;
+  scheduledPayoutDate?: string;
+  scheduledPayoutTime?: string;
   details?: Record<string, any>;
 }
