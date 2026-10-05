@@ -447,7 +447,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
               <div>
                 <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider">{selectedApp.reference_no}</span>
                 <h3 className="text-base font-extrabold text-white mt-0.5">
-                  Solo Parent Subsidy — ₱3,000 Cash Grant
+                  {(selectedApp.solo_parent_category || '').toLowerCase().includes('educational') || (selectedApp.reference_no || '').startsWith('QC-SP-EDU') || selectedApp.details?.childFullName ? 'Solo Parent Educational Assistance — ₱5,000 Cash Grant' : 'Solo Parent Subsidy — ₱3,000 Cash Grant'}
                 </h3>
               </div>
               <button
@@ -475,7 +475,9 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                   </div>
                   <div>
                     <span className="text-slate-400 text-[10px] font-semibold uppercase">Assistance Type</span>
-                    <div className="font-extrabold text-white mt-0.5">Solo Parent Financial Subsidy Program</div>
+                    <div className="font-extrabold text-white mt-0.5">
+                      {(selectedApp.solo_parent_category || '').toLowerCase().includes('educational') || (selectedApp.reference_no || '').startsWith('QC-SP-EDU') || selectedApp.details?.childFullName ? 'Solo Parent Educational Assistance Program' : 'Solo Parent Financial Subsidy Program'}
+                    </div>
                   </div>
                   <div>
                     <span className="text-slate-400 text-[10px] font-semibold uppercase">Solo Parent ID No (SPIC)</span>
@@ -486,7 +488,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                   <div>
                     <span className="text-slate-400 text-[10px] font-semibold uppercase">Benefit Entitlement</span>
                     <div className="font-bold text-amber-400 mt-0.5">
-                      ₱3,000.00 FIXED CASH SUBSIDY
+                      {(selectedApp.solo_parent_category || '').toLowerCase().includes('educational') || (selectedApp.reference_no || '').startsWith('QC-SP-EDU') || selectedApp.details?.childFullName ? '₱5,000.00 EDUCATIONAL CASH GRANT' : '₱3,000.00 FIXED CASH SUBSIDY'}
                     </div>
                   </div>
                 </div>
@@ -653,35 +655,72 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                 </span>
 
                 <div className="space-y-2.5">
-                  {[
-                    { key: 'spic', title: 'Solo Parent Identification Card (SPIC) / Booklet', file: selectedApp.uploaded_documents?.spic?.name || 'spic_identification_card.png', icon: CreditCard },
-                    { key: 'qcid', title: 'QCitizen ID (QC ID)', file: selectedApp.uploaded_documents?.qcid?.name || 'qcitizen_id_card.png', icon: ImageIcon },
-                    { key: 'proof_income', title: 'Proof of Indigency / Non-Employment', file: selectedApp.uploaded_documents?.proof_income?.name || 'proof_of_indigency.png', icon: FileText }
-                  ].map((docItem) => {
-                    const DocIcon = docItem.icon;
-                    const uploadedDoc = selectedApp.uploaded_documents?.[docItem.key];
-                    const dataUrl = uploadedDoc?.dataUrl || (uploadedDoc as any)?.url;
-                    const fileName = uploadedDoc?.name || docItem.file;
+                  {(() => {
+                    const docsList = [
+                      { 
+                        key: 'spic', 
+                        altKeys: ['spic', 'soloParentId'], 
+                        title: 'Solo Parent Identification Card (SPIC) / Booklet', 
+                        file: 'spic_identification_card.png', 
+                        icon: CreditCard 
+                      },
+                      { 
+                        key: 'qcid', 
+                        altKeys: ['qcid', 'qcitizenId'], 
+                        title: 'QCitizen ID (QC ID)', 
+                        file: 'qcitizen_id_card.png', 
+                        icon: ImageIcon 
+                      },
+                      { 
+                        key: 'proof_income', 
+                        altKeys: ['proof_income', 'indigency'], 
+                        title: 'Original Barangay Certificate of Indigency', 
+                        file: 'proof_of_indigency.png', 
+                        icon: FileText 
+                      },
+                      { 
+                        key: 'enrollment', 
+                        altKeys: ['enrollment'], 
+                        title: 'Certificate of Enrollment', 
+                        file: 'certificate_of_enrollment.png', 
+                        icon: FileText 
+                      }
+                    ];
 
-                    return (
-                      <div
-                        key={docItem.key}
-                        onClick={() => setInspectingDoc({ title: docItem.title, filename: fileName, dataUrl: dataUrl })}
-                        className="p-3.5 rounded-xl bg-[#0b1426] hover:bg-[#111e38] border border-slate-800 hover:border-blue-500/50 transition-all cursor-pointer flex items-center gap-3 group"
-                      >
-                        <div className="p-2 rounded-lg bg-blue-950/60 border border-blue-800/50 text-blue-400 group-hover:text-blue-300 shrink-0">
-                          <DocIcon className="w-5 h-5 stroke-[1.7]" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-extrabold text-white text-xs tracking-tight">{docItem.title}</div>
-                          <div className="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-1">
-                            <span className="text-emerald-400 font-bold">✓ Uploaded:</span>
-                            <span className="truncate">{fileName}</span>
+                    return docsList.map((docItem) => {
+                      const DocIcon = docItem.icon;
+                      let uploadedDoc = null;
+                      if (selectedApp.uploaded_documents) {
+                        for (const k of [docItem.key, ...docItem.altKeys]) {
+                          if (selectedApp.uploaded_documents[k]) {
+                            uploadedDoc = selectedApp.uploaded_documents[k];
+                            break;
+                          }
+                        }
+                      }
+                      const dataUrl = uploadedDoc?.dataUrl || (uploadedDoc as any)?.url;
+                      const fileName = uploadedDoc?.name || docItem.file;
+
+                      return (
+                        <div
+                          key={docItem.key}
+                          onClick={() => setInspectingDoc({ title: docItem.title, filename: fileName, dataUrl: dataUrl })}
+                          className="p-3.5 rounded-xl bg-[#0b1426] hover:bg-[#111e38] border border-slate-800 hover:border-blue-500/50 transition-all cursor-pointer flex items-center gap-3 group"
+                        >
+                          <div className="p-2 rounded-lg bg-blue-950/60 border border-blue-800/50 text-blue-400 group-hover:text-blue-300 shrink-0">
+                            <DocIcon className="w-5 h-5 stroke-[1.7]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-extrabold text-white text-xs tracking-tight">{docItem.title}</div>
+                            <div className="text-[10px] text-slate-400 font-mono mt-0.5 flex items-center gap-1">
+                              <span className="text-emerald-400 font-bold">✓ Uploaded:</span>
+                              <span className="truncate">{fileName}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    });
+                  })()}
                 </div>
               </div>
 
