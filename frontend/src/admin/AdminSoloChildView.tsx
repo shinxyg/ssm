@@ -658,32 +658,32 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                   {(() => {
                     const docsList = [
                       { 
-                        key: 'spic', 
-                        altKeys: ['spic', 'soloParentId'], 
-                        title: 'Solo Parent Identification Card (SPIC) / Booklet', 
-                        file: 'spic_identification_card.png', 
-                        icon: CreditCard 
-                      },
-                      { 
-                        key: 'qcid', 
-                        altKeys: ['qcid', 'qcitizenId'], 
-                        title: 'QCitizen ID (QC ID)', 
-                        file: 'qcitizen_id_card.png', 
-                        icon: ImageIcon 
-                      },
-                      { 
                         key: 'proof_income', 
                         altKeys: ['proof_income', 'indigency'], 
-                        title: 'Original Barangay Certificate of Indigency', 
+                        title: 'ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY', 
                         file: 'proof_of_indigency.png', 
                         icon: FileText 
                       },
                       { 
                         key: 'enrollment', 
                         altKeys: ['enrollment'], 
-                        title: 'Certificate of Enrollment', 
+                        title: 'CERTIFICATE OF ENROLLMENT', 
                         file: 'certificate_of_enrollment.png', 
                         icon: FileText 
+                      },
+                      { 
+                        key: 'qcid', 
+                        altKeys: ['qcid', 'qcitizenId'], 
+                        title: 'QCITIZEN ID', 
+                        file: 'qcitizen_id_card.png', 
+                        icon: ImageIcon 
+                      },
+                      { 
+                        key: 'spic', 
+                        altKeys: ['spic', 'soloParentId'], 
+                        title: 'SOLO PARENT ID / CERTIFICATION', 
+                        file: 'spic_identification_card.png', 
+                        icon: CreditCard 
                       }
                     ];
 
