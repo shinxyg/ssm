@@ -148,11 +148,15 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
 
   // Merge Applications from prop with DB appointments
   const combinedList = useMemo(() => {
-    // Include all active applications that reached Appointments (Pending Appointment, Interview Scheduled, Approved, Ready for Payout, Referred, Rejected)
-    const approvedApps = applications.filter((app) => 
-      app.status !== 'Under Review' && 
-      app.status !== 'Pending Documents'
-    );
+    const approvedApps = applications.filter((app) => {
+      const st = (app.status || '').toUpperCase();
+      return (
+        st !== 'UNDER REVIEW' && 
+        st !== 'PENDING DOCUMENTS' &&
+        st !== 'PENDING VALIDATION' &&
+        st !== 'PENDING'
+      );
+    });
 
     const merged: (ApplicationRecord & { appointmentDetails?: AppointmentEntry })[] = approvedApps.map((app) => {
       const dbAppt = dbAppointments.find((a) => a.referenceNo === app.referenceNo);

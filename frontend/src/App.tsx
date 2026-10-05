@@ -112,28 +112,7 @@ export default function App() {
 
       const allDbApps = [...(Array.isArray(aicsApps) ? aicsApps : []), ...seniorApps];
 
-      setApplications(prev => {
-        const dbRefNos = new Set(allDbApps.map(a => a.referenceNo));
-        const localOnly = prev.filter(a => !dbRefNos.has(a.referenceNo));
-        const merged = [...localOnly, ...allDbApps];
-
-        if (prev.length === merged.length) {
-          let isMatch = true;
-          for (let i = 0; i < prev.length; i++) {
-            if (
-              prev[i].referenceNo !== merged[i].referenceNo ||
-              prev[i].status !== merged[i].status ||
-              (prev[i] as any).scheduledPayoutDate !== (merged[i] as any).scheduledPayoutDate ||
-              (prev[i] as any).scheduledPayoutTime !== (merged[i] as any).scheduledPayoutTime
-            ) {
-              isMatch = false;
-              break;
-            }
-          }
-          if (isMatch) return prev;
-        }
-        return merged;
-      });
+      setApplications(allDbApps);
     } catch (err) {
       console.log('Notice: Backend API offline or error fetching DB apps:', err);
     }

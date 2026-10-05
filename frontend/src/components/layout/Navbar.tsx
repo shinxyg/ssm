@@ -102,78 +102,109 @@ export const Navbar: React.FC<NavbarProps> = ({
   const displaySubtitle = userSubtitle || (userRole === 'admin' ? 'Administrator' : 'Citizen Resident');
   const displayInitials = userInitials || (userRole === 'admin' ? 'AD' : 'JL');
 
-  // Generate Notifications derived from the 5-step application lifecycle
+  // Generate Notifications derived from the 6-step application lifecycle
   const rawNotifications = useMemo(() => {
     const list: { id: string; title: string; message: string; time: string; type: 'info' | 'success' | 'warning' | 'error' }[] = [];
 
     applications.forEach((app) => {
       const ref = app.referenceNo;
       const serv = app.serviceName;
+      const st = (app.status || '').toUpperCase();
+      const isSenior = (app.category || '').toLowerCase().includes('senior') || serv.toLowerCase().includes('senior') || ref.startsWith('SENIOR-');
 
-      // Step 1: Form Submitted
+      // Step 1: Form Submitted / Application Received
       list.unshift({
         id: `${ref}-step1`,
         title: 'Step 1: Application Received',
-        message: `Application received for ${serv} (Ref: ${ref}). Admin is currently evaluating your submitted requirements.`,
+        message: isSenior 
+          ? `QC Govt: Received your Senior Assistance request (Ref: ${ref}).`
+          : `Application received for ${serv} (Ref: ${ref}). Admin is evaluating submitted requirements.`,
         time: app.dateSubmitted || 'Submitted',
         type: 'info'
       });
 
       // Step 2: Admin Initial Verification
-      if (app.status === 'Pending Appointment' || app.status === 'Interview Scheduled' || app.status === 'Ready for Payout' || app.status === 'Approved' || app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed') {
+      if (st.includes('APPROVED BY ADMIN') || st.includes('INTERVIEW SCHEDULED') || st.includes('APPROVED BY OSCA') || st.includes('PAYOUT') || st.includes('RELEASED') || st.includes('COMPLETED') || st === 'APPROVED' || st === 'PENDING APPOINTMENT') {
         list.unshift({
           id: `${ref}-step2`,
           title: 'Step 2: Initial Verification Approved',
-          message: `Initial Approval: Your ${serv} (Ref: ${ref}) has been verified and queued for interview scheduling.`,
+          message: isSenior
+            ? `QC Govt: Documents verified. Please wait for your interview schedule (Ref: ${ref}).`
+            : `Initial Approval: Your ${serv} (Ref: ${ref}) has been verified and queued for interview scheduling.`,
           time: 'Verified',
           type: 'success'
         });
-      } else if ((app.status as string) === 'Rejected' || (app.status as string) === 'Disqualified') {
+      } else if (st.includes('REJECT') || st.includes('DISQUALIFIED')) {
         list.unshift({
           id: `${ref}-step2-rejected`,
           title: 'Step 2: Disapproved',
-          message: `Your ${serv} application (Ref: ${ref}) was disapproved due to requirement discrepancies.`,
+          message: isSenior
+            ? `QC Govt: Disapproved your Senior Assistance request (Ref: ${ref})${app.disapprovalReason ? ` due to: ${app.disapprovalReason}` : '.'}`
+            : `Your ${serv} application (Ref: ${ref}) was disapproved due to requirement discrepancies.`,
           time: 'Rejected',
           type: 'error'
         });
       }
 
       // Step 3: Interview Scheduled
-      if (app.status === 'Interview Scheduled' || app.status === 'Ready for Payout' || app.status === 'Approved' || app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed') {
+      if (st.includes('INTERVIEW SCHEDULED') || st.includes('APPROVED BY OSCA') || st.includes('PAYOUT') || st.includes('RELEASED') || st.includes('COMPLETED')) {
+        const apptDate = app.appointmentDate || (app as any).appointmentDetails?.appointmentDate || 'QC Hall OSCA Desk';
+        const apptTime = app.appointmentTime || (app as any).appointmentDetails?.appointmentTime || '';
         list.unshift({
           id: `${ref}-step3`,
           title: 'Step 3: Interview Scheduled',
-          message: `Interview Scheduled: Your appointment for ${serv} (Ref: ${ref}) is set at Quezon City Hall SSDD Assessment Area.`,
+          message: isSenior
+            ? `QC Govt: Scheduled OSCA interview at QC Hall on ${apptDate} ${apptTime}.`
+            : `Interview Scheduled: Your appointment for ${serv} (Ref: ${ref}) is set at QC Hall SSDD Desk.`,
           time: 'Scheduled',
           type: 'info'
         });
       }
 
-      // Step 4: Physical Interview & Decision
-      if (app.status === 'Ready for Payout' || app.status === 'Approved' || app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed') {
+      // Step 4: Physical Assessment at OSCA Approved
+      if (st.includes('APPROVED BY OSCA') || st.includes('PAYOUT') || st.includes('RELEASED') || st.includes('COMPLETED')) {
         list.unshift({
           id: `${ref}-step4-approved`,
-          title: 'Step 4: Aid Approved',
-          message: `Your ${serv} (Ref: ${ref}) has been officially approved! Financial assistance benefit is ready for release.`,
+          title: 'Step 4: OSCA Assessment Passed',
+          message: isSenior
+            ? `QC Govt: Approved your Senior Assistance for ₱3,000 Cash Grant (Ref: ${ref}). Please wait for Payout schedule.`
+            : `Your ${serv} (Ref: ${ref}) has been officially approved! Benefit ready for payout release.`,
           time: 'Approved',
           type: 'success'
         });
-      } else if (app.status === 'Referred to Partner Agency' || app.status === 'Referred') {
+      } else if (st.includes('REFERRED')) {
         list.unshift({
           id: `${ref}-step4-referred`,
           title: 'Step 4: Case Referred',
-          message: `Your ${serv} case (Ref: ${ref}) has been referred to partner government agency (PCSO / DSWD).`,
+          message: `Your ${serv} case (Ref: ${ref}) has been referred to partner government agency.`,
           time: 'Referred',
           type: 'warning'
         });
       }
 
-      // Step 5: Financial Release Completed
-      if (app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed') {
+      // Step 5: Payout Scheduled
+      if (st.includes('PAYOUT SCHEDULED') || st.includes('RELEASED') || st.includes('COMPLETED')) {
+        const payDate = (app as any).scheduledPayoutDate || app.appointmentDate || 'Scheduled Date';
+        const payTime = (app as any).scheduledPayoutTime || '';
         list.unshift({
           id: `${ref}-step5`,
-          title: 'Step 5: Release Completed',
-          message: `Completed: Financial assistance benefit for ${serv} (Ref: ${ref}) has been successfully released and claimed. Thank you!`,
+          title: 'Step 5: Payout Scheduled',
+          message: isSenior
+            ? `QC Govt: Scheduled your ₱3,000 Payout on ${payDate} ${payTime} at QC Hall OSCA Desk.`
+            : `Scheduled your financial payout for ${serv} on ${payDate} ${payTime}.`,
+          time: 'Payout Scheduled',
+          type: 'info'
+        });
+      }
+
+      // Step 6: Release Completed
+      if (st.includes('RELEASED') || st.includes('COMPLETED')) {
+        list.unshift({
+          id: `${ref}-step6`,
+          title: 'Step 6: Release Completed',
+          message: isSenior
+            ? `QC Govt: Released your ₱3,000 Senior Allowance. Thank you! (Ref: ${ref})`
+            : `Completed: Financial assistance benefit for ${serv} (Ref: ${ref}) has been released.`,
           time: 'Completed',
           type: 'success'
         });
