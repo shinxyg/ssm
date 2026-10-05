@@ -281,10 +281,23 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
       status: 'Pending Document Validation',
       details: {
         applicantName: `${applicantFirstName} ${applicantMiddleName} ${applicantLastName}`.trim(),
+        spicNumber: soloParentIdNumber || 'SP-we432432',
+        relationshipToChild: relationToChild,
         childFullName,
+        childDob,
+        childAge,
+        childSex,
         schoolName,
         gradeLevel,
-        monthlyIncome,
+        lrnNumber,
+        typeOfSchool,
+        otherEnrollmentInfo,
+        numChildrenInFamily,
+        numChildrenStudying,
+        monthlyFamilyIncome: monthlyIncome,
+        is4psBeneficiary,
+        isSoloEducationalBeneficiary: isSoloParentBeneficiary,
+        isPwdEducationalBeneficiary: isPwdBeneficiary,
       }
     };
 
@@ -322,12 +335,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
       status: 'Pending Document Validation',
       assignedSocialWorker: 'Maria Santos, RSW (QC Social Services)',
       amountOrType: mode === 'soloparent' ? '₱5,000 Solo Parent Educational Grant' : '₱5,000 Educational Grant',
-      details: {
-        applicantName: `${applicantFirstName} ${applicantMiddleName} ${applicantLastName}`.trim(),
-        childFullName,
-        schoolName,
-        gradeLevel
-      }
+      details: payload.details
     };
 
     onAddApplication(newAppRecord);

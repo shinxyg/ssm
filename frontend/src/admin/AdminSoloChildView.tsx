@@ -494,159 +494,255 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                 </div>
               </div>
 
-              {/* SECTION 2: APPLICANT PERSONAL INFORMATION (INDIVIDUAL FIELDS) */}
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-4">
-                <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                  <span>APPLICANT PERSONAL INFORMATION (INDIVIDUAL FIELDS)</span>
-                  <span className="text-[9px] font-mono text-slate-400">VERIFIED QCITIZEN PROFILE</span>
-                </span>
+                    {/* SECTION 2: APPLICANT / PARENT / GUARDIAN INFORMATION (INDIVIDUAL FIELDS) */}
+                    <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-4">
+                      <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                        <span>A. APPLICANT / PARENT / GUARDIAN INFORMATION</span>
+                        <span className="text-[9px] font-mono text-slate-400">VERIFIED QCITIZEN PROFILE</span>
+                      </span>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">First Name</span>
-                    <div className="font-bold text-white text-xs mt-0.5">{selectedApp.first_name || 'JEFFERSON'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Middle Name</span>
-                    <div className="font-bold text-white text-xs mt-0.5">{selectedApp.middle_name || 'FERNANDO'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Last Name</span>
-                    <div className="font-bold text-white text-xs mt-0.5">{selectedApp.last_name || 'LEE'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Suffix</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.suffix || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Nationality</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.nationality || 'FILIPINO'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Date of Birth</span>
-                    <div className="font-mono text-slate-200 text-xs mt-0.5">{selectedApp.dob || '2004-09-27'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Age</span>
-                    <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.age ? `${selectedApp.age} yrs old` : '22 yrs old'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Gender</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.gender || 'Male'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Civil Status</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.civil_status || 'Single'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">House / Bldg No.</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.house_no || '176'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Street Name</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.street_name || '23'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Barangay</span>
-                    <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.barangay || 'Bagong Silangan'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Phone Number</span>
-                    <div className="font-mono font-bold text-slate-200 text-xs mt-0.5">{selectedApp.phone_number || '09155582122'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Email Address</span>
-                    <div className="font-bold text-slate-200 text-xs mt-0.5 truncate">{selectedApp.email_address || 'jeffersonlee1234@gmail.com'}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 3: SOLO PARENT & DEPENDENT DETAILS */}
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
-                <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                  <span>SOLO PARENT & DEPENDENT INFORMATION</span>
-                  <span className="text-[9px] font-mono text-slate-400">FAMILY STATUS</span>
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Solo Parent Category / Reason</span>
-                    <div className="font-bold text-white mt-0.5">{selectedApp.solo_parent_category || selectedApp.details?.soloParentCategory || 'Unmarried parent'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Number of Dependents</span>
-                    <div className="font-bold text-white mt-0.5">{selectedApp.num_dependents || selectedApp.details?.dependentsCount || '1'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Age of Youngest Dependent</span>
-                    <div className="font-bold text-white mt-0.5">
-                      {(() => {
-                        const raw = selectedApp.age_youngest_dependent || selectedApp.details?.youngestAge || '3';
-                        return String(raw).includes('yr') ? raw : `${raw} yrs old`;
-                      })()}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">First Name</span>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.first_name || 'JEFFERSON'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Middle Name</span>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.middle_name || 'FERNANDO'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Last Name</span>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.last_name || 'LEE'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Suffix</span>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.suffix || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Nationality</span>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.nationality || 'FILIPINO'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Date of Birth</span>
+                          <div className="font-mono text-slate-200 text-xs mt-0.5">{selectedApp.dob || '27/09/2004'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Age</span>
+                          <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.age ? `${selectedApp.age} yrs old` : '22 yrs old'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Gender</span>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.gender || 'Male'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Civil Status</span>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.civil_status || 'Solo Parent'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">House / Bldg No.</span>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.house_no || '176'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Street Name</span>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.street_name || '23'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Barangay</span>
+                          <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.barangay || 'Bagong Silangan'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Phone Number</span>
+                          <div className="font-mono font-bold text-slate-200 text-xs mt-0.5">{selectedApp.phone_number || '09155582122'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Email Address</span>
+                          <div className="font-bold text-slate-200 text-xs mt-0.5 truncate">{selectedApp.email_address || 'jeffersonlee1234@gmail.com'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Existing Solo Parent ID No.</span>
+                          <div className="font-mono font-bold text-blue-400 text-xs mt-0.5">{selectedApp.solo_parent_id_no || selectedApp.details?.spicNumber || 'SP-we432432'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Relationship to Child</span>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.details?.relationshipToChild || (selectedApp as any).relationship_to_child || 'Parent / Guardian'}</div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* SECTION 4: EMPLOYMENT & INCOME DETAILS */}
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
-                <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                  <span>EMPLOYMENT & INCOME DETAILS</span>
-                  <span className="text-[9px] font-mono text-slate-400">FINANCIAL ASSESSMENT</span>
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Employment Status</span>
-                    <div className="font-bold text-white mt-0.5">{selectedApp.employment_status || selectedApp.details?.employmentStatus || 'Unemployed'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Occupation</span>
-                    <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.occupation || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Employer / Source of Income</span>
-                    <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.employer_income_source || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Monthly Income (PHP)</span>
-                    <div className="font-bold text-emerald-400 mt-0.5">
-                      {(() => {
-                        const val = selectedApp.monthly_income;
-                        if (!val || val === '0' || val === 'P0' || val === '₱0') return '₱0.00';
-                        return String(val).startsWith('₱') ? val : `₱${Number(val).toLocaleString('en-US')}`;
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                    {/* SECTION 3: B. CHILD / BENEFICIARY INFORMATION (STUDENT PROFILE) */}
+                    {isEduApp ? (
+                      <>
+                        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
+                          <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                            <span>B. CHILD / BENEFICIARY INFORMATION</span>
+                            <span className="text-[9px] font-mono text-blue-400">STUDENT BENEFICIARY</span>
+                          </span>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Full Name</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.details?.childFullName || (selectedApp as any).child_full_name || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Date of Birth</span>
+                              <div className="font-mono text-slate-200 mt-0.5">{selectedApp.details?.childDob || (selectedApp as any).child_dob || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Age</span>
+                              <div className="font-bold text-slate-200 mt-0.5">
+                                {selectedApp.details?.childAge || (selectedApp as any).child_age ? `${selectedApp.details?.childAge || (selectedApp as any).child_age} yrs old` : 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Sex</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.details?.childSex || (selectedApp as any).child_sex || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">School Name</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.details?.schoolName || (selectedApp as any).school_name || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Grade Level</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.details?.gradeLevel || (selectedApp as any).grade_level || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Learner Reference No. (LRN)</span>
+                              <div className="font-mono font-bold text-blue-400 mt-0.5">{selectedApp.details?.lrnNumber || (selectedApp as any).lrn_number || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Type of School</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.details?.typeOfSchool || (selectedApp as any).type_of_school || 'Public School'}</div>
+                            </div>
+                            <div className="col-span-2">
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Other Enrollment Info</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.details?.otherEnrollmentInfo || (selectedApp as any).other_enrollment_info || 'N/A'}</div>
+                            </div>
+                          </div>
+                        </div>
 
-              {/* SECTION 5: OTHER GOVERNMENT ASSISTANCE & PENSION */}
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
-                <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                  <span>OTHER GOVERNMENT ASSISTANCE & PENSION</span>
-                  <span className="text-[9px] font-mono text-slate-400">BENEFIT DECLARATION</span>
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Receiving Gov Assistance?</span>
-                    <div className="font-bold text-white mt-0.5">{selectedApp.receiving_gov_assistance || 'No'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Government Program Name</span>
-                    <div className="font-semibold text-slate-300 mt-0.5">
-                      {selectedApp.gov_program_name ? `${selectedApp.gov_program_name} ${selectedApp.gov_assistance_amount_freq ? `(${selectedApp.gov_assistance_amount_freq})` : ''}` : 'N/A'}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Receiving Pension?</span>
-                    <div className="font-bold text-white mt-0.5">{selectedApp.receiving_pension || 'No'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Pension Type / Details</span>
-                    <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.pension_type || 'N/A'}</div>
-                  </div>
-                </div>
-              </div>
+                        {/* SECTION 4: C. FAMILY & FINANCIAL INFORMATION */}
+                        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
+                          <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                            <span>C. FAMILY INFORMATION & FINANCIAL ASSESSMENT</span>
+                            <span className="text-[9px] font-mono text-emerald-400 font-bold">ELIGIBILITY ASSESS</span>
+                          </span>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Number of Children in Family</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.details?.numChildrenInFamily || (selectedApp as any).num_children_in_family || selectedApp.num_dependents || '1'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Number of Children Currently Studying</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.details?.numChildrenStudying || (selectedApp as any).num_children_studying || '1'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Monthly Family Income</span>
+                              <div className="font-bold text-emerald-400 mt-0.5">
+                                {selectedApp.monthly_income || selectedApp.details?.monthlyFamilyIncome || (selectedApp as any).monthly_family_income || '₱10,000 – ₱15,000'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">4Ps Beneficiary?</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.details?.is4psBeneficiary || (selectedApp as any).is_4ps_beneficiary || 'No'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Solo Parent Educational Beneficiary?</span>
+                              <div className="font-bold text-emerald-400 mt-0.5">{selectedApp.details?.isSoloEducationalBeneficiary || (selectedApp as any).is_solo_educational_beneficiary || 'Yes'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">PWD Educational Beneficiary?</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.details?.isPwdEducationalBeneficiary || (selectedApp as any).is_pwd_educational_beneficiary || 'No'}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* STANDARD SOLO PARENT SUBSIDY SECTIONS */}
+                        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
+                          <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                            <span>SOLO PARENT & DEPENDENT INFORMATION</span>
+                            <span className="text-[9px] font-mono text-slate-400">FAMILY STATUS</span>
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Solo Parent Category / Reason</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.solo_parent_category || selectedApp.details?.soloParentCategory || 'Unmarried parent'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Number of Dependents</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.num_dependents || selectedApp.details?.dependentsCount || '1'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Age of Youngest Dependent</span>
+                              <div className="font-bold text-white mt-0.5">
+                                {(() => {
+                                  const raw = selectedApp.age_youngest_dependent || selectedApp.details?.youngestAge || '3';
+                                  return String(raw).includes('yr') ? raw : `${raw} yrs old`;
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
+                          <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                            <span>EMPLOYMENT & INCOME DETAILS</span>
+                            <span className="text-[9px] font-mono text-slate-400">FINANCIAL ASSESSMENT</span>
+                          </span>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Employment Status</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.employment_status || selectedApp.details?.employmentStatus || 'Unemployed'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Occupation</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.occupation || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Employer / Source of Income</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.employer_income_source || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Monthly Income (PHP)</span>
+                              <div className="font-bold text-emerald-400 mt-0.5">
+                                {(() => {
+                                  const val = selectedApp.monthly_income;
+                                  if (!val || val === '0' || val === 'P0' || val === '₱0') return '₱0.00';
+                                  return String(val).startsWith('₱') ? val : `₱${Number(val).toLocaleString('en-US')}`;
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
+                          <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                            <span>OTHER GOVERNMENT ASSISTANCE & PENSION</span>
+                            <span className="text-[9px] font-mono text-slate-400">BENEFIT DECLARATION</span>
+                          </span>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Receiving Gov Assistance?</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.receiving_gov_assistance || 'No'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Government Program Name</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">
+                                {selectedApp.gov_program_name ? `${selectedApp.gov_program_name} ${selectedApp.gov_assistance_amount_freq ? `(${selectedApp.gov_assistance_amount_freq})` : ''}` : 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Receiving Pension?</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.receiving_pension || 'No'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Pension Type / Details</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.pension_type || 'N/A'}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
 
               {/* SECTION 6: UPLOADED REQUIREMENTS (MATCHING EXACT SCREENSHOT 2!) */}
               <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
