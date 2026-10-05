@@ -227,7 +227,14 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               const isInterviewScheduled = (statusText === 'Approved' || statusText === 'Interview Scheduled' || statusText === 'Pending Appointment') && !hasExplicitPayoutSched;
               const isScheduled = hasExplicitPayoutSched || isInterviewScheduled;
               const isReferred = statusText === 'Referred to Partner Agency' || statusText === 'Referred';
-              const isRejected = statusText === 'Rejected' || statusText === 'Disapproved';
+              const isRejected = 
+                statusText === 'Rejected' || 
+                statusText === 'Disapproved' || 
+                statusText === 'REJECTED' || 
+                statusText === 'DISAPPROVED' || 
+                statusText.toLowerCase().includes('reject') || 
+                statusText.toLowerCase().includes('disapprov') ||
+                statusText.toLowerCase().includes('disqualif');
               const isReleased = statusText === 'RELEASED / COMPLETED' || statusText === 'Completed';
 
               const formatScheduleDate = (dStr?: string) => {
@@ -279,9 +286,9 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                 statusDotStyle = 'bg-purple-400';
                 statusLabel = 'REFERRED TO DSWD/PCSO';
               } else if (isRejected) {
-                statusBadgeStyle = 'bg-rose-950/80 text-rose-300 border-rose-500/40';
-                statusDotStyle = 'bg-rose-400';
-                statusLabel = 'REJECTED';
+                statusBadgeStyle = 'bg-red-950/90 text-red-400 border-red-600/60 shadow-sm shadow-red-900/30';
+                statusDotStyle = 'bg-red-500';
+                statusLabel = statusText.toUpperCase().includes('DISAPPROVED') ? 'DISAPPROVED' : 'REJECTED';
               } else if (isInterviewScheduled) {
                 statusBadgeStyle = 'bg-blue-950/80 text-blue-300 border-blue-500/40';
                 statusDotStyle = 'bg-blue-400';

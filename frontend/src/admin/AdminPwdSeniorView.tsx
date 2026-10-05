@@ -319,9 +319,22 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                     <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800 uppercase">
                       REF: {selectedApp.referenceNo}
                     </span>
-                    <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 uppercase">
-                      {selectedApp.status}
-                    </span>
+                    {(() => {
+                      const st = selectedApp.status || '';
+                      const isApproved = st === 'APPROVED' || st === 'Approved' || st === 'Step 6: Completed';
+                      const isRejected = st === 'REJECTED' || st === 'Rejected' || st === 'Disapproved' || st.includes('Disapproved') || st.toUpperCase().includes('REJECT');
+                      return (
+                        <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded border uppercase ${
+                          isApproved
+                            ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                            : isRejected
+                            ? 'bg-red-950 text-red-400 border-red-800'
+                            : 'bg-amber-950 text-amber-400 border-amber-800'
+                        }`}>
+                          {selectedApp.status}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <h3 className="text-xl font-extrabold text-white mt-1">
                     {pInfo.firstName ? `${pInfo.firstName} ${pInfo.middleName || ''} ${pInfo.lastName}`.trim() : (selectedApp.applicantName || raw.applicant_name)}

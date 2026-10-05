@@ -1112,9 +1112,22 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
 
               <div>
                 <span className="text-slate-400 text-[10px] font-semibold uppercase block mb-1.5">Current Application Status</span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800">
-                  {selectedApp.status}
-                </span>
+                {(() => {
+                  const st = selectedApp.status || '';
+                  const isApproved = st === 'Approved' || st === 'Ready for Payout' || st === 'RELEASED / COMPLETED' || st === 'Completed';
+                  const isRejected = st === 'Rejected' || st === 'Disapproved' || st === 'REJECTED' || st.toLowerCase().includes('reject') || st.toLowerCase().includes('disapprov');
+                  return (
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                      isApproved
+                        ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                        : isRejected
+                        ? 'bg-red-950 text-red-400 border-red-800'
+                        : 'bg-amber-950 text-amber-300 border-amber-800'
+                    }`}>
+                      {selectedApp.status}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
 
