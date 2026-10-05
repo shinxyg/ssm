@@ -753,6 +753,8 @@ export default function App() {
               onBack={() => setActiveTab('senior')}
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
+              onNavigateToModule={(tab) => setActiveTab(tab)}
+              applications={applications}
             />
           ) : activeTab === 'soloparent-form' || activeTab === 'soloparent-financial-form' ? (
             /* Dedicated Solo Parent Financial Subsidy 4-Step Form View */
