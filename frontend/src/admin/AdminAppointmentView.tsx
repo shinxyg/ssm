@@ -146,16 +146,25 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
       .catch((err) => console.log('Notice: Backend API offline or fetching from local state', err));
   }, []);
 
-  // Merge Applications from prop with DB appointments
+  // Merge Applications from prop with DB appointments (exclude pending & rejected/disapproved apps)
   const combinedList = useMemo(() => {
     const approvedApps = applications.filter((app) => {
       const st = (app.status || '').toUpperCase();
-      return (
-        st !== 'UNDER REVIEW' && 
-        st !== 'PENDING DOCUMENTS' &&
-        st !== 'PENDING VALIDATION' &&
-        st !== 'PENDING'
-      );
+      const isRejected = 
+        st === 'REJECTED' || 
+        st === 'DISAPPROVED' || 
+        st === 'DISQUALIFIED' || 
+        st.includes('REJECT') || 
+        st.includes('DISAPPROV') || 
+        st.includes('DISQUALIF');
+
+      const isPending = 
+        st === 'UNDER REVIEW' || 
+        st === 'PENDING DOCUMENTS' ||
+        st === 'PENDING VALIDATION' ||
+        st === 'PENDING';
+
+      return !isPending && !isRejected;
     });
 
     const merged: (ApplicationRecord & { appointmentDetails?: AppointmentEntry })[] = approvedApps.map((app) => {
