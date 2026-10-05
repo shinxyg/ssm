@@ -410,8 +410,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
     (submittedAppInList.status || '').toUpperCase().includes('DISAPPROVED')
   ) : false;
 
-  // TEMPORARILY DISABLED targetApp BYPASS PER USER REQUEST TO INSPECT FORM
-  const targetApp: ApplicationRecord | null = null;
+  const targetApp = isSubmittedAppFinished ? null : (submittedApp || activePendingApp || null);
 
   if (targetApp) {
     return (

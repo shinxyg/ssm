@@ -15,8 +15,11 @@ async function resetAllTables() {
     await client.query('DELETE FROM pwd_applications;');
     await client.query('DELETE FROM senior_applications;');
     await client.query('DELETE FROM livelihood_applications;');
+    await client.query('DELETE FROM solo_parent_applications;');
+    await client.query('DELETE FROM educational_applications;');
+    await client.query('DELETE FROM financial_disbursements;');
 
-    console.log('🧹 Successfully deleted ALL records from ALL database tables in PostgreSQL (aics_applications, appointments, pwd_applications, senior_applications, livelihood_applications)!');
+    console.log('🧹 Successfully deleted ALL records from ALL database tables in PostgreSQL!');
     console.log('✨ PostgreSQL database is 100% empty and ready for fresh re-applications.');
 
     client.release();

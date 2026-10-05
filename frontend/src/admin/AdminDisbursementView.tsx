@@ -112,8 +112,11 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
 
       disbursementRecords.forEach((app) => {
         if (app.status !== 'RELEASED / COMPLETED' && (app.status as string) !== 'Completed') {
-          const schedDate = (app as any).scheduledPayoutDate || scheduledPayoutTimes[app.referenceNo]?.date;
-          const schedTime = (app as any).scheduledPayoutTime || scheduledPayoutTimes[app.referenceNo]?.time;
+          const rawDate = (app as any).scheduledPayoutDate || scheduledPayoutTimes[app.referenceNo]?.date;
+          const rawTime = (app as any).scheduledPayoutTime || scheduledPayoutTimes[app.referenceNo]?.time;
+          const schedDate = rawDate ? String(rawDate).split('T')[0] : null;
+          const schedTime = rawTime ? String(rawTime).split('T')[0] : null;
+
           if (schedDate && schedTime) {
             if (schedDate < currentDateStr || (schedDate === currentDateStr && schedTime <= currentTimeStr)) {
               if (onUpdateStatus) {
@@ -164,7 +167,10 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
         // Update status to Payout Scheduled with date & time!
         onUpdateStatus(releasingRecord.referenceNo, 'Payout Scheduled' as any, {
           scheduledPayoutDate: releaseDate,
-          scheduledPayoutTime: releaseTime
+          scheduledPayoutTime: releaseTime,
+          payoutDate: releaseDate,
+          payoutTime: releaseTime,
+          payoutVenue: 'Quezon City Hall Cashier / SSDD Office'
         });
       }
       setReleasingRecord(null);

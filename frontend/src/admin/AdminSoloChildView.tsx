@@ -152,7 +152,16 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
   // Update Status in PostgreSQL DB
   const handleUpdateStatus = async (refNo: string, newStatus: string, reason?: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/solo-parent/applications/${refNo}/status`, {
+      const isEdu = refNo.startsWith('QC-SP-EDU') || (selectedApp?.solo_parent_category || '').toLowerCase().includes('educational') || Boolean(selectedApp?.details?.childFullName);
+      const primaryEndpoint = isEdu
+        ? `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`
+        : `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`;
+
+      const fallbackEndpoint = isEdu
+        ? `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`
+        : `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`;
+
+      let res = await fetch(primaryEndpoint, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -160,6 +169,17 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
           disapprovalReason: reason || null,
         }),
       });
+
+      if (!res.ok) {
+        res = await fetch(fallbackEndpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: newStatus,
+            disapprovalReason: reason || null,
+          }),
+        });
+      }
 
       if (res.ok) {
         await fetchApplications();
@@ -378,7 +398,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-xs font-medium">
-                  {filteredApps.map((app) => {
+                  {filteredApps.map((app, idx) => {
                     const st = app.status;
                     const isApproved = st === 'APPROVED BY ADMIN' || st === 'APPROVED' || st === 'Approved' || st === 'Ready for Payout' || st === 'PAYOUT SCHEDULED';
                     const isReleased = st === 'RELEASED / COMPLETED' || st === 'Completed' || st === 'RELEASED';
@@ -386,7 +406,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
 
                     return (
                       <tr 
-                        key={app.id || app.reference_no} 
+                        key={app.reference_no ? `${app.reference_no}-${idx}` : `app-${app.id}-${idx}`} 
                         onClick={() => setSelectedApp(app)}
                         className="hover:bg-[#142036] transition-colors cursor-pointer"
                       >
@@ -468,38 +488,6 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             {/* Modal Body */}
             <div className="p-6 space-y-5 text-xs overflow-y-auto flex-1 custom-modal-scroll">
 
-              {/* SECTION 1: ASSISTANCE CATEGORY & DETAILS */}
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
-                <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                  <span>ASSISTANCE CATEGORY & DETAILS</span>
-                  <span className="text-[9px] font-mono text-slate-400">INPUTTED BY USER</span>
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Category / Program</span>
-                    <div className="font-extrabold text-white mt-0.5">Solo Parent Welfare Services</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Assistance Type</span>
-                    <div className="font-extrabold text-white mt-0.5">
-                      {(selectedApp.solo_parent_category || '').toLowerCase().includes('educational') || (selectedApp.reference_no || '').startsWith('QC-SP-EDU') || selectedApp.details?.childFullName ? 'Solo Parent Educational Assistance Program' : 'Solo Parent Financial Subsidy Program'}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Solo Parent ID No (SPIC)</span>
-                    <div className="font-mono font-bold text-blue-400 mt-0.5">
-                      {selectedApp.solo_parent_id_no || selectedApp.details?.spicNumber || 'SP-2026-88492'}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase">Benefit Entitlement</span>
-                    <div className="font-bold text-amber-400 mt-0.5">
-                      {(selectedApp.solo_parent_category || '').toLowerCase().includes('educational') || (selectedApp.reference_no || '').startsWith('QC-SP-EDU') || selectedApp.details?.childFullName ? '₱5,000.00 EDUCATIONAL CASH GRANT' : '₱3,000.00 FIXED CASH SUBSIDY'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
                     {/* SECTION 2: APPLICANT / PARENT / GUARDIAN INFORMATION (INDIVIDUAL FIELDS) */}
                     <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-4">
                       <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
@@ -566,7 +554,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Existing Solo Parent ID No.</span>
-                          <div className="font-mono font-bold text-blue-400 text-xs mt-0.5">{selectedApp.solo_parent_id_no || selectedApp.details?.spicNumber || 'SP-we432432'}</div>
+                          <div className="font-mono font-bold text-white text-xs mt-0.5">{selectedApp.solo_parent_id_no || selectedApp.details?.spicNumber || 'SP-we432432'}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Relationship to Child</span>
@@ -838,39 +826,59 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
 
             </div>
 
-            {/* Modal Bottom Action Bar matching exact green button design in screenshot 1 & 2! */}
+            {/* Modal Bottom Action Bar */}
             <div className="p-4 bg-[#121e36] border-t border-slate-800 flex justify-end items-center gap-3 shrink-0">
-              {selectedApp.status !== 'APPROVED BY ADMIN' && selectedApp.status !== 'APPROVED' && selectedApp.status !== 'RELEASED / COMPLETED' && selectedApp.status !== 'REJECTED' ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenRejectModal(selectedApp)}
-                    className="px-4 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/40 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    <span>Reject</span>
-                  </button>
+              {(() => {
+                const st = (selectedApp.status || '').toUpperCase();
+                const isPendingDoc = st.includes('PENDING') || st.includes('REVIEW') || st === 'SUBMITTED' || st === 'FOR VALIDATION';
+                const isRejected = st.includes('REJECT') || st.includes('DISAPPROV');
 
-                  <button
-                    type="button"
-                    onClick={() => handleUpdateStatus(selectedApp.reference_no, 'APPROVED BY ADMIN')}
-                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-1.5"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Initial Approve</span>
-                  </button>
-                </>
-              ) : (
-                <div className="px-6 py-2.5 bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 font-extrabold text-xs rounded-xl flex items-center gap-2 shadow-inner">
-                  <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
-                  <span>✓ Approved & Transferred to Appointments</span>
-                </div>
-              )}
+                if (isPendingDoc) {
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenRejectModal(selectedApp)}
+                        className="px-4 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/40 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        <span>Reject</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateStatus(selectedApp.reference_no, 'APPROVED BY ADMIN')}
+                        className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Initial Approve</span>
+                      </button>
+                    </>
+                  );
+                }
+
+                if (isRejected) {
+                  return (
+                    <div className="px-6 py-2.5 bg-rose-950/80 text-rose-400 border border-rose-500/40 font-extrabold text-xs rounded-xl flex items-center gap-2 shadow-inner">
+                      <XCircle className="w-4 h-4 text-rose-400" />
+                      <span>Application Disapproved / Rejected</span>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="px-6 py-2.5 bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 font-extrabold text-xs rounded-xl flex items-center gap-2 shadow-inner">
+                    <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
+                    <span>✓ Approved & Transferred to Appointments / Payout</span>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>,
         document.body
-      )})}
+      )
+      })()}
 
       {/* DOCUMENT INSPECTION MODAL WITH ACTUAL USER PHOTO PREVIEW */}
       {inspectingDoc && createPortal(

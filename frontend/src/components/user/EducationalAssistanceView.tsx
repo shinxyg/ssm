@@ -210,7 +210,23 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
   };
 
   const handleCapturePhoto = () => {
-    const fakePhotoUrl = `https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80`;
+    // Generate a high quality canvas Data URL for simulated camera capture
+    const canvas = document.createElement('canvas');
+    canvas.width = 640;
+    canvas.height = 480;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 640, 480);
+      ctx.fillStyle = '#3b82f6';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('QC GOVSERVE DOCUMENT CAPTURE', 320, 220);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '16px sans-serif';
+      ctx.fillText(`Doc: ${activeCameraDocKey?.toUpperCase()} | ${new Date().toLocaleString()}`, 320, 260);
+    }
+    const fakePhotoUrl = canvas.toDataURL('image/jpeg', 0.85);
     const photoDoc = { name: `camera_capture_${Date.now()}.jpg`, url: fakePhotoUrl };
 
     if (activeCameraDocKey === 'indigency') setDocIndigency(photoDoc);
@@ -307,18 +323,6 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (mode === 'soloparent') {
-        await fetch('http://localhost:5000/api/solo-parent/applications', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...payload,
-            referenceNo: newRef,
-            soloParentCategory: 'Educational Assistance Grant',
-            assistanceType: 'Solo Parent Educational Assistance Program',
-          })
-        });
-      }
     } catch (err) {
       console.warn("Educational Assistance API post warning:", err);
     }
@@ -366,8 +370,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
     (submittedAppInList.status || '').toUpperCase().includes('DISAPPROVED')
   ) : false;
 
-  // TEMPORARILY DISABLED targetApp BYPASS PER USER REQUEST TO INSPECT FORM
-  const targetApp = null;
+  const targetApp = isSubmittedAppFinished ? null : (submittedAppRecord || activePendingApp || null);
 
   if (targetApp) {
     return (
@@ -1539,7 +1542,11 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
                             const file = e.target.files[0];
-                            item.setDoc({ name: file.name, url: URL.createObjectURL(file) });
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              item.setDoc({ name: file.name, url: reader.result as string });
+                            };
+                            reader.readAsDataURL(file);
                           }
                         }}
                       />

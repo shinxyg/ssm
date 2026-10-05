@@ -120,12 +120,6 @@ export const initDB = async () => {
       ALTER TABLE appointments ALTER COLUMN appointment_time DROP NOT NULL;
       ALTER TABLE appointments ALTER COLUMN venue DROP NOT NULL;
 
-      try {
-        await client.query('ALTER TABLE appointments ADD CONSTRAINT appointments_ref_no_key UNIQUE (reference_no);');
-      } catch (e) {
-        // ignore if constraint already exists
-      }
-
       CREATE TABLE IF NOT EXISTS pwd_applications (
         id SERIAL PRIMARY KEY,
         reference_no VARCHAR(50) UNIQUE NOT NULL,

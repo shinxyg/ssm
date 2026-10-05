@@ -166,6 +166,36 @@ setInterval(async () => {
       }
     }
 
+    const resultEdu = await pool.query(`
+      SELECT reference_no, payout_date, payout_time, status 
+      FROM educational_applications 
+      WHERE (status = 'PAYOUT SCHEDULED' OR status = 'Payout Scheduled' OR status = 'APPROVED') 
+        AND payout_date IS NOT NULL 
+        AND payout_time IS NOT NULL
+    `);
+    for (const row of resultEdu.rows) {
+      if (isScheduledTimeReached(row.payout_date, row.payout_time)) {
+        console.log(`⏰ [AUTO-TRIGGER] Scheduled payout time reached for Educational ${row.reference_no}! Auto-updating status to RELEASED / COMPLETED`);
+        await pool.query(`UPDATE educational_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+        await pool.query(`UPDATE financial_disbursements SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+      }
+    }
+
+    const resultSenior = await pool.query(`
+      SELECT reference_no, payout_date, payout_time, status 
+      FROM senior_applications 
+      WHERE (status = 'PAYOUT SCHEDULED' OR status = 'Payout Scheduled' OR status = 'APPROVED') 
+        AND payout_date IS NOT NULL 
+        AND payout_time IS NOT NULL
+    `);
+    for (const row of resultSenior.rows) {
+      if (isScheduledTimeReached(row.payout_date, row.payout_time)) {
+        console.log(`⏰ [AUTO-TRIGGER] Scheduled payout time reached for Senior ${row.reference_no}! Auto-updating status to RELEASED / COMPLETED`);
+        await pool.query(`UPDATE senior_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+        await pool.query(`UPDATE financial_disbursements SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+      }
+    }
+
     const resultFin = await pool.query(`
       SELECT reference_no, payout_date, payout_start_time, status 
       FROM financial_disbursements 
@@ -178,6 +208,11 @@ setInterval(async () => {
         console.log(`⏰ [AUTO-TRIGGER] Scheduled payout time reached for Disbursement ${row.reference_no}! Auto-updating status to RELEASED / COMPLETED`);
         await pool.query(`UPDATE financial_disbursements SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
         await pool.query(`UPDATE solo_parent_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+        await pool.query(`UPDATE educational_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+        await pool.query(`UPDATE senior_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+        await pool.query(`UPDATE pwd_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+        await pool.query(`UPDATE livelihood_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+        await pool.query(`UPDATE aics_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
       }
     }
   } catch (err) {
@@ -970,6 +1005,36 @@ app.post('/api/financial-aid/disbursements/schedule', async (req, res) => {
       WHERE reference_no = $4;
     `, [payoutDate, `${startTime} - ${endTime}`, venue, referenceNo]);
 
+    await pool.query(`
+      UPDATE educational_applications
+      SET payout_date = $1, payout_time = $2, payout_venue = $3, status = 'PAYOUT SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $4;
+    `, [payoutDate, `${startTime} - ${endTime}`, venue, referenceNo]);
+
+    await pool.query(`
+      UPDATE senior_applications
+      SET payout_date = $1, payout_time = $2, payout_venue = $3, status = 'PAYOUT SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $4;
+    `, [payoutDate, `${startTime} - ${endTime}`, venue, referenceNo]);
+
+    await pool.query(`
+      UPDATE pwd_applications
+      SET payout_date = $1, payout_time = $2, payout_venue = $3, status = 'PAYOUT SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $4;
+    `, [payoutDate, `${startTime} - ${endTime}`, venue, referenceNo]);
+
+    await pool.query(`
+      UPDATE livelihood_applications
+      SET payout_date = $1, payout_time = $2, payout_venue = $3, status = 'PAYOUT SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $4;
+    `, [payoutDate, `${startTime} - ${endTime}`, venue, referenceNo]);
+
+    await pool.query(`
+      UPDATE aics_applications
+      SET scheduled_payout_date = $1, scheduled_payout_time = $2, status = 'PAYOUT SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $3;
+    `, [payoutDate, `${startTime} - ${endTime}`, referenceNo]);
+
     res.json(result.rows[0] || { success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1126,13 +1191,27 @@ app.put('/api/educational/applications/:id/status', async (req, res) => {
     }
     const row = result.rows[0];
 
-    // If status becomes "APPROVED" or "APPROVED BY ADMIN", insert into financial_disbursements
-    if (status === 'APPROVED' || status === 'APPROVED BY ADMIN') {
-      await pool.query(`
-        INSERT INTO financial_disbursements (reference_no, applicant_name, module_name, benefit_name, amount, status)
-        VALUES ($1, $2, 'EDUCATIONAL', 'Solo Parent Educational Assistance Grant', 5000.00, 'PENDING PAYOUT SCHEDULE')
-        ON CONFLICT (reference_no) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP;
-      `, [row.reference_no, row.applicant_name]);
+    // If status becomes "APPROVED", "APPROVED BY ADMIN", or "Payout Scheduled", sync to financial_disbursements
+    if (status === 'APPROVED' || status === 'APPROVED BY ADMIN' || status === 'Payout Scheduled' || status === 'PAYOUT SCHEDULED') {
+      const finStatus = (status === 'Payout Scheduled' || status === 'PAYOUT SCHEDULED') ? 'PAYOUT SCHEDULED' : 'PENDING PAYOUT SCHEDULE';
+      const checkFin = await pool.query(`SELECT id FROM financial_disbursements WHERE reference_no = $1`, [row.reference_no]);
+      if (checkFin.rows.length > 0) {
+        await pool.query(`
+          UPDATE financial_disbursements 
+          SET 
+            payout_date = COALESCE($1, payout_date),
+            payout_start_time = COALESCE($2, payout_start_time),
+            venue = COALESCE($3, venue),
+            status = $4,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE reference_no = $5;
+        `, [payoutDate || row.payout_date || null, payoutTime || row.payout_time || null, payoutVenue || row.payout_venue || null, finStatus, row.reference_no]);
+      } else {
+        await pool.query(`
+          INSERT INTO financial_disbursements (reference_no, applicant_name, module_name, benefit_name, amount, payout_date, payout_start_time, venue, status)
+          VALUES ($1, $2, 'EDUCATIONAL', 'Solo Parent Educational Assistance Grant', 5000.00, $3, $4, $5, $6);
+        `, [row.reference_no, row.applicant_name, payoutDate || row.payout_date || null, payoutTime || row.payout_time || null, payoutVenue || row.payout_venue || null, finStatus]);
+      }
     }
 
     sendNotificationEmail({
