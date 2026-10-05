@@ -389,16 +389,28 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
 
   const proofLabel = getProofOfIncomeLabel();
 
-  // Check if there is an active pending Solo Parent application or recently submitted application
-  const activePendingApp = applications?.find(
-    app => app.category === 'soloparent' && 
-    app.status !== 'Disapproved' && 
-    app.status !== 'Rejected' && 
-    app.status !== 'Released / Cash Claimed' && 
-    app.status !== 'Disbursement Completed'
-  );
+  // Check if there is an active pending (ongoing) Solo Parent application
+  const activePendingApp = applications?.find(app => {
+    if (app.category !== 'soloparent') return false;
+    const st = (app.status || '').toUpperCase();
+    const isFinished = 
+      st.includes('RELEASED') || 
+      st.includes('COMPLETED') || 
+      st.includes('REJECTED') || 
+      st.includes('DISAPPROVED');
+    return !isFinished;
+  });
 
-  const targetApp = submittedApp || activePendingApp;
+  // Check if submittedApp has finished in global applications state
+  const submittedAppInList = applications?.find(app => app.referenceNo === submittedApp?.referenceNo);
+  const isSubmittedAppFinished = submittedAppInList ? (
+    (submittedAppInList.status || '').toUpperCase().includes('RELEASED') ||
+    (submittedAppInList.status || '').toUpperCase().includes('COMPLETED') ||
+    (submittedAppInList.status || '').toUpperCase().includes('REJECTED') ||
+    (submittedAppInList.status || '').toUpperCase().includes('DISAPPROVED')
+  ) : false;
+
+  const targetApp = isSubmittedAppFinished ? null : (activePendingApp || (submittedApp && !isSubmittedAppFinished ? submittedApp : null));
 
   if (targetApp) {
     return (
