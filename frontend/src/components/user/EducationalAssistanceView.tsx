@@ -185,6 +185,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
   // Success Confirmation Modal State
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
   const [generatedRefNo, setGeneratedRefNo] = useState<string>('');
+  const [submittedAppRecord, setSubmittedAppRecord] = useState<ApplicationRecord | null>(null);
 
   // Camera functions
   const openCameraModal = async (docKey: string) => {
