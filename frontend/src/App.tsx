@@ -760,6 +760,8 @@ export default function App() {
               onBack={() => setActiveTab('soloparent')}
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
+              onNavigateToModule={(tab) => setActiveTab(tab)}
+              applications={userApplications}
             />
           ) : activeTab === 'soloparent-edu-form' ? (
             /* Dedicated QC Solo Parent Educational Assistance 4-Step Form View */
