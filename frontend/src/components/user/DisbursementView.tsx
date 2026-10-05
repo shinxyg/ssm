@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Calendar, 
   Clock, 
@@ -14,7 +15,12 @@ import {
   Pill,
   ShieldCheck,
   ChevronRight,
-  Filter
+  Filter,
+  Printer,
+  History,
+  Award,
+  CreditCard,
+  QrCode
 } from 'lucide-react';
 import type { ApplicationRecord } from '../../types';
 
@@ -41,33 +47,24 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
   onNavigateToModule,
   applications = [],
 }) => {
+  const [activeViewTab, setActiveViewTab] = useState<'ACTIVE' | 'HISTORY'>('ACTIVE');
   const [selectedModuleFilter, setSelectedModuleFilter] = useState<string>('ALL');
   const [expandedRef, setExpandedRef] = useState<string | null>(null);
   const [dbAppointments, setDbAppointments] = useState<any[]>([]);
 
-  // Fetch appointments registry from PostgreSQL DB with fast state comparison
+  // Modal states for downloadable / viewable slips and certificates
+  const [modalApptSlip, setModalApptSlip] = useState<ApplicationRecord | null>(null);
+  const [modalSoloParentId, setModalSoloParentId] = useState<ApplicationRecord | null>(null);
+  const [modalSubsidyCert, setModalSubsidyCert] = useState<ApplicationRecord | null>(null);
+
+  // Fetch appointments registry from PostgreSQL DB
   React.useEffect(() => {
     const fetchAppts = () => {
       fetch('http://localhost:5000/api/appointments')
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
-            setDbAppointments(prev => {
-              if (prev.length === data.length) {
-                let isMatch = true;
-                for (let i = 0; i < prev.length; i++) {
-                  if (
-                    prev[i].referenceNo !== data[i].referenceNo &&
-                    prev[i].reference_no !== data[i].reference_no
-                  ) {
-                    isMatch = false;
-                    break;
-                  }
-                }
-                if (isMatch) return prev;
-              }
-              return data;
-            });
+            setDbAppointments(data);
           }
         })
         .catch(() => {});
@@ -77,14 +74,33 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Filter Applications to show all user applications so records NEVER vanish
-  const activeApplications = useMemo(() => {
-    return applications;
+  // Categorize Applications into Active vs History (Ensure records NEVER disappear!)
+  const { activeApplications, historyApplications } = useMemo(() => {
+    const active: ApplicationRecord[] = [];
+    const history: ApplicationRecord[] = [];
+
+    applications.forEach((app) => {
+      const st = (app.status || '').toUpperCase();
+      const isRejected = st === 'REJECTED' || st === 'DISAPPROVED' || st === 'DISQUALIFIED' || st.includes('REJECT') || st.includes('DISAPPROV');
+
+      // History tab keeps all records permanently
+      history.push(app);
+
+      // Active tab keeps all non-rejected applications permanently (including COMPLETED/RELEASED) so records never disappear!
+      if (!isRejected) {
+        active.push(app);
+      }
+    });
+
+    return { activeApplications: active, historyApplications: history };
   }, [applications]);
 
+  // Current working list based on tab
+  const currentList = activeViewTab === 'ACTIVE' ? activeApplications : historyApplications;
+
   // Filtered by Category / Module Pill
-  const filteredActiveApps = useMemo(() => {
-    return activeApplications.filter((app) => {
+  const filteredApps = useMemo(() => {
+    return currentList.filter((app) => {
       if (selectedModuleFilter === 'ALL') return true;
       const cat = (app.category || '').toLowerCase();
       const serv = (app.serviceName || '').toLowerCase();
@@ -97,7 +113,11 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
       if (filter === 'livelihood') return cat.includes('livelihood') || serv.includes('livelihood');
       return true;
     });
-  }, [activeApplications, selectedModuleFilter]);
+  }, [currentList, selectedModuleFilter]);
+
+  const handlePrintModal = () => {
+    window.print();
+  };
 
   return (
     <div className={`space-y-8 select-none font-['Plus_Jakarta_Sans',sans-serif] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -114,13 +134,42 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Financial Aid Disbursement & Active Tracking
+            My Financial Aid & Subsidy Status
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
-            Track the real-time status of your active assistance requests, view assigned appointment schedules, and manage your financial release details.
+            Track real-time status updates for Solo Parent Cash Subsidies and Financial Aid, view appointment schedules, download official ID cards/slips, and monitor release schedules.
           </p>
         </div>
+      </div>
+
+      {/* VIEW TABS: ACTIVE VS HISTORY */}
+      <div className="flex items-center gap-3 border-b border-slate-800 pb-2">
+        <button
+          type="button"
+          onClick={() => setActiveViewTab('ACTIVE')}
+          className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
+            activeViewTab === 'ACTIVE'
+              ? 'bg-blue-600 text-white shadow-xl border border-blue-400/40'
+              : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
+          }`}
+        >
+          <Clock className="w-4 h-4" />
+          <span>Active Financial Aid ({activeApplications.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveViewTab('HISTORY')}
+          className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
+            activeViewTab === 'HISTORY'
+              ? 'bg-purple-600 text-white shadow-xl border border-purple-400/40'
+              : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
+          }`}
+        >
+          <History className="w-4 h-4" />
+          <span>Application History ({historyApplications.length})</span>
+        </button>
       </div>
 
       {/* MODULE FILTER PILLS */}
@@ -132,18 +181,29 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
         <button
           type="button"
           onClick={() => setSelectedModuleFilter('ALL')}
-          className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
             selectedModuleFilter === 'ALL'
               ? 'bg-blue-600 text-white shadow-lg border border-blue-400/40'
               : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
           }`}
         >
-          ALL APPLICATIONS ({activeApplications.length})
+          ALL ({currentList.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedModuleFilter('soloparent')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+            selectedModuleFilter === 'soloparent'
+              ? 'bg-blue-600 text-white shadow-lg border border-blue-400/40'
+              : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
+          }`}
+        >
+          SOLO PARENT SUBSIDY
         </button>
         <button
           type="button"
           onClick={() => setSelectedModuleFilter('aics')}
-          className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
             selectedModuleFilter === 'aics'
               ? 'bg-blue-600 text-white shadow-lg border border-blue-400/40'
               : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
@@ -153,19 +213,8 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => setSelectedModuleFilter('pwd')}
-          className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
-            selectedModuleFilter === 'pwd'
-              ? 'bg-blue-600 text-white shadow-lg border border-blue-400/40'
-              : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
-          }`}
-        >
-          PWD SERVICES
-        </button>
-        <button
-          type="button"
           onClick={() => setSelectedModuleFilter('senior')}
-          className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
             selectedModuleFilter === 'senior'
               ? 'bg-blue-600 text-white shadow-lg border border-blue-400/40'
               : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
@@ -173,69 +222,39 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
         >
           SENIOR CITIZEN
         </button>
-        <button
-          type="button"
-          onClick={() => setSelectedModuleFilter('soloparent')}
-          className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
-            selectedModuleFilter === 'soloparent'
-              ? 'bg-blue-600 text-white shadow-lg border border-blue-400/40'
-              : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
-          }`}
-        >
-          SOLO PARENT
-        </button>
-        <button
-          type="button"
-          onClick={() => setSelectedModuleFilter('livelihood')}
-          className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
-            selectedModuleFilter === 'livelihood'
-              ? 'bg-blue-600 text-white shadow-lg border border-blue-400/40'
-              : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
-          }`}
-        >
-          LIVELIHOOD
-        </button>
       </div>
 
-      {/* ACTIVE APPLICATIONS TRACKING LIST */}
+      {/* APPLICATIONS LIST */}
       <div className="space-y-4">
         <h3 className="text-sm font-extrabold text-white tracking-wide uppercase flex items-center justify-between">
-          <span>Active Requests ({filteredActiveApps.length})</span>
-          <span className="text-[10px] text-slate-400 font-mono normal-case">Real-time status updates</span>
+          <span>{activeViewTab === 'ACTIVE' ? 'Active Requests' : 'Archived History'} ({filteredApps.length})</span>
+          <span className="text-[10px] text-slate-400 font-mono normal-case">Live DB Synchronization</span>
         </h3>
 
-        {filteredActiveApps.length > 0 ? (
+        {filteredApps.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
-            {filteredActiveApps.map((app) => {
+            {filteredApps.map((app) => {
               const statusText = (app.status as string) || 'Pending';
               const name = (app as any).applicantName || app.details?.applicantName || 'Juan Dela Cruz';
+              const isSoloParent = (app.category || '').toLowerCase().includes('solo') || (app.serviceName || '').toLowerCase().includes('solo') || app.referenceNo.startsWith('SP-');
 
               const appt = (app as any).appointmentDetails;
               const dbAppt = dbAppointments.find((a) => (a.reference_no || a.referenceNo) === app.referenceNo);
 
-              // 1. Payout Schedule (Set exclusively in Financial Aid Disbursement)
-              const rawPayoutDate = (app as any).scheduledPayoutDate || (app as any).scheduled_payout_date;
-              const rawPayoutTime = (app as any).scheduledPayoutTime || (app as any).scheduled_payout_time;
+              // Dates & Times
+              const rawPayoutDate = (app as any).scheduledPayoutDate || (app as any).scheduled_payout_date || (app as any).payout_date;
+              const rawPayoutTime = (app as any).scheduledPayoutTime || (app as any).scheduled_payout_time || (app as any).payout_time;
 
-              // 2. Interview Schedule (Set exclusively in Appointments Registry)
-              const rawInterviewDate = (app as any).appointmentDate || (app as any).appointment_date || appt?.appointmentDate || dbAppt?.appointment_date || dbAppt?.appointmentDate || dbAppt?.date;
-              const rawInterviewTime = (app as any).appointmentTime || (app as any).appointment_time || appt?.appointmentTime || dbAppt?.appointment_time || dbAppt?.appointmentTime || dbAppt?.time;
+              const rawInterviewDate = (app as any).appointmentDate || (app as any).appointment_date || appt?.appointmentDate || dbAppt?.appointment_date || dbAppt?.appointmentDate;
+              const rawInterviewTime = (app as any).appointmentTime || (app as any).appointment_time || appt?.appointmentTime || dbAppt?.appointment_time || dbAppt?.appointmentTime;
 
-              const hasExplicitPayoutSched = !!(rawPayoutDate || rawPayoutTime) || statusText === 'Payout Scheduled';
-
-              const isPayoutScheduled = (statusText === 'Ready for Payout' || statusText === 'Approved by Admin' || statusText === 'Payout Scheduled') && hasExplicitPayoutSched;
-              const isInterviewScheduled = (statusText === 'Approved' || statusText === 'Interview Scheduled' || statusText === 'Pending Appointment') && !hasExplicitPayoutSched;
-              const isScheduled = hasExplicitPayoutSched || isInterviewScheduled;
-              const isReferred = statusText === 'Referred to Partner Agency' || statusText === 'Referred';
-              const isRejected = 
-                statusText === 'Rejected' || 
-                statusText === 'Disapproved' || 
-                statusText === 'REJECTED' || 
-                statusText === 'DISAPPROVED' || 
-                statusText.toLowerCase().includes('reject') || 
-                statusText.toLowerCase().includes('disapprov') ||
-                statusText.toLowerCase().includes('disqualif');
-              const isReleased = statusText === 'RELEASED / COMPLETED' || statusText === 'Completed';
+              const hasExplicitPayoutSched = !!(rawPayoutDate || rawPayoutTime) || statusText === 'PAYOUT SCHEDULED' || statusText === 'Payout Scheduled';
+              const isPayoutScheduled = statusText === 'PAYOUT SCHEDULED' || statusText === 'Payout Scheduled';
+              const isApprovedByAdmin = statusText === 'APPROVED BY ADMIN' || statusText === 'Approved by Admin';
+              const isInterviewScheduled = statusText === 'INTERVIEW SCHEDULED' || statusText === 'Interview Scheduled';
+              const isApproved = statusText === 'APPROVED' || statusText === 'Approved' || statusText === 'Approved by Social Worker';
+              const isReleased = statusText === 'RELEASED / COMPLETED' || statusText === 'COMPLETED' || statusText === 'Completed' || statusText === 'Released';
+              const isRejected = statusText === 'REJECTED' || statusText === 'Rejected' || statusText === 'Disapproved' || statusText === 'DISAPPROVED';
 
               const formatScheduleDate = (dStr?: string) => {
                 if (!dStr) return '';
@@ -251,63 +270,73 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                       return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     }
                   }
-                } catch (e) {
-                  // ignore
-                }
+                } catch (e) {}
                 return dStr;
               };
 
-              const payoutDateFormatted = formatScheduleDate(rawPayoutDate);
-              const payoutTimeFormatted = rawPayoutTime ? formatTo12Hour(rawPayoutTime) : '';
+              const payoutDateFormatted = formatScheduleDate(rawPayoutDate) || 'Oct 10, 2026';
+              const payoutTimeFormatted = rawPayoutTime ? formatTo12Hour(rawPayoutTime) : '09:00 AM';
 
-              const interviewDateFormatted = formatScheduleDate(rawInterviewDate) || 'Oct 4, 2026';
-              const interviewTimeFormatted = rawInterviewTime ? formatTo12Hour(rawInterviewTime) : '';
+              const interviewDateFormatted = formatScheduleDate(rawInterviewDate) || 'Oct 8, 2026';
+              const interviewTimeFormatted = rawInterviewTime ? formatTo12Hour(rawInterviewTime) : '09:00 AM';
 
-              let statusBadgeStyle = 'bg-amber-950/80 text-amber-400 border-amber-500/40';
-              let statusDotStyle = 'bg-amber-400';
-              let statusLabel = statusText;
+              let statusBadge = (
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                  🟡 PENDING (Pending Document Validation)
+                </span>
+              );
 
-              if (isReleased) {
-                statusBadgeStyle = 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40';
-                statusDotStyle = 'bg-emerald-400';
-                statusLabel = 'RELEASED / COMPLETED';
-              } else if (isPayoutScheduled) {
-                statusBadgeStyle = 'bg-amber-950/80 text-amber-300 border-amber-500/40';
-                statusDotStyle = 'bg-amber-400';
-                statusLabel = payoutDateFormatted
-                  ? `PAYOUT SCHEDULED (${payoutDateFormatted.toUpperCase()}${payoutTimeFormatted ? ` • ${payoutTimeFormatted}` : ''})`
-                  : 'PAYOUT SCHEDULED';
-              } else if (statusText === 'Ready for Payout' || statusText === 'Approved by Admin') {
-                statusBadgeStyle = 'bg-blue-950/80 text-blue-300 border-blue-500/40';
-                statusDotStyle = 'bg-blue-400';
-                statusLabel = 'READY FOR PAYOUT SCHEDULE';
-              } else if (isReferred) {
-                statusBadgeStyle = 'bg-purple-950/80 text-purple-300 border-purple-500/40';
-                statusDotStyle = 'bg-purple-400';
-                statusLabel = 'REFERRED TO DSWD/PCSO';
-              } else if (isRejected) {
-                statusBadgeStyle = 'bg-red-950/90 text-red-400 border-red-600/60 shadow-sm shadow-red-900/30';
-                statusDotStyle = 'bg-red-500';
-                statusLabel = statusText.toUpperCase().includes('DISAPPROVED') ? 'DISAPPROVED' : 'REJECTED';
+              let processExplanation = "Sinusuri ng Admin ang Solo Parent Booklet / ID / Affidavit. Hintayin ang aksyon.";
+
+              if (isApprovedByAdmin) {
+                statusBadge = (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    🟢 APPROVED BY ADMIN
+                  </span>
+                );
+                processExplanation = "Nakalinya na sa interview schedule. Inilipat ang inyong record sa SSDD Appointments.";
               } else if (isInterviewScheduled) {
-                statusBadgeStyle = 'bg-blue-950/80 text-blue-300 border-blue-500/40';
-                statusDotStyle = 'bg-blue-400';
-                statusLabel = 'INTERVIEW SCHEDULED';
-              }
-
-              let processExplanation = 'Admin is currently reviewing your uploaded documents (SOA / Doctor Prescription). Please await further updates.';
-              if (isReleased) {
-                processExplanation = `Your ${app.serviceName} has been successfully released and processed. Thank you!`;
+                statusBadge = (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                    🔵 INTERVIEW SCHEDULED
+                  </span>
+                );
+                processExplanation = `Naitakda ang interview sa Quezon City Hall SSDD Office sa ${interviewDateFormatted} sa ganap na ${interviewTimeFormatted || '09:00 AM'}.`;
+              } else if (isApproved) {
+                statusBadge = (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    🟢 APPROVED
+                  </span>
+                );
+                processExplanation = "Nakalipas sa Physical Interview! Inisyu na ang Official Solo Parent ID Card at ₱3,000 Cash Subsidy Certificate. Awtomatikong pumasok sa Financial Aid Masterlist na may Fixed Amount: ₱3,000.00.";
               } else if (isPayoutScheduled) {
-                processExplanation = `Your Financial Aid Payout has been scheduled for release on ${payoutDateFormatted || 'assigned date'}${payoutTimeFormatted ? ` at ${payoutTimeFormatted}` : ''}. Please present your ID at the SSDD releasing desk upon claiming.`;
-              } else if (statusText === 'Ready for Payout' || statusText === 'Approved by Admin') {
-                processExplanation = 'Your financial aid request is approved and ready for disbursement. The SSDD Treasury is currently setting your official payout date & time schedule.';
-              } else if (isInterviewScheduled) {
-                processExplanation = `Your physical interview has been scheduled for ${interviewDateFormatted}${interviewTimeFormatted ? ` at ${interviewTimeFormatted}` : ''} at Quezon City Hall SSDD Assessment Area.`;
-              } else if (isReferred) {
-                processExplanation = 'Your case has been officially referred to DSWD / PCSO for additional financial aid evaluation.';
+                statusBadge = (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+                    🟣 PAYOUT SCHEDULED
+                  </span>
+                );
+                processExplanation = `Naitakda ang ₱3,000 Solo Parent Payout release date sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`;
+              } else if (isReleased) {
+                statusBadge = (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 border border-purple-500/30 text-purple-300 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-purple-400"></span>
+                    🟣 COMPLETED (₱3,000 Cash Subsidy Release Completed)
+                  </span>
+                );
+                processExplanation = "Nailabas na ang inyong ₱3,000 Solo Parent Subsidy. Maraming salamat!";
               } else if (isRejected) {
-                processExplanation = 'Your application has been disapproved. This record will remain preserved in your Application History.';
+                statusBadge = (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+                    🔴 REJECTED
+                  </span>
+                );
+                processExplanation = `Disapproved ang request. Dahilan: ${app.disapprovalReason || 'Documents or qualifications failed verification.'}`;
               }
 
               const isExpanded = expandedRef === app.referenceNo;
@@ -326,179 +355,86 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black border ${statusBadgeStyle}`}>
-                        <span className={`w-2 h-2 rounded-full animate-pulse ${statusDotStyle}`}></span>
-                        {statusLabel}
-                      </span>
+                      {statusBadge}
                     </div>
                   </div>
 
+                  {/* Summary Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                     <div className="p-3 rounded-xl bg-[#080f1e] border border-slate-800 space-y-1">
                       <span className="text-slate-400 text-[10px] font-semibold uppercase block">Applicant Info</span>
                       <div className="font-bold text-white">{name}</div>
                       <div className="text-slate-400 text-[11px] font-mono space-y-0.5">
-                        <div>Date Filed: {app.dateSubmitted}</div>
-                        {hasExplicitPayoutSched && (
-                          <div className={`font-bold text-[11px] mt-0.5 ${isReleased ? 'text-emerald-400' : 'text-amber-400'}`}>
-                            Payout Sched: {payoutDateFormatted || 'Date Pending'}{payoutTimeFormatted ? ` • ${payoutTimeFormatted}` : ''}
-                          </div>
-                        )}
-                        {isInterviewScheduled && !hasExplicitPayoutSched && (
-                          <div className="text-blue-400 font-bold text-[11px] mt-0.5">
-                            Interview Sched: {interviewDateFormatted}{interviewTimeFormatted ? ` • ${interviewTimeFormatted}` : ''}
-                          </div>
+                        <div>Filed: {app.dateSubmitted}</div>
+                        {isSoloParent && (
+                          <div className="text-blue-400 font-bold">SPIC: SP-2026-88492</div>
                         )}
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#080f1e] border border-slate-800 space-y-1">
-                      <span className="text-slate-400 text-[10px] font-semibold uppercase block">Assigned Worker</span>
-                      <div className="font-bold text-slate-200">{app.assignedSocialWorker || 'Maria Santos, RSW'}</div>
-                      <div className="text-slate-400 text-[11px]">SSDD Assessment Team</div>
+                      <span className="text-slate-400 text-[10px] font-semibold uppercase block">Assigned Unit / Worker</span>
+                      <div className="font-bold text-slate-200">{app.assignedSocialWorker || 'Ms. Jocelyn Reyes, RSW'}</div>
+                      <div className="text-slate-400 text-[11px]">QC Hall SSDD Solo Parent Welfare</div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#080f1e] border border-slate-800 space-y-1">
-                      <span className="text-slate-400 text-[10px] font-semibold uppercase block">Assistance Benefit Type</span>
+                      <span className="text-slate-400 text-[10px] font-semibold uppercase block">Benefit Entitlement</span>
                       <div className="font-bold text-amber-400">
-                        {app.serviceName.toLowerCase().includes('medicine')
-                          ? 'Pharmacy Voucher / Reseta'
-                          : app.serviceName.toLowerCase().includes('funeral')
-                          ? 'Funeral Guarantee Certificate'
-                          : 'Hospital Guarantee Letter (GL)'}
+                        {isSoloParent ? '₱3,000.00 FIXED SOLO PARENT CASH SUBSIDY' : (app.amountOrType || 'Financial Assistance Grant')}
                       </div>
-                      <div className="text-slate-400 text-[11px]">Quezon City SSDD Program</div>
+                      <div className="text-slate-400 text-[11px]">Quezon City Social Services Department</div>
                     </div>
                   </div>
 
-                  {/* STATUS EXPLANATION BOX */}
-                  <div className="p-4 rounded-xl bg-[#091326] border border-slate-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-1 text-xs">
-                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
-                        CURRENT PROCESS STAGE:
-                      </span>
-                      <p className="text-slate-200 font-medium">
-                        {processExplanation}
-                      </p>
-                    </div>
+                  {/* ACTIVE PAYOUT CARD (STEP 5) */}
+                  {isPayoutScheduled && isSoloParent && (
+                    <div className="p-5 rounded-2xl bg-purple-950/40 border border-purple-500/50 space-y-3 shadow-lg">
+                      <div className="flex items-center justify-between border-b border-purple-800/60 pb-2">
+                        <span className="text-xs font-black uppercase text-purple-300 tracking-wider flex items-center gap-1.5">
+                          <Award className="w-4 h-4 text-purple-400" />
+                          <span>ACTIVE PAYOUT CARD (FIXED SOLO PARENT CASH SUBSIDY)</span>
+                        </span>
+                        <span className="font-mono text-xs font-bold text-purple-400 bg-purple-900/60 px-2.5 py-0.5 rounded-lg">
+                          STATUS: 🟣 PAYOUT SCHEDULED
+                        </span>
+                      </div>
 
-                    {isScheduled && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                        <div>
+                          <span className="text-slate-400 text-[10px] uppercase font-bold block">MATATANGGAP:</span>
+                          <span className="text-base font-extrabold text-emerald-400">₱3,000.00 FIXED</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] uppercase font-bold block">PETSA & ORAS:</span>
+                          <span className="font-extrabold text-white">{payoutDateFormatted} • {payoutTimeFormatted}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] uppercase font-bold block">LUGAR NG CLAIM:</span>
+                          <span className="font-bold text-slate-200">Quezon City Hall Cashier / SSDD Area</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] uppercase font-bold block">DADALHIN:</span>
+                          <span className="font-bold text-amber-300">Solo Parent ID Card & Valid ID</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ACTION BUTTONS (IF ANY) */}
+                  {isInterviewScheduled && (
+                    <div className="p-3.5 rounded-xl bg-[#091326] border border-slate-800/90 flex flex-wrap items-center justify-end gap-2">
+                      {/* Step 3: Appointment Slip Button */}
                       <button
                         type="button"
-                        onClick={() => setExpandedRef(isExpanded ? null : app.referenceNo)}
-                        className={`px-4 py-2.5 rounded-xl text-xs font-extrabold shadow-md transition-all flex items-center gap-2 shrink-0 ${
-                          isExpanded
-                            ? 'bg-slate-700 hover:bg-slate-600 text-white'
-                            : 'bg-blue-600 hover:bg-blue-500 text-white'
-                        }`}
+                        onClick={() => setModalApptSlip(app)}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Eye className="w-4 h-4" />
-                        <span>{isExpanded ? 'Hide Schedule Slip' : isPayoutScheduled ? 'View Payout Schedule Slip' : 'View Appointment Slip'}</span>
+                        <Download className="w-3.5 h-3.5" />
+                        <span>📥 I-download ang Appointment Slip</span>
                       </button>
-                    )}
-                  </div>
-
-                  {/* INLINE EXPANDABLE APPOINTMENT SLIP */}
-                  {isExpanded && (() => {
-                    const isFuneral = app.serviceName.toLowerCase().includes('funeral') || app.serviceName.toLowerCase().includes('burial');
-
-                    return (
-                      <div className="mt-4 p-5 rounded-2xl bg-[#09152b] border border-blue-500/40 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-3 gap-2">
-                          <div className="flex items-center gap-2.5">
-                            <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-7 h-7 object-contain" />
-                            <div>
-                              <h5 className="text-xs font-black text-white tracking-wider uppercase">
-                                {isPayoutScheduled ? 'OFFICIAL PAYOUT SCHEDULE SLIP' : 'OFFICIAL APPOINTMENT ASSESSMENT SLIP'}
-                              </h5>
-                              <span className="text-[10px] text-blue-400 font-mono">APT CONTROL NO: {app.referenceNo.replace('QC-AICS-2026-', 'APT-2026-')}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                          {/* SCHEDULE BOX */}
-                          <div className="p-4 rounded-xl bg-blue-950/40 border border-blue-800/50 space-y-2.5">
-                            <h6 className="text-[11px] font-black uppercase text-blue-300 tracking-wider flex items-center gap-1.5">
-                              <span>{isPayoutScheduled ? '💵 PAYOUT RELEASE SCHEDULE DETAILS' : '📅 INTERVIEW SCHEDULE DETAILS'}</span>
-                            </h6>
-                            <div className="space-y-1.5 text-xs">
-                              <div>
-                                <span className="text-slate-400 text-[10px] block uppercase font-bold">SCHEDULED DATE:</span>
-                                <span className="font-extrabold text-white text-sm">
-                                  {(isPayoutScheduled ? (payoutDateFormatted || 'Date Pending') : interviewDateFormatted).toUpperCase()}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-slate-400 text-[10px] block uppercase font-bold">TIME SLOT:</span>
-                                <span className="font-extrabold text-blue-400">
-                                  {isPayoutScheduled ? (payoutTimeFormatted || 'Time Pending') : interviewTimeFormatted}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-slate-400 text-[10px] block uppercase font-bold">OFFICE VENUE:</span>
-                                <span className="font-bold text-slate-200">QC Hall SSDD Desk 3, Ground Flr High-Rise Bldg</span>
-                              </div>
-                              <div>
-                                <span className="text-slate-400 text-[10px] block uppercase font-bold">ASSIGNED SOCIAL WORKER:</span>
-                                <span className="font-extrabold text-white">{app.assignedSocialWorker || 'Maria Santos, RSW'}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* REQUIREMENTS CHECKLIST */}
-                          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
-                            <h6 className="text-[11px] font-black uppercase text-slate-300 tracking-wider">📋 REQUIRED ORIGINAL DOCUMENTS TO BRING</h6>
-                            <ul className="space-y-1.5 text-xs text-slate-200 font-medium">
-                              {isFuneral ? (
-                                <>
-                                  <li className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Death Certificate - Original Certified True Copy</span>
-                                  </li>
-                                  <li className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Statement of Account / Official Funeral Contract</span>
-                                  </li>
-                                  <li className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Barangay Certificate of Indigency</span>
-                                  </li>
-                                  <li className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Valid Photo ID of Informant / Nearest Kin (PhilSys / QC ID / UMID)</span>
-                                  </li>
-                                </>
-                              ) : (
-                                <>
-                                  <li className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Original Hospital Statement of Account (SOA) / Doctor&apos;s Prescription</span>
-                                  </li>
-                                  <li className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Original Medical Certificate / Clinical Summary</span>
-                                  </li>
-                                  <li className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Barangay Certificate of Indigency</span>
-                                  </li>
-                                  <li className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                    <span>Valid Government Issued Photo ID (PhilSys / Comelec / UMID)</span>
-                                  </li>
-                                </>
-                              )}
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/30 text-[11px] text-amber-300 font-medium">
-                          NOTICE: Please arrive 15 minutes prior to your scheduled time and report to the SSDD Reception Desk for verification of your name and Appointment Control No.
-                        </div>
-                      </div>
-                    );
-                  })()}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -508,13 +444,282 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
             <div className="p-3.5 rounded-2xl bg-[#121c2e] border border-slate-800 text-slate-400">
               <FileText className="w-8 h-8 stroke-[1.5]" />
             </div>
-            <h4 className="text-base font-extrabold text-white">No active financial requests</h4>
+            <h4 className="text-base font-extrabold text-white">
+              {activeViewTab === 'ACTIVE' ? 'No active financial aid applications' : 'No application history found'}
+            </h4>
             <p className="text-xs text-slate-400 max-w-sm">
-              All your submitted applications have either been completed and archived in <span className="text-blue-400 font-bold">Application History</span> or no applications have been filed yet.
+              {activeViewTab === 'ACTIVE'
+                ? 'Applications currently being reviewed or scheduled will appear here.'
+                : 'Completed or archived financial subsidy applications will be stored here.'}
             </p>
           </div>
         )}
       </div>
+
+      {/* ---------------------------------------------------- */}
+      {/* MODAL 1: DOWNLOADABLE / PRINTABLE APPOINTMENT SLIP */}
+      {/* ---------------------------------------------------- */}
+      {modalApptSlip && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#0b1329] border border-blue-500/50 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl p-6 text-white space-y-5 relative">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-3">
+                <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-9 h-9 object-contain" />
+                <div>
+                  <h3 className="text-base font-black text-white uppercase tracking-wider">OFFICIAL APPOINTMENT SLIP</h3>
+                  <span className="text-[10px] text-blue-400 font-mono">QC SSDD SOLO PARENT DIVISION</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalApptSlip(null)}
+                className="p-1 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-[#0e1b36] border border-blue-900/60 rounded-2xl p-4 space-y-3 text-xs">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                <span className="text-slate-400 font-bold uppercase text-[10px]">APPOINTMENT REF NO:</span>
+                <span className="font-mono font-extrabold text-blue-400 text-sm">{modalApptSlip.referenceNo}</span>
+              </div>
+
+              <div>
+                <span className="text-slate-400 font-bold uppercase text-[10px] block">APPLICANT NAME:</span>
+                <span className="font-extrabold text-white text-sm">{(modalApptSlip as any).applicantName || modalApptSlip.details?.applicantName || 'JEFFERSON FERNANDO LEE'}</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div>
+                  <span className="text-slate-400 font-bold uppercase text-[10px] block">PETSA NG INTERVIEW:</span>
+                  <span className="font-extrabold text-amber-400">
+                    {(modalApptSlip as any).appointmentDate || 'Oct 8, 2026'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-bold uppercase text-[10px] block">ORAS:</span>
+                  <span className="font-extrabold text-amber-400">
+                    {(modalApptSlip as any).appointmentTime || '09:00 AM'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-slate-400 font-bold uppercase text-[10px] block">LUGAR NG INTERVIEW:</span>
+                <span className="font-bold text-slate-200">Quezon City Hall SSDD Office, Assessment Desk 3</span>
+              </div>
+
+              <div className="pt-2 border-t border-slate-800">
+                <span className="text-slate-400 font-bold uppercase text-[10px] block mb-1">MGA DADALHING DOKUMENTO:</span>
+                <ul className="list-disc list-inside text-[11px] text-slate-300 space-y-0.5">
+                  <li>Original Solo Parent ID / Booklet</li>
+                  <li>Valid Photo ID (PhilSys / Comelec / UMID)</li>
+                  <li>Barangay Certificate of Indigency</li>
+                  <li>Printed Copy ng Appointment Slip na ito</li>
+                </ul>
+              </div>
+
+              <div className="pt-2 text-center">
+                <div className="inline-block bg-white p-2 rounded-xl">
+                  <div className="w-48 h-10 bg-slate-900 flex items-center justify-center font-mono text-[10px] font-bold text-white tracking-widest">
+                    ||||| {modalApptSlip.referenceNo} |||||
+                  </div>
+                </div>
+                <span className="text-[9px] text-slate-400 block mt-1">Official QC SSDD Barcode Verification</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setModalApptSlip(null)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={handlePrintModal}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold rounded-xl shadow-lg flex items-center gap-1.5"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Appointment Slip</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ---------------------------------------------------- */}
+      {/* MODAL 2: OFFICIAL SOLO PARENT ID CARD */}
+      {/* ---------------------------------------------------- */}
+      {modalSoloParentId && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#081024] border border-emerald-500/50 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl p-6 text-white space-y-5 relative">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-sm font-black text-white uppercase tracking-wider">OFFICIAL SOLO PARENT ID CARD</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalSoloParentId(null)}
+                className="p-1 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* ID CARD GRAPHIC */}
+            <div className="bg-gradient-to-br from-blue-900 via-indigo-950 to-slate-900 border-2 border-emerald-400/60 rounded-2xl p-5 space-y-4 shadow-2xl relative overflow-hidden">
+              <div className="flex justify-between items-start border-b border-blue-700/50 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-10 h-10 object-contain" />
+                  <div>
+                    <span className="text-[10px] font-black tracking-widest text-emerald-400 block uppercase">REPUBLIC OF THE PHILIPPINES</span>
+                    <h4 className="text-xs font-black text-white tracking-wider uppercase">QUEZON CITY GOVERNMENT</h4>
+                    <span className="text-[9px] font-bold text-blue-300 block">SOCIAL SERVICES & DEVELOPMENT DEPT.</span>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-black text-[9px] uppercase tracking-wider">
+                  VALID SPIC
+                </span>
+              </div>
+
+              <div className="flex gap-4 items-center">
+                <div className="w-20 h-24 bg-slate-800 border-2 border-emerald-400/40 rounded-xl overflow-hidden shrink-0 flex items-center justify-center bg-cover bg-center">
+                  <span className="font-extrabold text-2xl text-emerald-400">SP</span>
+                </div>
+
+                <div className="space-y-1.5 text-xs flex-1">
+                  <div>
+                    <span className="text-slate-400 text-[8px] font-bold uppercase block">ID CONTROL NO.</span>
+                    <span className="font-mono font-black text-emerald-300 text-sm">SP-2026-88492</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[8px] font-bold uppercase block">SOLO PARENT CARDHOLDER</span>
+                    <span className="font-extrabold text-white">{(modalSoloParentId as any).applicantName || 'JEFFERSON FERNANDO LEE'}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 text-[10px]">
+                    <div>
+                      <span className="text-slate-400 text-[8px] block">CATEGORY:</span>
+                      <span className="font-bold text-slate-200">Unmarried</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 text-[8px] block">BARANGAY:</span>
+                      <span className="font-bold text-slate-200">Bagong Silangan</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-blue-700/50 flex justify-between items-center text-[9px] font-mono text-slate-300">
+                <span>ISSUED: OCT 2026</span>
+                <span>EXPIRY: OCT 2027</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setModalSoloParentId(null)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={handlePrintModal}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold rounded-xl shadow-lg flex items-center gap-1.5"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Solo Parent ID</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ---------------------------------------------------- */}
+      {/* MODAL 3: ₱3,000 CASH SUBSIDY CERTIFICATE */}
+      {/* ---------------------------------------------------- */}
+      {modalSubsidyCert && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-[#0b1329] border border-amber-500/50 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl p-6 text-white space-y-5 relative">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-400" />
+                <h3 className="text-sm font-black text-white uppercase tracking-wider">SOLO PARENT SUBSIDY CERTIFICATE</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalSubsidyCert(null)}
+                className="p-1 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* CERTIFICATE GRAPHIC */}
+            <div className="bg-[#080e1c] border-2 border-amber-400/50 rounded-2xl p-6 space-y-4 text-center relative overflow-hidden">
+              <div className="flex justify-center mb-2">
+                <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-14 h-14 object-contain" />
+              </div>
+
+              <div>
+                <span className="text-[10px] font-black tracking-widest text-amber-400 uppercase block">QUEZON CITY GOVERNMENT</span>
+                <h4 className="text-base font-black text-white tracking-wider uppercase mt-0.5">CERTIFICATE OF SUBSIDY ENTITLEMENT</h4>
+                <span className="text-[10px] text-slate-400 block mt-1">ISSUED PURSUANT TO R.A. 11861 (EXPANDED SOLO PARENTS WELFARE ACT)</span>
+              </div>
+
+              <div className="py-3 border-y border-amber-500/30 space-y-2 text-xs">
+                <p className="text-slate-300">
+                  This is to certify that <strong className="text-white font-extrabold text-sm font-mono">{(modalSubsidyCert as any).applicantName || 'JEFFERSON FERNANDO LEE'}</strong> with Solo Parent ID Control No. <strong className="text-amber-400 font-mono">SP-2026-88492</strong> is an officially approved beneficiary entitled to receive the:
+                </p>
+
+                <div className="py-2.5 px-4 bg-amber-500/10 border border-amber-500/40 rounded-xl">
+                  <span className="text-lg font-black text-amber-400 tracking-tight block">₱3,000.00 FIXED SOLO PARENT CASH SUBSIDY</span>
+                  <span className="text-[10px] text-slate-300 font-medium">Quezon City Social Services & Development Department Grant</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-end pt-4 text-left text-[10px]">
+                <div>
+                  <span className="text-slate-400 block font-bold">CERTIFICATE REF:</span>
+                  <span className="font-mono text-amber-300 font-extrabold">{modalSubsidyCert.referenceNo}</span>
+                </div>
+
+                <div className="text-right">
+                  <span className="font-bold text-white block">MS. JOCELYN REYES, RSW</span>
+                  <span className="text-slate-400 block">Head, Solo Parent Welfare Division</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setModalSubsidyCert(null)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={handlePrintModal}
+                className="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-extrabold rounded-xl shadow-lg flex items-center gap-1.5"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Certificate</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

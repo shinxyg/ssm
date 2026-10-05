@@ -45,6 +45,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
   // Live database records state
   const [dbSeniorApps, setDbSeniorApps] = useState<any[]>([]);
   const [dbAicsApps, setDbAicsApps] = useState<any[]>([]);
+  const [dbSoloApps, setDbSoloApps] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchApps = async () => {
@@ -61,6 +62,14 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
         if (resAics.ok) {
           const data = await resAics.json();
           setDbAicsApps(data);
+        }
+      } catch (e) {}
+
+      try {
+        const resSolo = await fetch('http://localhost:5000/api/solo-parent/applications');
+        if (resSolo.ok) {
+          const data = await resSolo.json();
+          setDbSoloApps(data);
         }
       } catch (e) {}
     };
@@ -105,19 +114,36 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       }
     });
 
-    // 3. Prop records (include only non-AICS and non-Senior records from props to prevent mock double counting)
+    // 3. Solo Parent DB records
+    dbSoloApps.forEach((item) => {
+      if (!seen.has(item.reference_no)) {
+        seen.add(item.reference_no);
+        list.push({
+          referenceNo: item.reference_no,
+          applicantName: item.applicant_name,
+          serviceName: item.service_name || 'Solo Parent Financial Subsidy Program',
+          category: item.category || 'soloparent',
+          status: item.status || 'Pending Document Validation',
+          amountOrType: '₱3,000.00 Solo Parent Subsidy',
+          dateSubmitted: item.date_submitted
+        });
+      }
+    });
+
+    // 4. Prop records (include only non-AICS, non-Senior, non-Solo records from props to prevent mock double counting)
     applications.forEach((app) => {
       const isSeniorOrPwd = app.category?.toLowerCase().includes('senior') || app.serviceName?.toLowerCase().includes('senior') || app.category?.toLowerCase().includes('pwd') || app.serviceName?.toLowerCase().includes('pwd');
       const isAics = app.category?.toLowerCase().includes('aics') || app.serviceName?.toLowerCase().includes('aics') || app.category?.toLowerCase().includes('medical') || app.serviceName?.toLowerCase().includes('medical') || app.category?.toLowerCase().includes('funeral') || app.serviceName?.toLowerCase().includes('funeral');
+      const isSolo = app.category?.toLowerCase().includes('solo') || app.serviceName?.toLowerCase().includes('solo') || app.referenceNo?.startsWith('SP-');
 
-      if (!isSeniorOrPwd && !isAics && app.referenceNo && !seen.has(app.referenceNo)) {
+      if (!isSeniorOrPwd && !isAics && !isSolo && app.referenceNo && !seen.has(app.referenceNo)) {
         seen.add(app.referenceNo);
         list.push(app);
       }
     });
 
     return list;
-  }, [dbSeniorApps, dbAicsApps, applications]);
+  }, [dbSeniorApps, dbAicsApps, dbSoloApps, applications]);
 
   const totalApplications = combinedApps.length;
 

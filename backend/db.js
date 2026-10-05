@@ -104,17 +104,27 @@ export const initDB = async () => {
 
       CREATE TABLE IF NOT EXISTS appointments (
         id SERIAL PRIMARY KEY,
-        reference_no VARCHAR(50) NOT NULL,
+        reference_no VARCHAR(50) UNIQUE NOT NULL,
         module_name VARCHAR(100) NOT NULL,
         applicant_name VARCHAR(255) NOT NULL,
-        appointment_date VARCHAR(50) NOT NULL,
-        appointment_time VARCHAR(50) NOT NULL,
-        venue VARCHAR(255) NOT NULL,
+        appointment_date VARCHAR(50),
+        appointment_time VARCHAR(50),
+        venue VARCHAR(255),
         purpose VARCHAR(255),
-        status VARCHAR(50) DEFAULT 'Scheduled',
+        status VARCHAR(50) DEFAULT 'Pending Schedule',
         social_worker_notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE appointments ALTER COLUMN appointment_date DROP NOT NULL;
+      ALTER TABLE appointments ALTER COLUMN appointment_time DROP NOT NULL;
+      ALTER TABLE appointments ALTER COLUMN venue DROP NOT NULL;
+
+      try {
+        await client.query('ALTER TABLE appointments ADD CONSTRAINT appointments_ref_no_key UNIQUE (reference_no);');
+      } catch (e) {
+        // ignore if constraint already exists
+      }
 
       CREATE TABLE IF NOT EXISTS pwd_applications (
         id SERIAL PRIMARY KEY,
@@ -235,9 +245,132 @@ export const initDB = async () => {
         status VARCHAR(100) DEFAULT 'Under Evaluation',
         date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS solo_parent_applications (
+        id SERIAL PRIMARY KEY,
+        reference_no VARCHAR(50) UNIQUE NOT NULL,
+        applicant_name VARCHAR(255) NOT NULL,
+        first_name VARCHAR(100),
+        middle_name VARCHAR(100),
+        last_name VARCHAR(100),
+        suffix VARCHAR(20),
+        nationality VARCHAR(50) DEFAULT 'FILIPINO',
+        dob VARCHAR(50),
+        age VARCHAR(10),
+        gender VARCHAR(20),
+        civil_status VARCHAR(50),
+        house_no VARCHAR(100),
+        street_name VARCHAR(150),
+        barangay VARCHAR(150),
+        phone_number VARCHAR(50),
+        email_address VARCHAR(255),
+        solo_parent_id_no VARCHAR(50),
+        solo_parent_status VARCHAR(100),
+        solo_parent_category VARCHAR(100),
+        num_dependents VARCHAR(10),
+        age_youngest_dependent VARCHAR(10),
+        employment_status VARCHAR(100),
+        occupation VARCHAR(255),
+        employer_income_source VARCHAR(255),
+        monthly_income VARCHAR(100),
+        receiving_gov_assistance VARCHAR(100),
+        gov_program_name VARCHAR(255),
+        gov_assistance_amount_freq VARCHAR(255),
+        receiving_pension VARCHAR(100),
+        pension_type VARCHAR(255),
+        service_name VARCHAR(255) DEFAULT 'Solo Parent Financial Subsidy Program',
+        category VARCHAR(50) DEFAULT 'soloparent',
+        assistance_type VARCHAR(100) DEFAULT 'Solo Parent Welfare Grant',
+        amount NUMERIC(10,2) DEFAULT 3000.00,
+        status VARCHAR(100) DEFAULT 'Pending Document Validation',
+        disapproval_reason TEXT,
+        appointment_date VARCHAR(50),
+        appointment_time VARCHAR(50),
+        appointment_venue VARCHAR(255),
+        payout_date VARCHAR(50),
+        payout_time VARCHAR(50),
+        payout_venue VARCHAR(255),
+        uploaded_documents JSONB,
+        details JSONB,
+        date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS financial_disbursements (
+        id SERIAL PRIMARY KEY,
+        reference_no VARCHAR(50) UNIQUE NOT NULL,
+        applicant_name VARCHAR(255) NOT NULL,
+        module_name VARCHAR(100) DEFAULT 'SOLO PARENT',
+        benefit_name VARCHAR(255) DEFAULT 'Solo Parent Cash Subsidy',
+        amount NUMERIC(10,2) DEFAULT 3000.00,
+        payout_date VARCHAR(50),
+        payout_start_time VARCHAR(50),
+        payout_end_time VARCHAR(50),
+        venue VARCHAR(255),
+        status VARCHAR(100) DEFAULT 'PAYOUT SCHEDULED',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS educational_applications (
+        id SERIAL PRIMARY KEY,
+        reference_no VARCHAR(50) UNIQUE NOT NULL,
+        applicant_name VARCHAR(255) NOT NULL,
+        first_name VARCHAR(100),
+        middle_name VARCHAR(100),
+        last_name VARCHAR(100),
+        suffix VARCHAR(20),
+        nationality VARCHAR(50) DEFAULT 'FILIPINO',
+        dob VARCHAR(50),
+        age VARCHAR(10),
+        gender VARCHAR(20),
+        civil_status VARCHAR(50),
+        house_no VARCHAR(100),
+        street_name VARCHAR(150),
+        barangay VARCHAR(150),
+        phone_number VARCHAR(50),
+        email_address VARCHAR(255),
+        solo_parent_id_no VARCHAR(50),
+        relationship_to_child VARCHAR(100),
+        
+        -- Section B: Child / Beneficiary Information
+        child_full_name VARCHAR(255),
+        child_dob VARCHAR(50),
+        child_age VARCHAR(10),
+        child_sex VARCHAR(20),
+        school_name VARCHAR(255),
+        grade_level VARCHAR(100),
+        lrn_number VARCHAR(50),
+        type_of_school VARCHAR(100),
+        other_enrollment_info VARCHAR(255),
+
+        -- Section C: Family Information
+        num_children_in_family VARCHAR(10),
+        num_children_studying VARCHAR(10),
+        monthly_family_income VARCHAR(100),
+        is_4ps_beneficiary VARCHAR(10),
+        is_solo_educational_beneficiary VARCHAR(10),
+        is_pwd_educational_beneficiary VARCHAR(10),
+
+        service_name VARCHAR(255) DEFAULT 'Solo Parent Educational Assistance Program',
+        category VARCHAR(50) DEFAULT 'educational',
+        amount NUMERIC(10,2) DEFAULT 5000.00,
+        status VARCHAR(100) DEFAULT 'Pending Document Validation',
+        disapproval_reason TEXT,
+        appointment_date VARCHAR(50),
+        appointment_time VARCHAR(50),
+        appointment_venue VARCHAR(255),
+        payout_date VARCHAR(50),
+        payout_time VARCHAR(50),
+        payout_venue VARCHAR(255),
+        uploaded_documents JSONB,
+        details JSONB,
+        date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
-    console.log('✅ Database tables for AICS, Appointments, PWD, Senior, and Livelihood verified & ready!');
+    console.log('✅ Database tables for AICS, Appointments, PWD, Senior, Livelihood, Solo Parent, Financial Disbursements, and Educational Assistance verified & ready!');
     client.release();
   } catch (err) {
     console.error('❌ Database Connection Warning/Notice:', err.message);

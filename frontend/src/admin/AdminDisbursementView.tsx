@@ -86,16 +86,17 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
     return timeStr;
   };
 
-  // Filter approved/ready applications for financial disbursement
+  // Filter approved/ready applications for financial disbursement (Step 5 Payout Masterlist)
   const disbursementRecords = useMemo(() => {
     return applications.filter((app) => {
-      const st = app.status;
+      const st = (app.status || '').toUpperCase();
+      // Exclude initial 'APPROVED BY ADMIN' step 2 applications until they complete Step 4 interview approval!
       return (
-        st === 'Ready for Payout' || 
-        st === 'Payout Scheduled' ||
+        st === 'APPROVED' ||
+        st === 'READY FOR PAYOUT' || 
+        st === 'PAYOUT SCHEDULED' ||
         st === 'RELEASED / COMPLETED' || 
-        (st as string) === 'Completed' ||
-        st === 'Approved by Admin'
+        st === 'COMPLETED'
       );
     });
   }, [applications]);
@@ -324,9 +325,9 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
                   } else if (s.includes('senior')) {
                     benefitText = '₱3,000 Quarterly Social Pension';
                     locationText = 'OSCA Distribution Desk';
-                  } else if (s.includes('livelihood')) {
-                    benefitText = '₱15,000 Micro-Capital Grant';
-                    locationText = 'QC Livelihood Center';
+                  } else if (s.includes('solo') || s.includes('parent')) {
+                    benefitText = '₱3,000.00 Fixed Cash Subsidy';
+                    locationText = 'Quezon City Hall Cashier / SSDD Office';
                   }
 
                   return (

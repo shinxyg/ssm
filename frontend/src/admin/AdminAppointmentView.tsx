@@ -411,7 +411,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                           <span className="font-semibold">{app.serviceName}</span>
                         </td>
                         <td className="py-4 px-6 text-slate-300 font-mono text-[11px]">
-                          {appt ? (
+                          {appt && appt.appointmentDate && appt.appointmentDate !== 'Awaiting Schedule' && appt.status !== 'Pending Schedule' ? (
                             <div className="space-y-0.5">
                               <div className="flex items-center gap-1 text-slate-200 font-bold">
                                 <Calendar className="w-3.5 h-3.5 text-blue-400" />
@@ -434,7 +434,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                               ? 'bg-amber-950/60 text-amber-300 border-amber-800/40'
                               : isAppApproved(app.status) || isAppApproved(appt?.status)
                               ? 'bg-emerald-950/60 text-emerald-400 border-emerald-500/30'
-                              : appt
+                              : (appt && appt.appointmentDate && appt.appointmentDate !== 'Awaiting Schedule' && appt.status !== 'Pending Schedule')
                               ? 'bg-blue-950/60 text-blue-400 border-blue-500/30'
                               : 'bg-amber-950/60 text-amber-400 border-amber-500/30'
                           }`}>
@@ -445,7 +445,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                                 ? 'bg-amber-400'
                                 : isAppApproved(app.status) || isAppApproved(appt?.status)
                                 ? 'bg-emerald-400'
-                                : appt
+                                : (appt && appt.appointmentDate && appt.appointmentDate !== 'Awaiting Schedule' && appt.status !== 'Pending Schedule')
                                 ? 'bg-blue-400'
                                 : 'bg-amber-400'
                             }`}></span>
@@ -456,7 +456,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                                 ? 'Referred to Partner Agency'
                                 : isAppApproved(app.status) || isAppApproved(appt?.status)
                                 ? (app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed' ? 'Released & Archived' : 'Approved & Ready for Payout')
-                                : appt
+                                : (appt && appt.appointmentDate && appt.appointmentDate !== 'Awaiting Schedule' && appt.status !== 'Pending Schedule')
                                 ? 'Interview Scheduled'
                                 : 'Pending Schedule'}
                             </span>
@@ -491,7 +491,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                                 </button>
                               )}
                             </div>
-                          ) : !appt ? (
+                          ) : !(appt && appt.appointmentDate && appt.appointmentDate !== 'Awaiting Schedule' && appt.status !== 'Pending Schedule') ? (
                             <button
                               type="button"
                               onClick={() => handleOpenScheduleModal(app)}

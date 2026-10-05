@@ -224,11 +224,74 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
   };
 
   // Submit Application Handler
-  const handleSubmitApplication = () => {
+  const handleSubmitApplication = async () => {
     const newRef = mode === 'soloparent'
       ? `QC-SP-EDU-${Math.floor(100000 + Math.random() * 900000)}`
       : `QC-EDU-${Math.floor(100000 + Math.random() * 900000)}`;
     setGeneratedRefNo(newRef);
+
+    const uploadedDocsObj: Record<string, { name: string; url?: string }> = {};
+    if (docIndigency) uploadedDocsObj['indigency'] = docIndigency;
+    if (docEnrollment) uploadedDocsObj['enrollment'] = docEnrollment;
+    if (docQcitizenId) uploadedDocsObj['qcitizenId'] = docQcitizenId;
+    if (docSoloParentId) uploadedDocsObj['soloParentId'] = docSoloParentId;
+    if (docSchoolId) uploadedDocsObj['schoolId'] = docSchoolId;
+    if (docGovId) uploadedDocsObj['govId'] = docGovId;
+
+    const payload = {
+      referenceNo: newRef,
+      applicantName: `${applicantFirstName} ${applicantMiddleName} ${applicantLastName} ${applicantSuffix}`.trim(),
+      firstName: applicantFirstName,
+      middleName: applicantMiddleName,
+      lastName: applicantLastName,
+      suffix: applicantSuffix,
+      nationality: applicantNationality,
+      dob: applicantDob,
+      age: applicantAge,
+      gender: applicantGender,
+      civilStatus: applicantCivilStatus,
+      houseNo: applicantHouseNo,
+      streetName: applicantStreet,
+      barangay: applicantBarangay,
+      phoneNumber: contactNumber,
+      emailAddress,
+      soloParentIdNo: soloParentIdNumber || 'SP-23123',
+      relationshipToChild: relationToChild,
+      childFullName,
+      childDob,
+      childAge,
+      childSex,
+      schoolName,
+      gradeLevel,
+      lrnNumber,
+      typeOfSchool,
+      otherEnrollmentInfo,
+      numChildrenInFamily,
+      numChildrenStudying,
+      monthlyFamilyIncome: monthlyIncome,
+      is4psBeneficiary,
+      isSoloEducationalBeneficiary: isSoloParentBeneficiary,
+      isPwdEducationalBeneficiary: isPwdBeneficiary,
+      uploadedDocuments: uploadedDocsObj,
+      status: 'Pending Document Validation',
+      details: {
+        applicantName: `${applicantFirstName} ${applicantMiddleName} ${applicantLastName}`.trim(),
+        childFullName,
+        schoolName,
+        gradeLevel,
+        monthlyIncome,
+      }
+    };
+
+    try {
+      await fetch('http://localhost:5000/api/educational/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.warn("Educational Assistance API post warning:", err);
+    }
 
     const newAppRecord: ApplicationRecord = {
       referenceNo: newRef,
@@ -239,10 +302,15 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         : 'AICS Educational Financial Aid - Children with Disability',
       category: mode === 'soloparent' ? 'Solo Parent Services' : 'AICS Assistance',
       dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
-      status: 'Ready for Payout',
+      status: 'Pending Document Validation',
       assignedSocialWorker: 'Maria Santos, RSW (QC Social Services)',
       amountOrType: mode === 'soloparent' ? '₱5,000 Solo Parent Educational Grant' : '₱5,000 Educational Grant',
-      qrCodeData: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${newRef}`
+      details: {
+        applicantName: `${applicantFirstName} ${applicantMiddleName} ${applicantLastName}`.trim(),
+        childFullName,
+        schoolName,
+        gradeLevel
+      }
     };
 
     onAddApplication(newAppRecord);

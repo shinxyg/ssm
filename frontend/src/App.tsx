@@ -78,13 +78,17 @@ export default function App() {
   // Fetch applications from PostgreSQL DB with fast O(1) state comparison
   const fetchDBApplications = async () => {
     try {
-      const [resAics, resSenior] = await Promise.all([
+      const [resAics, resSenior, resSolo, resEdu] = await Promise.all([
         fetch('http://localhost:5000/api/aics/applications').catch(() => null),
-        fetch('http://localhost:5000/api/senior/applications').catch(() => null)
+        fetch('http://localhost:5000/api/senior/applications').catch(() => null),
+        fetch('http://localhost:5000/api/solo-parent/applications').catch(() => null),
+        fetch('http://localhost:5000/api/educational/applications').catch(() => null)
       ]);
 
       const aicsApps: ApplicationRecord[] = (resAics && resAics.ok) ? await resAics.json() : [];
       const seniorRaw: any[] = (resSenior && resSenior.ok) ? await resSenior.json() : [];
+      const soloRaw: any[] = (resSolo && resSolo.ok) ? await resSolo.json() : [];
+      const eduRaw: any[] = (resEdu && resEdu.ok) ? await resEdu.json() : [];
 
       const seniorApps: ApplicationRecord[] = (Array.isArray(seniorRaw) ? seniorRaw : []).map(row => ({
         referenceNo: row.reference_no,
@@ -110,7 +114,60 @@ export default function App() {
         details: row.details
       }));
 
-      const allDbApps = [...(Array.isArray(aicsApps) ? aicsApps : []), ...seniorApps];
+      const soloApps: ApplicationRecord[] = (Array.isArray(soloRaw) ? soloRaw : []).map(row => ({
+        referenceNo: row.reference_no,
+        applicantName: row.applicant_name,
+        serviceName: row.service_name || 'Solo Parent Financial Subsidy Program',
+        category: row.category || 'soloparent',
+        assistanceType: row.assistance_type || 'Solo Parent Welfare Grant',
+        status: row.status || 'Pending Document Validation',
+        dateSubmitted: row.date_submitted ? new Date(row.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
+        amountOrType: '₱3,000.00 Fixed Solo Parent Cash Subsidy',
+        assignedSocialWorker: 'Ms. Jocelyn Reyes, RSW (Solo Parent Welfare Division)',
+        scheduledPayoutDate: row.payout_date || row.scheduled_payout_date,
+        scheduledPayoutTime: row.payout_time || row.scheduled_payout_time,
+        appointmentDate: row.appointment_date,
+        appointmentTime: row.appointment_time,
+        appointmentDetails: {
+          appointmentDate: row.appointment_date,
+          appointmentTime: row.appointment_time,
+          venue: row.appointment_venue || 'Quezon City Hall SSDD Office',
+          assignedWorker: 'SSDD Social Worker, RSW'
+        },
+        disapprovalReason: row.disapproval_reason,
+        details: row.details
+      }));
+
+      const eduApps: ApplicationRecord[] = (Array.isArray(eduRaw) ? eduRaw : []).map(row => ({
+        referenceNo: row.reference_no,
+        applicantName: row.applicant_name,
+        serviceName: row.service_name || 'Solo Parent Educational Assistance Program',
+        category: row.category || 'educational',
+        assistanceType: row.assistance_type || 'Educational Cash Grant',
+        status: row.status || 'Pending Document Validation',
+        dateSubmitted: row.date_submitted ? new Date(row.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
+        amountOrType: '₱5,000.00 Educational Grant',
+        assignedSocialWorker: 'Ms. Corazon Mendoza, RSW (Child & Youth Welfare)',
+        scheduledPayoutDate: row.payout_date || row.scheduled_payout_date,
+        scheduledPayoutTime: row.payout_time || row.scheduled_payout_time,
+        appointmentDate: row.appointment_date,
+        appointmentTime: row.appointment_time,
+        appointmentDetails: {
+          appointmentDate: row.appointment_date,
+          appointmentTime: row.appointment_time,
+          venue: row.appointment_venue || 'Quezon City Hall SSDD Desk 4',
+          assignedWorker: 'Educational Grant Evaluator, RSW'
+        },
+        disapprovalReason: row.disapproval_reason,
+        details: row.details
+      }));
+
+      const allDbApps = [
+        ...(Array.isArray(aicsApps) ? aicsApps : []), 
+        ...seniorApps,
+        ...soloApps,
+        ...eduApps
+      ];
 
       setApplications(allDbApps);
     } catch (err) {
@@ -132,9 +189,11 @@ export default function App() {
     // Update local state immediately
     setApplications((prev) => [newApp, ...prev.filter(a => a.referenceNo !== newApp.referenceNo)]);
 
-    // Skip posting to AICS endpoint if this is a Senior Citizen application (already saved to senior_applications)
     const isSenior = (newApp.category || '').toLowerCase().includes('senior') || (newApp.serviceName || '').toLowerCase().includes('senior') || (newApp.referenceNo || '').startsWith('SENIOR-');
-    if (isSenior) {
+    const isSolo = (newApp.category || '').toLowerCase() === 'soloparent' || (newApp.referenceNo || '').startsWith('SP-SUBSIDY-') || (newApp.referenceNo || '').startsWith('SP-');
+    const isEdu = (newApp.category || '').toLowerCase() === 'educational' || (newApp.referenceNo || '').startsWith('QC-SP-EDU-');
+
+    if (isSenior || isSolo || isEdu) {
       return;
     }
 
@@ -166,9 +225,17 @@ export default function App() {
   const handleUpdateStatus = async (refNo: string, newStatus: ApplicationRecord['status'], extraFields?: Record<string, any>) => {
     setApplications(prev => prev.map(app => app.referenceNo === refNo ? { ...app, status: newStatus, ...(extraFields || {}) } : app));
     const isSenior = (refNo || '').startsWith('SENIOR-');
-    const endpoint = isSenior 
-      ? `http://localhost:5000/api/senior/applications/${encodeURIComponent(refNo)}/status`
-      : `http://localhost:5000/api/aics/applications/${encodeURIComponent(refNo)}/status`;
+    const isSolo = (refNo || '').startsWith('SP-SUBSIDY-') || (refNo || '').startsWith('SP-');
+    const isEdu = (refNo || '').startsWith('QC-SP-EDU-');
+
+    let endpoint = `http://localhost:5000/api/aics/applications/${encodeURIComponent(refNo)}/status`;
+    if (isSenior) {
+      endpoint = `http://localhost:5000/api/senior/applications/${encodeURIComponent(refNo)}/status`;
+    } else if (isSolo) {
+      endpoint = `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`;
+    } else if (isEdu) {
+      endpoint = `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`;
+    }
 
     try {
       await fetch(endpoint, {

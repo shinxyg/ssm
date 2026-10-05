@@ -146,8 +146,38 @@ setInterval(async () => {
     `);
     for (const row of result.rows) {
       if (isScheduledTimeReached(row.scheduled_payout_date, row.scheduled_payout_time)) {
-        console.log(`⏰ [AUTO-TRIGGER] Scheduled payout time reached for ${row.reference_no}! Auto-updating status to RELEASED / COMPLETED`);
+        console.log(`⏰ [AUTO-TRIGGER] Scheduled payout time reached for AICS ${row.reference_no}! Auto-updating status to RELEASED / COMPLETED`);
         await pool.query(`UPDATE aics_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+      }
+    }
+
+    const resultSolo = await pool.query(`
+      SELECT reference_no, payout_date, payout_time, status 
+      FROM solo_parent_applications 
+      WHERE (status = 'PAYOUT SCHEDULED' OR status = 'Payout Scheduled' OR status = 'APPROVED') 
+        AND payout_date IS NOT NULL 
+        AND payout_time IS NOT NULL
+    `);
+    for (const row of resultSolo.rows) {
+      if (isScheduledTimeReached(row.payout_date, row.payout_time)) {
+        console.log(`⏰ [AUTO-TRIGGER] Scheduled payout time reached for Solo Parent ${row.reference_no}! Auto-updating status to RELEASED / COMPLETED`);
+        await pool.query(`UPDATE solo_parent_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+        await pool.query(`UPDATE financial_disbursements SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+      }
+    }
+
+    const resultFin = await pool.query(`
+      SELECT reference_no, payout_date, payout_start_time, status 
+      FROM financial_disbursements 
+      WHERE (status = 'PAYOUT SCHEDULED' OR status = 'Payout Scheduled') 
+        AND payout_date IS NOT NULL 
+        AND payout_start_time IS NOT NULL
+    `);
+    for (const row of resultFin.rows) {
+      if (isScheduledTimeReached(row.payout_date, row.payout_start_time)) {
+        console.log(`⏰ [AUTO-TRIGGER] Scheduled payout time reached for Disbursement ${row.reference_no}! Auto-updating status to RELEASED / COMPLETED`);
+        await pool.query(`UPDATE financial_disbursements SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
+        await pool.query(`UPDATE solo_parent_applications SET status = 'RELEASED / COMPLETED', updated_at = NOW() WHERE reference_no = $1`, [row.reference_no]);
       }
     }
   } catch (err) {
@@ -695,6 +725,432 @@ app.put('/api/senior/applications/:id/status', async (req, res) => {
   }
 });
 
+// GET all Solo Parent applications from PostgreSQL DB
+app.get('/api/solo-parent/applications', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM solo_parent_applications ORDER BY date_submitted DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST submit new Solo Parent application to PostgreSQL DB
+app.post('/api/solo-parent/applications', async (req, res) => {
+  const { 
+    referenceNo, 
+    applicantName, 
+    firstName,
+    middleName,
+    lastName,
+    suffix,
+    nationality,
+    dob,
+    age,
+    gender,
+    civilStatus,
+    houseNo,
+    streetName,
+    barangay,
+    phoneNumber,
+    emailAddress,
+    soloParentIdNo,
+    soloParentStatus,
+    soloParentCategory,
+    numDependents,
+    ageYoungestDependent,
+    employmentStatus,
+    occupation,
+    employerIncomeSource,
+    monthlyIncome,
+    receivingGovAssistance,
+    govProgramName,
+    govAssistanceAmountFreq,
+    receivingPension,
+    pensionType,
+    uploadedDocuments,
+    status,
+    details
+  } = req.body;
+
+  try {
+    const refNo = referenceNo || `SP-SUBSIDY-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const name = applicantName || details?.applicantName || `${firstName || 'JEFFERSON'} ${lastName || 'LEE'}`.trim();
+    const savedDetails = JSON.stringify(details || {});
+    const savedDocs = JSON.stringify(uploadedDocuments || {});
+
+    const query = `
+      INSERT INTO solo_parent_applications (
+        reference_no, applicant_name, first_name, middle_name, last_name, suffix, nationality, dob, age, gender, civil_status,
+        house_no, street_name, barangay, phone_number, email_address, solo_parent_id_no, solo_parent_status,
+        solo_parent_category, num_dependents, age_youngest_dependent, employment_status, occupation, employer_income_source,
+        monthly_income, receiving_gov_assistance, gov_program_name, gov_assistance_amount_freq, receiving_pension, pension_type,
+        status, uploaded_documents, details
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
+        $12, $13, $14, $15, $16, $17, $18,
+        $19, $20, $21, $22, $23, $24,
+        $25, $26, $27, $28, $29, $30,
+        $31, $32, $33
+      )
+      ON CONFLICT (reference_no) DO UPDATE SET
+        applicant_name = EXCLUDED.applicant_name,
+        status = EXCLUDED.status,
+        uploaded_documents = EXCLUDED.uploaded_documents,
+        details = EXCLUDED.details,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *;
+    `;
+
+    const values = [
+      refNo, name, firstName || 'JEFFERSON', middleName || 'FERNANDO', lastName || 'LEE', suffix || '', nationality || 'FILIPINO',
+      dob || '2004-09-27', age || '22', gender || 'Male', civilStatus || 'Single',
+      houseNo || '176', streetName || '23', barangay || 'Bagong Silangan', phoneNumber || '09155582122', emailAddress || 'jeffersonlee1234@gmail.com',
+      soloParentIdNo || 'SP-2026-88492', soloParentStatus || 'Active / Validated SPIC',
+      soloParentCategory || 'Unmarried parent', numDependents || '1', ageYoungestDependent || '3', employmentStatus || 'Unemployed',
+      occupation || '', employerIncomeSource || '', monthlyIncome || '0', receivingGovAssistance || 'No', govProgramName || '',
+      govAssistanceAmountFreq || '', receivingPension || 'No', pensionType || '',
+      status || 'Pending Document Validation', savedDocs, savedDetails
+    ];
+
+    const result = await pool.query(query, values);
+    const row = result.rows[0];
+
+    sendNotificationEmail({
+      to: emailAddress || 'clarencemillares15@gmail.com',
+      subject: `GovServe Notice: Solo Parent Subsidy Application Received (${row.reference_no})`,
+      title: `Solo Parent Subsidy Application Submitted!`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: row.status || 'Pending Document Validation',
+      detailsMessage: `Natanggap ang inyong Solo Parent Subsidy Form. Sinusuri ng Admin ang inyong Solo Parent ID at submitted documents.`
+    });
+
+    res.status(201).json(row);
+  } catch (err) {
+    console.error('Error saving Solo Parent application:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update status/scheduling of a Solo Parent application
+app.put('/api/solo-parent/applications/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { 
+    status, 
+    disapprovalReason, 
+    appointmentDate, 
+    appointmentTime, 
+    appointmentVenue, 
+    payoutDate, 
+    payoutTime, 
+    payoutVenue 
+  } = req.body;
+
+  try {
+    const query = `
+      UPDATE solo_parent_applications 
+      SET 
+        status = COALESCE($1, status),
+        disapproval_reason = COALESCE($2, disapproval_reason),
+        appointment_date = COALESCE($3, appointment_date),
+        appointment_time = COALESCE($4, appointment_time),
+        appointment_venue = COALESCE($5, appointment_venue),
+        payout_date = COALESCE($6, payout_date),
+        payout_time = COALESCE($7, payout_time),
+        payout_venue = COALESCE($8, payout_venue),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id::text = $9 OR reference_no = $9
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [
+      status, disapprovalReason, appointmentDate, appointmentTime, appointmentVenue,
+      payoutDate, payoutTime, payoutVenue, id
+    ]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Solo Parent application not found' });
+    }
+    const row = result.rows[0];
+
+    // Sync with appointments table
+    if (status === 'APPROVED BY ADMIN' || status === 'INTERVIEW SCHEDULED' || appointmentDate) {
+      const apptStatus = appointmentDate || status === 'INTERVIEW SCHEDULED' ? 'Interview Scheduled' : 'Pending Schedule';
+      try {
+        const checkAppt = await pool.query(`SELECT id FROM appointments WHERE reference_no = $1`, [row.reference_no]);
+        if (checkAppt.rows.length > 0) {
+          await pool.query(`
+            UPDATE appointments 
+            SET 
+              appointment_date = COALESCE($1, appointment_date),
+              appointment_time = COALESCE($2, appointment_time),
+              venue = COALESCE($3, venue),
+              status = $4
+            WHERE reference_no = $5;
+          `, [appointmentDate || null, appointmentTime || null, appointmentVenue || null, apptStatus, row.reference_no]);
+        } else {
+          await pool.query(`
+            INSERT INTO appointments (reference_no, module_name, applicant_name, appointment_date, appointment_time, venue, purpose, status)
+            VALUES ($1, 'SOLO PARENT', $2, $3, $4, COALESCE($5, 'Quezon City Hall SSDD Office'), 'Solo Parent SSDD Assessment & Intake Interview', $6);
+          `, [row.reference_no, row.applicant_name, appointmentDate || null, appointmentTime || null, appointmentVenue || null, apptStatus]);
+        }
+      } catch (e) {
+        console.warn('Sync appointments warning:', e.message);
+      }
+    }
+
+    // Only insert into financial_disbursements when Step 4 is APPROVED (Interview passed) or PAYOUT SCHEDULED
+    if (status === 'APPROVED' || status === 'Ready for Payout' || status === 'PAYOUT SCHEDULED') {
+      try {
+        const checkFin = await pool.query(`SELECT id FROM financial_disbursements WHERE reference_no = $1`, [row.reference_no]);
+        if (checkFin.rows.length > 0) {
+          await pool.query(`
+            UPDATE financial_disbursements 
+            SET 
+              payout_date = COALESCE($1, payout_date),
+              payout_start_time = COALESCE($2, payout_start_time),
+              venue = COALESCE($3, venue),
+              status = $4,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE reference_no = $5;
+          `, [payoutDate || row.payout_date || null, payoutTime || row.payout_time || null, payoutVenue || row.payout_venue || null, status === 'PAYOUT SCHEDULED' ? 'PAYOUT SCHEDULED' : 'PENDING PAYOUT SCHEDULE', row.reference_no]);
+        } else {
+          await pool.query(`
+            INSERT INTO financial_disbursements (reference_no, applicant_name, module_name, benefit_name, amount, payout_date, payout_start_time, venue, status)
+            VALUES ($1, $2, 'SOLO PARENT', '₱3,000 Fixed Solo Parent Cash Subsidy', 3000.00, $3, $4, $5, $6);
+          `, [row.reference_no, row.applicant_name, payoutDate || row.payout_date || null, payoutTime || row.payout_time || null, payoutVenue || row.payout_venue || null, status === 'PAYOUT SCHEDULED' ? 'PAYOUT SCHEDULED' : 'PENDING PAYOUT SCHEDULE']);
+        }
+      } catch (e) {
+        console.warn('Sync financial_disbursements warning:', e.message);
+      }
+    }
+
+    sendNotificationEmail({
+      to: row.email_address || 'clarencemillares15@gmail.com',
+      subject: `Solo Parent Subsidy Update (${row.reference_no}): ${row.status}`,
+      title: `Solo Parent Application Status: ${row.status}`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: row.status,
+      detailsMessage: row.disapproval_reason ? `Disapproved ang request. Dahilan: ${row.disapproval_reason}` : `May update sa inyong Solo Parent Subsidy application. Current Status: ${row.status}`
+    });
+
+    res.json(row);
+  } catch (err) {
+    console.error('PUT status error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET Financial Aid Disbursements Masterlist
+app.get('/api/financial-aid/disbursements', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM financial_disbursements ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST Schedule Payout in Financial Aid Masterlist
+app.post('/api/financial-aid/disbursements/schedule', async (req, res) => {
+  const { referenceNo, payoutDate, startTime, endTime, venue } = req.body;
+  try {
+    const query = `
+      UPDATE financial_disbursements
+      SET payout_date = $1, payout_start_time = $2, payout_end_time = $3, venue = $4, status = 'PAYOUT SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $5
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [payoutDate, startTime, endTime, venue, referenceNo]);
+    
+    await pool.query(`
+      UPDATE solo_parent_applications
+      SET payout_date = $1, payout_time = $2, payout_venue = $3, status = 'PAYOUT SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $4;
+    `, [payoutDate, `${startTime} - ${endTime}`, venue, referenceNo]);
+
+    res.json(result.rows[0] || { success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET all Educational Assistance applications from PostgreSQL DB
+app.get('/api/educational/applications', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM educational_applications ORDER BY date_submitted DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST submit new Educational Assistance application to PostgreSQL DB
+app.post('/api/educational/applications', async (req, res) => {
+  const { 
+    referenceNo, 
+    applicantName, 
+    firstName,
+    middleName,
+    lastName,
+    suffix,
+    nationality,
+    dob,
+    age,
+    gender,
+    civilStatus,
+    houseNo,
+    streetName,
+    barangay,
+    phoneNumber,
+    emailAddress,
+    soloParentIdNo,
+    relationshipToChild,
+    childFullName,
+    childDob,
+    childAge,
+    childSex,
+    schoolName,
+    gradeLevel,
+    lrnNumber,
+    typeOfSchool,
+    otherEnrollmentInfo,
+    numChildrenInFamily,
+    numChildrenStudying,
+    monthlyFamilyIncome,
+    is4psBeneficiary,
+    isSoloEducationalBeneficiary,
+    isPwdEducationalBeneficiary,
+    uploadedDocuments,
+    status,
+    details
+  } = req.body;
+
+  try {
+    const refNo = referenceNo || `QC-SP-EDU-${Math.floor(100000 + Math.random() * 900000)}`;
+    const name = applicantName || details?.applicantName || `${firstName || 'JEFFERSON'} ${lastName || 'LEE'}`.trim();
+    const savedDetails = JSON.stringify(details || {});
+    const savedDocs = JSON.stringify(uploadedDocuments || {});
+
+    const query = `
+      INSERT INTO educational_applications (
+        reference_no, applicant_name, first_name, middle_name, last_name, suffix, nationality, dob, age, gender, civil_status,
+        house_no, street_name, barangay, phone_number, email_address, solo_parent_id_no, relationship_to_child,
+        child_full_name, child_dob, child_age, child_sex, school_name, grade_level, lrn_number, type_of_school, other_enrollment_info,
+        num_children_in_family, num_children_studying, monthly_family_income, is_4ps_beneficiary, is_solo_educational_beneficiary, is_pwd_educational_beneficiary,
+        status, uploaded_documents, details
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
+        $12, $13, $14, $15, $16, $17, $18,
+        $19, $20, $21, $22, $23, $24, $25, $26, $27,
+        $28, $29, $30, $31, $32, $33,
+        $34, $35, $36
+      )
+      ON CONFLICT (reference_no) DO UPDATE SET
+        applicant_name = EXCLUDED.applicant_name,
+        status = EXCLUDED.status,
+        uploaded_documents = EXCLUDED.uploaded_documents,
+        details = EXCLUDED.details,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *;
+    `;
+
+    const values = [
+      refNo, name, firstName || 'JEFFERSON', middleName || 'FERNANDO', lastName || 'LEE', suffix || '', nationality || 'FILIPINO',
+      dob || '2004-09-27', age || '22', gender || 'Male', civilStatus || 'Solo Parent',
+      houseNo || '176', streetName || '23', barangay || 'Bagong Silangan', phoneNumber || '09155582122', emailAddress || 'jeffersonlee1234@gmail.com',
+      soloParentIdNo || 'SP-23123', relationshipToChild || 'Parent',
+      childFullName || '', childDob || '', childAge || '', childSex || '', schoolName || '', gradeLevel || '', lrnNumber || '', typeOfSchool || '', otherEnrollmentInfo || '',
+      numChildrenInFamily || '', numChildrenStudying || '', monthlyFamilyIncome || '', is4psBeneficiary || 'No', isSoloEducationalBeneficiary || 'Yes', isPwdEducationalBeneficiary || 'No',
+      status || 'Pending Document Validation', savedDocs, savedDetails
+    ];
+
+    const result = await pool.query(query, values);
+    const row = result.rows[0];
+
+    sendNotificationEmail({
+      to: emailAddress || 'clarencemillares15@gmail.com',
+      subject: `GovServe Notice: Educational Assistance Application Received (${row.reference_no})`,
+      title: `Educational Assistance Application Submitted!`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: row.status || 'Pending Document Validation',
+      detailsMessage: `Natanggap ang inyong Solo Parent Educational Assistance application for ${row.child_full_name || 'beneficiary'}. Sinusuri ng Admin ang submitted documents.`
+    });
+
+    res.status(201).json(row);
+  } catch (err) {
+    console.error('Error saving Educational Assistance application:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update status/scheduling of an Educational Assistance application
+app.put('/api/educational/applications/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { 
+    status, 
+    disapprovalReason, 
+    appointmentDate, 
+    appointmentTime, 
+    appointmentVenue, 
+    payoutDate, 
+    payoutTime, 
+    payoutVenue 
+  } = req.body;
+
+  try {
+    const query = `
+      UPDATE educational_applications 
+      SET 
+        status = COALESCE($1, status),
+        disapproval_reason = COALESCE($2, disapproval_reason),
+        appointment_date = COALESCE($3, appointment_date),
+        appointment_time = COALESCE($4, appointment_time),
+        appointment_venue = COALESCE($5, appointment_venue),
+        payout_date = COALESCE($6, payout_date),
+        payout_time = COALESCE($7, payout_time),
+        payout_venue = COALESCE($8, payout_venue),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id::text = $9 OR reference_no = $9
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [
+      status, disapprovalReason, appointmentDate, appointmentTime, appointmentVenue,
+      payoutDate, payoutTime, payoutVenue, id
+    ]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Educational application not found' });
+    }
+    const row = result.rows[0];
+
+    // If status becomes "APPROVED" or "APPROVED BY ADMIN", insert into financial_disbursements
+    if (status === 'APPROVED' || status === 'APPROVED BY ADMIN') {
+      await pool.query(`
+        INSERT INTO financial_disbursements (reference_no, applicant_name, module_name, benefit_name, amount, status)
+        VALUES ($1, $2, 'EDUCATIONAL', 'Solo Parent Educational Assistance Grant', 5000.00, 'PENDING PAYOUT SCHEDULE')
+        ON CONFLICT (reference_no) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP;
+      `, [row.reference_no, row.applicant_name]);
+    }
+
+    sendNotificationEmail({
+      to: row.email_address || 'clarencemillares15@gmail.com',
+      subject: `Educational Assistance Update (${row.reference_no}): ${row.status}`,
+      title: `Educational Assistance Status: ${row.status}`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: row.status,
+      detailsMessage: row.disapproval_reason ? `Disapproved ang request. Dahilan: ${row.disapproval_reason}` : `May update sa inyong Educational Assistance application. Current Status: ${row.status}`
+    });
+
+    res.json(row);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET all appointments from PostgreSQL DB
 app.get('/api/appointments', async (req, res) => {
   try {
@@ -721,24 +1177,52 @@ app.post('/api/appointments', async (req, res) => {
   try {
     const query = `
       INSERT INTO appointments 
-      (reference_no, module_name, applicant_name, appointment_date, appointment_time, venue, purpose, social_worker_notes)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      (reference_no, module_name, applicant_name, appointment_date, appointment_time, venue, purpose, social_worker_notes, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Interview Scheduled')
+      ON CONFLICT (reference_no) DO UPDATE SET
+        appointment_date = EXCLUDED.appointment_date,
+        appointment_time = EXCLUDED.appointment_time,
+        venue = EXCLUDED.venue,
+        purpose = COALESCE(EXCLUDED.purpose, appointments.purpose),
+        status = 'Interview Scheduled',
+        social_worker_notes = COALESCE(EXCLUDED.social_worker_notes, appointments.social_worker_notes)
       RETURNING *;
     `;
     const values = [
       referenceNo,
-      moduleName || 'AICS Assistance',
+      moduleName || 'SOLO PARENT',
       applicantName || 'Applicant Name',
-      appointmentDate || new Date().toISOString().split('T')[0],
-      appointmentTime || '09:00 AM',
-      venue || 'SSDD Assessment Desk 3, QC Hall',
-      purpose || 'Document Verification & Intake Interview',
-      socialWorkerNotes || 'Initial appointment set'
+      appointmentDate,
+      appointmentTime,
+      venue || 'Quezon City Hall SSDD Office',
+      purpose || 'Solo Parent SSDD Assessment & Intake Interview',
+      socialWorkerNotes || 'Schedule set by Admin'
     ];
 
     const result = await pool.query(query, values);
-    res.status(201).json(result.rows[0]);
+    const row = result.rows[0];
+
+    // Sync status & date to solo_parent_applications
+    await pool.query(`
+      UPDATE solo_parent_applications 
+      SET appointment_date = $1, appointment_time = $2, appointment_venue = $3, status = 'INTERVIEW SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $4;
+    `, [appointmentDate, appointmentTime, venue, referenceNo]);
+
+    sendNotificationEmail({
+      to: 'clarencemillares15@gmail.com',
+      subject: `GovServe Notice: Solo Parent Interview Scheduled (${referenceNo})`,
+      title: `Solo Parent Interview Scheduled!`,
+      applicantName: row.applicant_name,
+      refNo: referenceNo,
+      status: 'INTERVIEW SCHEDULED',
+      detailsMessage: `Naitakda ang inyong Solo Parent assessment interview sa Quezon City Hall SSDD Office.`,
+      appointmentInfo: `Petsa: ${appointmentDate} | Oras: ${appointmentTime} | Lugar: ${venue || 'QC Hall SSDD Office'}`
+    });
+
+    res.status(201).json(row);
   } catch (err) {
+    console.error('Error saving appointment:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -752,14 +1236,37 @@ app.put('/api/appointments/:id/status', async (req, res) => {
     const query = `
       UPDATE appointments 
       SET status = $1, social_worker_notes = COALESCE($2, social_worker_notes)
-      WHERE id = $3 
+      WHERE id::text = $3 OR reference_no = $3
       RETURNING *;
     `;
     const result = await pool.query(query, [status, socialWorkerNotes, id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Appointment not found' });
     }
-    res.json(result.rows[0]);
+    const row = result.rows[0];
+
+    // If status is APPROVED, transfer to solo_parent_applications AND financial_disbursements!
+    if (status === 'APPROVED' || status === 'Approved') {
+      await pool.query(`
+        UPDATE solo_parent_applications 
+        SET status = 'APPROVED', updated_at = CURRENT_TIMESTAMP 
+        WHERE reference_no = $1;
+      `, [row.reference_no]);
+
+      await pool.query(`
+        INSERT INTO financial_disbursements (reference_no, applicant_name, module_name, benefit_name, amount, status)
+        VALUES ($1, $2, 'SOLO PARENT', '₱3,000 Fixed Solo Parent Cash Subsidy', 3000.00, 'PENDING PAYOUT SCHEDULE')
+        ON CONFLICT (reference_no) DO UPDATE SET status = 'PENDING PAYOUT SCHEDULE', updated_at = CURRENT_TIMESTAMP;
+      `, [row.reference_no, row.applicant_name]);
+    } else if (status === 'REJECTED' || status === 'Rejected') {
+      await pool.query(`
+        UPDATE solo_parent_applications 
+        SET status = 'REJECTED', updated_at = CURRENT_TIMESTAMP 
+        WHERE reference_no = $1;
+      `, [row.reference_no]);
+    }
+
+    res.json(row);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -768,7 +1275,7 @@ app.put('/api/appointments/:id/status', async (req, res) => {
 // DELETE reset all test data in PostgreSQL DB
 app.delete('/api/reset-data', async (req, res) => {
   try {
-    await pool.query('TRUNCATE TABLE aics_applications, appointments, pwd_applications, senior_applications, livelihood_applications RESTART IDENTITY CASCADE;');
+    await pool.query('TRUNCATE TABLE aics_applications, appointments, pwd_applications, senior_applications, livelihood_applications, solo_parent_applications, educational_applications, financial_disbursements RESTART IDENTITY CASCADE;');
     res.json({ success: true, message: 'All database records successfully cleared.' });
   } catch (err) {
     res.status(500).json({ error: err.message });

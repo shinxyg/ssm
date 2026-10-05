@@ -246,24 +246,103 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
     };
   }, [showReqModal, submittedApp]);
 
-  const handleSubmitApplication = () => {
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleSubmitApplication = async () => {
     if (!isTermsAccepted) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const refNum = `SP-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+    try {
+      const refNum = `SP-SUBSIDY-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+
+      // Convert uploaded photos to base64 data URLs
+      const docsBase64: Record<string, { name: string; size: number; dataUrl: string }> = {};
+      for (const [key, file] of Object.entries(uploadedFiles)) {
+        try {
+          const dataUrl = await fileToBase64(file);
+          docsBase64[key] = {
+            name: file.name,
+            size: file.size,
+            dataUrl
+          };
+        } catch (e) {
+          console.error("Failed to convert photo", e);
+        }
+      }
+
+      const payload = {
+        referenceNo: refNum,
+        applicantName: `${firstName} ${middleName} ${lastName} ${suffix}`.trim(),
+        firstName,
+        middleName,
+        lastName,
+        suffix,
+        nationality,
+        dob,
+        age,
+        gender,
+        civilStatus,
+        houseNo,
+        streetName: street,
+        barangay,
+        phoneNumber: phone,
+        emailAddress,
+        soloParentIdNo: applicantSpicNumber || soloParentIdNumber || 'SP-2026-88492',
+        soloParentStatus: soloParentStatus || 'Active / Validated SPIC',
+        soloParentCategory,
+        numDependents,
+        ageYoungestDependent,
+        employmentStatus,
+        occupation,
+        employerIncomeSource: employerOrIncomeSource,
+        monthlyIncome,
+        receivingGovAssistance,
+        govProgramName,
+        govAssistanceAmountFreq,
+        receivingPension,
+        pensionType,
+        uploadedDocuments: docsBase64,
+        status: 'Pending Document Validation',
+        details: {
+          applicantName: `${firstName} ${middleName} ${lastName} ${suffix}`.trim(),
+          spicNumber: applicantSpicNumber || soloParentIdNumber,
+          soloParentCategory,
+          employmentStatus,
+          monthlyIncome: `₱${monthlyIncome}`,
+          dependentsCount: numDependents,
+          youngestAge: ageYoungestDependent,
+          uploadedDocsCount: Object.keys(uploadedFiles).length
+        }
+      };
+
+      try {
+        await fetch('http://localhost:5000/api/solo-parent/applications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.warn("Backend API save warning:", err);
+      }
+
       const newApp: ApplicationRecord = {
         referenceNo: refNum,
         serviceName: 'Solo Parent Financial Subsidy Program',
         category: 'soloparent',
         dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
-        status: 'Under Review',
-        amountOrType: 'Solo Parent Welfare Grant',
+        status: 'Pending Document Validation',
+        amountOrType: '₱3,000.00 Solo Parent Subsidy',
         assignedSocialWorker: 'Ms. Jocelyn Reyes, RSW (Solo Parent Welfare Division)',
-        qrCodeData: `GOVSERVE-SP-SUBSIDY-${refNum}-${applicantSpicNumber}`,
         details: {
           applicantName: `${firstName} ${middleName} ${lastName} ${suffix}`.trim(),
-          spicNumber: applicantSpicNumber,
+          spicNumber: applicantSpicNumber || soloParentIdNumber,
           soloParentCategory,
           employmentStatus,
           monthlyIncome: `₱${monthlyIncome}`,
@@ -275,7 +354,10 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
       onAddApplication(newApp);
       setIsSubmitting(false);
       onBack();
-    }, 1000);
+    } catch (err) {
+      console.error("Submission failed", err);
+      setIsSubmitting(false);
+    }
   };
 
   // Helper title for Step 3 Proof of Indigency / Income requirement label
@@ -944,14 +1026,22 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                 </h3>
 
                 <div className="space-y-4">
-                  <div className="p-4 rounded-xl border bg-slate-900/40 border-slate-800 space-y-3">
-                    <label className="text-xs font-bold uppercase text-slate-300 block">
+                  {/* Question 1: Currently receiving government assistance */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-slate-400 block">
                       Currently receiving government assistance? *
                     </label>
                     <select
                       value={receivingGovAssistance}
-                      onChange={(e) => setReceivingGovAssistance(e.target.value)}
-                      className={`w-full max-w-xs px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setReceivingGovAssistance(val);
+                        if (val !== 'Yes') {
+                          setGovProgramName('');
+                          setGovAssistanceAmountFreq('');
+                        }
+                      }}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
                         darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
                       }`}
                     >
@@ -961,27 +1051,27 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                     </select>
 
                     {receivingGovAssistance === 'Yes' && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                         <div className="space-y-1">
-                          <label className="text-[11px] font-bold uppercase text-slate-300">Program Name</label>
+                          <label className="text-xs font-bold uppercase text-slate-400 block">Program Name</label>
                           <input
                             type="text"
                             placeholder="e.g. 4Ps, TUPAD, DSWD AICS"
                             value={govProgramName}
                             onChange={(e) => setGovProgramName(e.target.value)}
-                            className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold ${
+                            className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
                               darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
                             }`}
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[11px] font-bold uppercase text-slate-300">Amount / Frequency</label>
+                          <label className="text-xs font-bold uppercase text-slate-400 block">Amount / Frequency</label>
                           <input
                             type="text"
                             placeholder="e.g. ₱1,500 / monthly"
                             value={govAssistanceAmountFreq}
                             onChange={(e) => setGovAssistanceAmountFreq(e.target.value)}
-                            className={`w-full px-3 py-2 rounded-xl border text-xs font-semibold ${
+                            className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
                               darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
                             }`}
                           />
@@ -990,14 +1080,21 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                     )}
                   </div>
 
-                  <div className="p-4 rounded-xl border bg-slate-900/40 border-slate-800 space-y-3">
-                    <label className="text-xs font-bold uppercase text-slate-300 block">
+                  {/* Question 2: Receiving pension */}
+                  <div className="space-y-2 pt-1">
+                    <label className="text-xs font-bold uppercase text-slate-400 block">
                       Receiving pension? *
                     </label>
                     <select
                       value={receivingPension}
-                      onChange={(e) => setReceivingPension(e.target.value)}
-                      className={`w-full max-w-xs px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setReceivingPension(val);
+                        if (val !== 'Yes') {
+                          setPensionType('');
+                        }
+                      }}
+                      className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
                         darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
                       }`}
                     >
@@ -1007,14 +1104,14 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                     </select>
 
                     {receivingPension === 'Yes' && (
-                      <div className="pt-2">
-                        <label className="text-[11px] font-bold uppercase text-slate-300 block mb-1">Type of Pension</label>
+                      <div className="space-y-1 pt-1">
+                        <label className="text-xs font-bold uppercase text-slate-400 block">Type of Pension</label>
                         <input
                           type="text"
                           placeholder="e.g. SSS Survivor Pension, GSIS, Private Pension"
                           value={pensionType}
                           onChange={(e) => setPensionType(e.target.value)}
-                          className={`w-full max-w-md px-3 py-2 rounded-xl border text-xs font-semibold ${
+                          className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
                             darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
                           }`}
                         />
