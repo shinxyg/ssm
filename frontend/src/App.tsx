@@ -772,6 +772,8 @@ export default function App() {
               onBack={() => setActiveTab('soloparent')}
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
+              onNavigateToModule={(tab) => setActiveTab(tab)}
+              applications={applications}
             />
           ) : activeTab === 'profile' ? (
             /* Dedicated User Profile Content View */
