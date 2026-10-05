@@ -411,7 +411,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
   ) : false;
 
   // TEMPORARILY DISABLED targetApp BYPASS PER USER REQUEST TO INSPECT FORM
-  const targetApp = null;
+  const targetApp: ApplicationRecord | null = null;
 
   if (targetApp) {
     return (

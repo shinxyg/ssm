@@ -439,7 +439,13 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
       {/* ---------------------------------------------------------------------- */}
       {/* MANAGE APPLICATION MODAL (MATCHING EXACT AICS LAYOUT FROM SCREENSHOTS 1 & 2!) */}
       {/* ---------------------------------------------------------------------- */}
-      {selectedApp && createPortal(
+      {selectedApp && (() => {
+        const isEduApp = Boolean(
+          (selectedApp.solo_parent_category || '').toLowerCase().includes('educational') ||
+          (selectedApp.reference_no || '').startsWith('QC-SP-EDU') ||
+          selectedApp.details?.childFullName
+        );
+        return createPortal(
         <div className="fixed inset-0 z-[99999] bg-[#030712]/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
           <div className="bg-[#0e172a] text-slate-100 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-slate-800 my-auto">
             {/* Modal Header */}
@@ -864,7 +870,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
           </div>
         </div>,
         document.body
-      )}
+      )})}
 
       {/* DOCUMENT INSPECTION MODAL WITH ACTUAL USER PHOTO PREVIEW */}
       {inspectingDoc && createPortal(
