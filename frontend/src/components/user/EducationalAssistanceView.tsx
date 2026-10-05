@@ -358,7 +358,8 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
     (submittedAppInList.status || '').toUpperCase().includes('DISAPPROVED')
   ) : false;
 
-  const targetApp = isSubmittedAppFinished ? null : (activePendingApp || (submittedAppRecord && !isSubmittedAppFinished ? submittedAppRecord : null));
+  // TEMPORARILY DISABLED targetApp BYPASS PER USER REQUEST TO INSPECT FORM
+  const targetApp = null;
 
   if (targetApp) {
     return (
