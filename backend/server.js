@@ -44,6 +44,58 @@ app.post('/api/send-email', async (req, res) => {
     res.status(500).json({ error: 'Failed to send email', details: err.message });
   }
 });
+
+// Helper to send formatted Gmail Notification Emails
+const sendNotificationEmail = async ({ to, subject, title, applicantName, refNo, status, detailsMessage, appointmentInfo }) => {
+  const recipient = to || 'clarencemillares15@gmail.com';
+  const senderEmail = process.env.EMAIL_USER || 'clarencemillares15@gmail.com';
+  
+  const htmlContent = `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #f1f5f9; padding: 24px; color: #1e293b;">
+      <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+        <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); padding: 28px; text-align: center; color: #ffffff;">
+          <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.5px;">QC GovServe</h1>
+          <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9; font-weight: 500;">Quezon City Social Services & Development Department</p>
+        </div>
+        <div style="padding: 28px;">
+          <h2 style="color: #0f172a; font-size: 18px; font-weight: 700; margin-top: 0;">${title || 'Application Status Update'}</h2>
+          <p style="font-size: 15px; color: #334155; margin-bottom: 16px;">Dear <strong>${applicantName || 'Valued Applicant'}</strong>,</p>
+          <p style="font-size: 14px; line-height: 1.6; color: #475569; margin-bottom: 20px;">
+            ${detailsMessage || 'Here is an important notification regarding your social service application in Quezon City.'}
+          </p>
+          
+          <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 16px; border-radius: 0 12px 12px 0; margin-bottom: 24px;">
+            ${refNo ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Reference No:</strong> <span style="color: #2563eb; font-family: monospace; font-size: 15px; font-weight: 700;">${refNo}</span></p>` : ''}
+            ${status ? `<p style="margin: 6px 0; font-size: 14px;"><strong>Current Status:</strong> <span style="background: #dbeafe; color: #1e40af; padding: 3px 10px; border-radius: 12px; font-size: 13px; font-weight: 700;">${status}</span></p>` : ''}
+            ${appointmentInfo ? `<p style="margin: 6px 0; font-size: 14px;"><strong>Schedule / Details:</strong> <span style="color: #0f172a;">${appointmentInfo}</span></p>` : ''}
+          </div>
+
+          <p style="font-size: 13px; color: #64748b; line-height: 1.5;">
+            You can log in to your <strong>GovServe Portal account</strong> anytime to track application progress, download your Guarantee Letter (GL), or check appointment status.
+          </p>
+        </div>
+        <div style="background-color: #f8fafc; padding: 16px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9;">
+          This is an automated notification from QC GovServe Social Services System.
+        </div>
+      </div>
+    </div>
+  `;
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"QC GovServe Social Services" <${senderEmail}>`,
+      to: recipient,
+      subject: subject || `QC GovServe Notice: ${refNo || 'Application Update'}`,
+      text: `${title}\nReference No: ${refNo || 'N/A'}\nStatus: ${status || 'N/A'}\n${detailsMessage || ''}`,
+      html: htmlContent
+    });
+    console.log(`📧 Gmail sent successfully to ${recipient} (Message ID: ${info.messageId})`);
+    return info;
+  } catch (err) {
+    console.error(`❌ Gmail sending error for ${recipient}:`, err.message);
+  }
+};
+
 // Helper to check if current real-time clock >= scheduled date & time
 const isScheduledTimeReached = (dStr, tStr) => {
   if (!dStr || !tStr) return false;
@@ -365,6 +417,17 @@ app.post('/api/aics/applications', async (req, res) => {
         assistanceType: row.assistance_type
       }
     };
+
+    sendNotificationEmail({
+      to: req.body.emailAddress || req.body.email || 'clarencemillares15@gmail.com',
+      subject: `GovServe Notice: Application Received (${formatted.referenceNo})`,
+      title: `Application Successfully Submitted!`,
+      applicantName: formatted.applicantName,
+      refNo: formatted.referenceNo,
+      status: formatted.status || 'Under Review',
+      detailsMessage: `Your application for ${formatted.serviceName || 'AICS Assistance'} has been successfully submitted and recorded in the QC GovServe Social Services system.`,
+    });
+
     res.status(201).json(formatted);
   } catch (err) {
     console.error('Database POST error:', err);
@@ -425,6 +488,18 @@ app.put('/api/aics/applications/:refNo/status', async (req, res) => {
         diagnosis: row.medical_condition
       }
     };
+
+    sendNotificationEmail({
+      to: row.email_address || 'clarencemillares15@gmail.com',
+      subject: `GovServe Update: Application ${row.reference_no} status is now "${row.status}"`,
+      title: `Application Status Changed: ${row.status}`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: row.status,
+      detailsMessage: `Your ${row.service_name} application status has been updated to "${row.status}".`,
+      appointmentInfo: row.appointment_date ? `Appointment on ${row.appointment_date} at ${row.appointment_time || '09:00 AM'}` : (row.scheduled_payout_date ? `Payout scheduled for ${row.scheduled_payout_date} at ${row.scheduled_payout_time || '09:00 AM'}` : null)
+    });
+
     res.json(formatted);
   } catch (err) {
     console.error('Error updating status in DB:', err);
@@ -541,7 +616,19 @@ app.post('/api/senior/applications', async (req, res) => {
     ];
 
     const result = await pool.query(query, values);
-    res.status(201).json(result.rows[0]);
+    const row = result.rows[0];
+
+    sendNotificationEmail({
+      to: req.body.emailAddress || req.body.email || 'clarencemillares15@gmail.com',
+      subject: `GovServe Notice: Senior Citizen Application Received (${row.reference_no})`,
+      title: `Senior Citizen Assistance Submitted`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: row.status || 'Pending Validation',
+      detailsMessage: `Your Senior Citizen Financial Assistance application has been recorded in the QC GovServe System.`,
+    });
+
+    res.status(201).json(row);
   } catch (err) {
     console.error('Error saving senior application to DB:', err);
     res.status(500).json({ error: err.message });
@@ -589,7 +676,20 @@ app.put('/api/senior/applications/:id/status', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Senior application not found' });
     }
-    res.json(result.rows[0]);
+    const row = result.rows[0];
+
+    sendNotificationEmail({
+      to: row.email_address || 'clarencemillares15@gmail.com',
+      subject: `Senior Citizen Assistance Update (${row.reference_no}): ${row.status}`,
+      title: `Senior Citizen Status Update: ${row.status}`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: row.status,
+      detailsMessage: row.disapproval_reason ? `Reason: ${row.disapproval_reason}` : `Your Senior Citizen Financial Assistance application status has been updated.`,
+      appointmentInfo: row.appointment_date ? `Interview on ${row.appointment_date} at ${row.appointment_time || '09:00 AM'} (${row.appointment_venue || 'QC Hall'})` : (row.payout_date ? `Payout on ${row.payout_date} at ${row.payout_time || '09:00 AM'} (${row.payout_venue || 'QC Hall'})` : null)
+    });
+
+    res.json(row);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

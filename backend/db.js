@@ -79,18 +79,7 @@ export const initDB = async () => {
       ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS street_name VARCHAR(150);
       ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS barangay VARCHAR(150);
       ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS is_patient_self BOOLEAN DEFAULT TRUE;
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_relationship VARCHAR(100);
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_first_name VARCHAR(100);
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_middle_name VARCHAR(100);
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_last_name VARCHAR(100);
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_suffix VARCHAR(20);
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_gender VARCHAR(20);
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_dob VARCHAR(50);
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_age VARCHAR(10);
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_house_no VARCHAR(100);
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_street_name VARCHAR(150);
-      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS patient_barangay VARCHAR(150);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS email_address VARCHAR(255);
       ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS nationality VARCHAR(50) DEFAULT 'FILIPINO';
       
       -- Funeral Assistance Explicit DB Columns (Step 1 & Step 2)
