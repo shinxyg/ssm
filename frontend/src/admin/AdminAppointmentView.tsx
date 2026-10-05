@@ -164,11 +164,12 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
     return merged;
   }, [applications, dbAppointments]);
 
-  // Helper to check if application is approved, payout-ready, or released/completed
+  // Helper to check if application is approved by OSCA, payout-ready, or released/completed (excluding initial 'APPROVED BY ADMIN' which requires interview schedule)
   const isAppApproved = (status?: string) => {
     if (!status) return false;
     const s = status.toUpperCase();
-    return s.includes('APPROVED') || s.includes('PAYOUT') || s.includes('RELEASED') || s.includes('COMPLETED');
+    if (s === 'APPROVED BY ADMIN') return false;
+    return s.includes('APPROVED BY OSCA') || s.includes('READY FOR PAYOUT') || s.includes('PAYOUT') || s.includes('RELEASED') || s.includes('COMPLETED') || s === 'APPROVED';
   };
 
   // Metrics Counters
@@ -674,25 +675,6 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                 >
                   Reject
                 </button>
-
-                {!(
-                  (assessmentApp.serviceName || '').toLowerCase().includes('funeral') ||
-                  (assessmentApp.serviceName || '').toLowerCase().includes('burial') ||
-                  (assessmentApp.referenceNo || '').includes('FUN') ||
-                  ((assessmentApp as any).category || '').toLowerCase().includes('funeral') ||
-                  ((assessmentApp as any).assistanceType || '').toLowerCase().includes('funeral')
-                ) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (onUpdateStatus) onUpdateStatus(assessmentApp.referenceNo, 'Referred to Partner Agency');
-                      setAssessmentApp(null);
-                    }}
-                    className="px-4 py-2 bg-amber-950/70 hover:bg-amber-900 border border-amber-700/60 text-amber-300 font-bold text-xs rounded-xl transition-colors"
-                  >
-                    Refer to Agency
-                  </button>
-                )}
 
                 <button
                   type="button"

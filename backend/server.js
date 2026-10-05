@@ -432,6 +432,169 @@ app.put('/api/aics/applications/:refNo/status', async (req, res) => {
   }
 });
 
+// GET all Senior Citizen applications from PostgreSQL DB
+app.get('/api/senior/applications', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM senior_applications ORDER BY date_submitted DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST submit new Senior Citizen application to PostgreSQL DB
+app.post('/api/senior/applications', async (req, res) => {
+  const { 
+    referenceNo, 
+    applicantName, 
+    firstName,
+    middleName,
+    lastName,
+    suffix,
+    dob,
+    age,
+    gender,
+    civilStatus,
+    houseNo,
+    streetName,
+    barangay,
+    phoneNumber,
+    seniorIdNo,
+    status,
+    details
+  } = req.body;
+
+  try {
+    const refNo = referenceNo || `SENIOR-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const name = applicantName || details?.personalInformation?.applicantName || `${firstName || ''} ${lastName || ''}`.trim() || 'Senior Applicant';
+    const savedDetails = JSON.stringify(details || {});
+
+    const empStatus = details?.occupationFinancialInformation?.employmentStatus || '';
+    const occ = details?.occupationFinancialInformation?.occupation || '';
+    const srcIncome = details?.occupationFinancialInformation?.sourceOfIncome || '';
+    const approxInc = details?.occupationFinancialInformation?.approxMonthlyIncome || '';
+    const pensionRec = details?.occupationFinancialInformation?.pensionReceived || '';
+    const pensionDet = details?.occupationFinancialInformation?.otherPensionDetails || '';
+    const monthlyExp = details?.monthlyHouseholdExpenses?.totalMonthlyExpenses || '';
+    const livArrangement = details?.livingSituationAdditionalInfo?.livingArrangement || '';
+    const custLivArrangement = details?.livingSituationAdditionalInfo?.customLivingArrangement || '';
+    const finSupportSrc = details?.livingSituationAdditionalInfo?.financialSupportSource || '';
+    const custFinSupport = details?.livingSituationAdditionalInfo?.customFinancialSupport || '';
+    const reasonAssist = details?.livingSituationAdditionalInfo?.reasonForAssistance || '';
+    const custReasonAssist = details?.livingSituationAdditionalInfo?.customReasonForAssistance || '';
+    const otherBenRec = details?.otherAssistanceBenefits?.benefitReceived || '';
+    const custOtherBen = details?.otherAssistanceBenefits?.customBenefitReceived || '';
+
+    const query = `
+      INSERT INTO senior_applications (
+        reference_no, applicant_name, first_name, middle_name, last_name, suffix, dob, age, gender, civil_status, house_no, street_name, barangay, phone_number, senior_id_no,
+        employment_status, occupation, source_of_income, approx_monthly_income, pension_received, pension_details, total_monthly_expenses,
+        living_arrangement, custom_living_arrangement, financial_support_source, custom_financial_support, reason_for_assistance, custom_reason_for_assistance,
+        other_benefits_received, custom_other_benefit, status, details
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+        $16, $17, $18, $19, $20, $21, $22,
+        $23, $24, $25, $26, $27, $28,
+        $29, $30, $31, $32
+      )
+      ON CONFLICT (reference_no) DO UPDATE SET
+        applicant_name = EXCLUDED.applicant_name,
+        details = EXCLUDED.details,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *;
+    `;
+
+    const values = [
+      refNo,
+      name,
+      firstName || details?.personalInformation?.firstName || '',
+      middleName || details?.personalInformation?.middleName || '',
+      lastName || details?.personalInformation?.lastName || '',
+      suffix || details?.personalInformation?.suffix || '',
+      dob || details?.personalInformation?.dateOfBirth || '',
+      age || details?.personalInformation?.age || '',
+      gender || details?.personalInformation?.gender || '',
+      civilStatus || details?.personalInformation?.civilStatus || '',
+      houseNo || details?.personalInformation?.houseNo || '',
+      streetName || details?.personalInformation?.streetName || '',
+      barangay || details?.personalInformation?.barangay || '',
+      phoneNumber || details?.personalInformation?.phoneNumber || '',
+      seniorIdNo || details?.personalInformation?.seniorCitizenId || '',
+      empStatus,
+      occ,
+      srcIncome,
+      approxInc,
+      pensionRec,
+      pensionDet,
+      monthlyExp,
+      livArrangement,
+      custLivArrangement,
+      finSupportSrc,
+      custFinSupport,
+      reasonAssist,
+      custReasonAssist,
+      otherBenRec,
+      custOtherBen,
+      status || 'Pending Validation',
+      savedDetails
+    ];
+
+    const result = await pool.query(query, values);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error saving senior application to DB:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update status/schedule of a Senior application
+app.put('/api/senior/applications/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { 
+    status, 
+    disapprovalReason, 
+    appointmentDate, 
+    appointmentDay, 
+    appointmentTime, 
+    appointmentVenue, 
+    payoutDate, 
+    payoutDay, 
+    payoutTime, 
+    payoutVenue 
+  } = req.body;
+
+  try {
+    const query = `
+      UPDATE senior_applications 
+      SET 
+        status = COALESCE($1, status),
+        disapproval_reason = COALESCE($2, disapproval_reason),
+        appointment_date = COALESCE($3, appointment_date),
+        appointment_day = COALESCE($4, appointment_day),
+        appointment_time = COALESCE($5, appointment_time),
+        appointment_venue = COALESCE($6, appointment_venue),
+        payout_date = COALESCE($7, payout_date),
+        payout_day = COALESCE($8, payout_day),
+        payout_time = COALESCE($9, payout_time),
+        payout_venue = COALESCE($10, payout_venue),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id::text = $11 OR reference_no = $11
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [
+      status, disapprovalReason, appointmentDate, appointmentDay, appointmentTime, appointmentVenue,
+      payoutDate, payoutDay, payoutTime, payoutVenue, id
+    ]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Senior application not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET all appointments from PostgreSQL DB
 app.get('/api/appointments', async (req, res) => {
   try {

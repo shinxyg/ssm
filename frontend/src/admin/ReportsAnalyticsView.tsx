@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   FileText, 
   TrendingUp, 
@@ -42,36 +42,147 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [hoveredBar, setHoveredBar] = useState<string | null>(null);
 
-  const totalApplications = applications.length;
-  const approvedCount = applications.filter(a => a.status === 'Approved' || a.status === 'Ready for Payout').length;
-  const rejectedCount = applications.filter(a => a.status === 'Rejected' || a.status === 'Disqualified').length;
-  const pendingReviewCount = applications.filter(a => a.status === 'Under Review' || a.status === 'Pending').length;
+  // Live database records state
+  const [dbSeniorApps, setDbSeniorApps] = useState<any[]>([]);
+  const [dbAicsApps, setDbAicsApps] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchApps = async () => {
+      try {
+        const resSenior = await fetch('http://localhost:5000/api/senior/applications');
+        if (resSenior.ok) {
+          const data = await resSenior.json();
+          setDbSeniorApps(data);
+        }
+      } catch (e) {}
+
+      try {
+        const resAics = await fetch('http://localhost:5000/api/aics/applications');
+        if (resAics.ok) {
+          const data = await resAics.json();
+          setDbAicsApps(data);
+        }
+      } catch (e) {}
+    };
+
+    fetchApps();
+    const interval = setInterval(fetchApps, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Merge DB records with prop applications
+  const combinedApps = useMemo(() => {
+    const list: any[] = [];
+    const seen = new Set<string>();
+
+    // 1. Senior DB records
+    dbSeniorApps.forEach((item) => {
+      seen.add(item.reference_no);
+      list.push({
+        referenceNo: item.reference_no,
+        applicantName: item.applicant_name,
+        serviceName: item.service_name || 'Senior Citizen Financial Assistance',
+        category: item.category || 'Senior Assistance',
+        status: item.status || 'Pending Validation',
+        amountOrType: '₱3,000.00 Financial Assistance',
+        dateSubmitted: item.date_submitted
+      });
+    });
+
+    // 2. AICS DB records
+    dbAicsApps.forEach((item) => {
+      if (!seen.has(item.reference_no)) {
+        seen.add(item.reference_no);
+        list.push({
+          referenceNo: item.reference_no,
+          applicantName: item.applicant_name,
+          serviceName: item.service_name || 'AICS Financial Assistance',
+          category: item.category || 'AICS',
+          status: item.status || 'Pending Validation',
+          amountOrType: item.assistance_type || '₱5,000.00 Financial Subsidy',
+          dateSubmitted: item.date_submitted
+        });
+      }
+    });
+
+    // 3. Prop records (include only non-AICS and non-Senior records from props to prevent mock double counting)
+    applications.forEach((app) => {
+      const isSeniorOrPwd = app.category?.toLowerCase().includes('senior') || app.serviceName?.toLowerCase().includes('senior') || app.category?.toLowerCase().includes('pwd') || app.serviceName?.toLowerCase().includes('pwd');
+      const isAics = app.category?.toLowerCase().includes('aics') || app.serviceName?.toLowerCase().includes('aics') || app.category?.toLowerCase().includes('medical') || app.serviceName?.toLowerCase().includes('medical') || app.category?.toLowerCase().includes('funeral') || app.serviceName?.toLowerCase().includes('funeral');
+
+      if (!isSeniorOrPwd && !isAics && app.referenceNo && !seen.has(app.referenceNo)) {
+        seen.add(app.referenceNo);
+        list.push(app);
+      }
+    });
+
+    return list;
+  }, [dbSeniorApps, dbAicsApps, applications]);
+
+  const totalApplications = combinedApps.length;
+
+  const isApprovedStatus = (st: string) => {
+    const s = (st || '').toLowerCase();
+    return s.includes('approved') || s.includes('scheduled') || s.includes('payout') || s.includes('ready') || s.includes('completed') || s.includes('released');
+  };
+
+  const isRejectedStatus = (st: string) => {
+    const s = (st || '').toLowerCase();
+    return s.includes('reject') || s.includes('disqualified');
+  };
+
+  const isPendingStatus = (st: string) => {
+    const s = (st || '').toLowerCase();
+    return s.includes('pending') || s.includes('review') || s.includes('validation') || s.includes('submitted');
+  };
+
+  const approvedCount = combinedApps.filter(a => isApprovedStatus(a.status)).length;
+  const rejectedCount = combinedApps.filter(a => isRejectedStatus(a.status)).length;
+  const pendingReviewCount = combinedApps.filter(a => isPendingStatus(a.status)).length;
   const decidedCount = approvedCount + rejectedCount;
   const approvalRate = decidedCount > 0 ? Math.round((approvedCount / decidedCount) * 100) : 0;
   
   // Calculate total disbursed from approved/payout applications
-  const totalDisbursed = applications
-    .filter(a => a.status === 'Approved' || a.status === 'Ready for Payout')
+  const totalDisbursed = combinedApps
+    .filter(a => isApprovedStatus(a.status))
     .reduce((sum, a) => {
       const match = a.amountOrType?.match(/\d[\d,]*/);
-      return sum + (match ? parseInt(match[0].replace(/,/g, ''), 10) : 0);
+      return sum + (match ? parseInt(match[0].replace(/,/g, ''), 10) : 3000);
     }, 0);
 
-  // Group by program
-  const getProgStats = (catName: string) => {
-    const progApps = applications.filter(a => (a.category || '').toLowerCase().includes(catName.toLowerCase()));
+  // Group by program with flexible category and status matching
+  const getProgStats = (type: 'aics' | 'pwd_senior' | 'solo_child' | 'livelihood') => {
+    const progApps = combinedApps.filter(a => {
+      const cat = (a.category || '').toLowerCase();
+      const serv = (a.serviceName || '').toLowerCase();
+
+      if (type === 'aics') {
+        return cat.includes('aics') || cat.includes('medical') || cat.includes('funeral') || serv.includes('aics') || serv.includes('medical') || serv.includes('funeral');
+      }
+      if (type === 'pwd_senior') {
+        return cat.includes('pwd') || cat.includes('senior') || serv.includes('pwd') || serv.includes('senior');
+      }
+      if (type === 'solo_child') {
+        return cat.includes('solo') || cat.includes('child') || serv.includes('solo') || serv.includes('child');
+      }
+      if (type === 'livelihood') {
+        return cat.includes('livelihood') || cat.includes('training') || serv.includes('livelihood') || serv.includes('training');
+      }
+      return false;
+    });
+
     const total = progApps.length;
-    const pending = progApps.filter(a => a.status === 'Under Review' || a.status === 'Pending').length;
-    const approved = progApps.filter(a => a.status === 'Approved' || a.status === 'Ready for Payout').length;
-    const rejected = progApps.filter(a => a.status === 'Rejected' || a.status === 'Disqualified').length;
+    const pending = progApps.filter(a => isPendingStatus(a.status)).length;
+    const approved = progApps.filter(a => isApprovedStatus(a.status)).length;
+    const rejected = progApps.filter(a => isRejectedStatus(a.status)).length;
     const sharePercent = totalApplications > 0 ? Math.round((total / totalApplications) * 100) : 0;
     const approvalPercent = (approved + rejected) > 0 ? Math.round((approved / (approved + rejected)) * 100) : 0;
     return { pending, approved, rejected, total, sharePercent, approvalPercent };
   };
 
   const aicsStats = getProgStats('aics');
-  const pwdSeniorStats = getProgStats('pwd');
-  const soloChildStats = getProgStats('solo');
+  const pwdSeniorStats = getProgStats('pwd_senior');
+  const soloChildStats = getProgStats('solo_child');
   const livelihoodStats = getProgStats('livelihood');
 
   const programData: ProgramStats[] = [

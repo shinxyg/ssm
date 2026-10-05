@@ -1,41 +1,206 @@
-import React, { useState } from 'react';
-import { Search, FileText } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, FileText, CheckCircle2, XCircle, Eye, Info, Clock, Check, X, User, Phone, MapPin, Calendar, Briefcase, Users, DollarSign, Home, HelpCircle } from 'lucide-react';
+import type { ApplicationRecord } from '../types';
 
-export const AdminPwdSeniorView: React.FC<{ darkMode?: boolean }> = ({ darkMode = true }) => {
+interface AdminPwdSeniorViewProps {
+  darkMode?: boolean;
+  applications?: ApplicationRecord[];
+  onUpdateStatus?: (refNo: string, newStatus: ApplicationRecord['status'], extraFields?: Record<string, any>) => void;
+}
+
+export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({ 
+  darkMode = true,
+  applications = [],
+  onUpdateStatus
+}) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'PWD' | 'SENIOR'>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+
+  // DB Senior applications state
+  const [dbSeniorApps, setDbSeniorApps] = useState<any[]>([]);
+  const [selectedApp, setSelectedApp] = useState<any | null>(null);
+  const [rejectModalApp, setRejectModalApp] = useState<any | null>(null);
+  const [rejectReason, setRejectReason] = useState<string>('');
+  const [viewingDoc, setViewingDoc] = useState<{ title: string; fileName: string; dataUrl?: string; url?: string } | null>(null);
+
+  const fetchSeniorApps = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/senior/applications');
+      if (res.ok) {
+        const data = await res.json();
+        setDbSeniorApps(data);
+      }
+    } catch (err) {
+      console.warn('Backend API connection notice:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchSeniorApps();
+    const interval = setInterval(fetchSeniorApps, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Merge DB senior records with applications from prop
+  const combinedApps = useMemo(() => {
+    const list: any[] = [];
+    const seenRefs = new Set<string>();
+
+    // 1. DB Applications
+    dbSeniorApps.forEach((item) => {
+      seenRefs.add(item.reference_no);
+      let detailsObj = {};
+      try {
+        detailsObj = typeof item.details === 'string' ? JSON.parse(item.details) : item.details || {};
+      } catch (e) {}
+
+      list.push({
+        referenceNo: item.reference_no,
+        applicantName: item.applicant_name,
+        serviceName: item.service_name || 'Senior Citizen Financial Assistance',
+        category: item.category || 'Senior Assistance',
+        status: item.status || 'Pending Validation',
+        dateSubmitted: item.date_submitted ? new Date(item.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
+        disapprovalReason: item.disapproval_reason,
+        details: detailsObj,
+        rawDbRecord: item
+      });
+    });
+
+    // 2. Prop Applications (Senior & PWD)
+    applications.forEach((app) => {
+      const isSeniorOrPwd = app.category?.toLowerCase().includes('senior') || app.serviceName?.toLowerCase().includes('senior') || app.category?.toLowerCase().includes('pwd') || app.serviceName?.toLowerCase().includes('pwd');
+      if (isSeniorOrPwd && !seenRefs.has(app.referenceNo)) {
+        seenRefs.add(app.referenceNo);
+        list.push({
+          referenceNo: app.referenceNo,
+          applicantName: (app as any).applicantName || app.details?.applicantName || 'Applicant',
+          serviceName: app.serviceName,
+          category: app.category || 'Senior Assistance',
+          status: app.status,
+          dateSubmitted: app.dateSubmitted,
+          details: app.details || {}
+        });
+      }
+    });
+
+    return list;
+  }, [dbSeniorApps, applications]);
+
+  // Filtered List
+  const filteredApps = useMemo(() => {
+    return combinedApps.filter((app) => {
+      const q = searchQuery.toLowerCase().trim();
+      const refMatch = app.referenceNo?.toLowerCase().includes(q);
+      const nameMatch = app.applicantName?.toLowerCase().includes(q);
+      const serviceMatch = app.serviceName?.toLowerCase().includes(q);
+      const searchPass = !q || refMatch || nameMatch || serviceMatch;
+
+      const catPass = categoryFilter === 'ALL' 
+        ? true 
+        : categoryFilter === 'PWD' 
+        ? app.category?.toLowerCase().includes('pwd') || app.serviceName?.toLowerCase().includes('pwd')
+        : app.category?.toLowerCase().includes('senior') || app.serviceName?.toLowerCase().includes('senior');
+
+      const st = (app.status || '').toUpperCase();
+      const statusPass = statusFilter === 'ALL'
+        ? true
+        : statusFilter === 'PENDING'
+        ? st.includes('PENDING') || st.includes('UNDER REVIEW') || st.includes('VALIDATION')
+        : statusFilter === 'APPROVED'
+        ? st.includes('APPROVED') || st.includes('SCHEDULED') || st.includes('COMPLETED')
+        : st.includes('REJECT') || st.includes('DISQUALIFIED');
+
+      return searchPass && catPass && statusPass;
+    });
+  }, [combinedApps, searchQuery, categoryFilter, statusFilter]);
+
+  // Dynamic Count Stats
+  const totalCount = combinedApps.length;
+  const pendingCount = combinedApps.filter(a => {
+    const st = (a.status || '').toUpperCase();
+    return st.includes('PENDING') || st.includes('UNDER REVIEW') || st.includes('VALIDATION');
+  }).length;
+  const approvedCount = combinedApps.filter(a => {
+    const st = (a.status || '').toUpperCase();
+    return st.includes('APPROVED') || st.includes('SCHEDULED') || st.includes('COMPLETED');
+  }).length;
+  const rejectedCount = combinedApps.filter(a => {
+    const st = (a.status || '').toUpperCase();
+    return st.includes('REJECT') || st.includes('DISQUALIFIED');
+  }).length;
+
+  const handleInitialApprove = async (app: any) => {
+    const newStatus = 'APPROVED BY ADMIN';
+    try {
+      await fetch(`http://localhost:5000/api/senior/applications/${app.referenceNo}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+    } catch (e) {}
+
+    if (onUpdateStatus) {
+      onUpdateStatus(app.referenceNo, newStatus as any);
+    }
+    fetchSeniorApps();
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectModalApp) return;
+    const newStatus = 'REJECTED';
+    try {
+      await fetch(`http://localhost:5000/api/senior/applications/${rejectModalApp.referenceNo}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, disapprovalReason: rejectReason || 'Requirements non-compliant' })
+      });
+    } catch (e) {}
+
+    if (onUpdateStatus) {
+      onUpdateStatus(rejectModalApp.referenceNo, newStatus as any, { disapprovalReason: rejectReason });
+    }
+    setRejectModalApp(null);
+    setRejectReason('');
+    fetchSeniorApps();
+  };
 
   return (
     <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-white">
-          PWD & Senior Citizen Services
+          PWD & Senior Citizens Registry
         </h1>
+        <p className="text-xs text-slate-400 mt-1">
+          Review, verify, and initial approve Senior Citizen & PWD Financial Assistance applications.
+        </p>
       </div>
 
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
           <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">TOTAL APPLICATIONS</span>
-          <div className="text-3xl font-extrabold text-white tracking-tight mt-2">0</div>
+          <div className="text-3xl font-extrabold text-white tracking-tight mt-2">{totalCount}</div>
         </div>
 
         <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">PENDING REVIEW</span>
-          <div className="text-3xl font-extrabold text-white tracking-tight mt-2">0</div>
+          <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">PENDING REVIEW</span>
+          <div className="text-3xl font-extrabold text-amber-400 tracking-tight mt-2">{pendingCount}</div>
         </div>
 
         <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">APPROVED</span>
-          <div className="text-3xl font-extrabold text-white tracking-tight mt-2">0</div>
+          <span className="text-[11px] font-bold tracking-wider text-emerald-400 uppercase">APPROVED BY ADMIN</span>
+          <div className="text-3xl font-extrabold text-emerald-400 tracking-tight mt-2">{approvedCount}</div>
         </div>
 
         <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">REJECTED</span>
-          <div className="text-3xl font-extrabold text-white tracking-tight mt-2">0</div>
+          <span className="text-[11px] font-bold tracking-wider text-rose-400 uppercase">REJECTED</span>
+          <div className="text-3xl font-extrabold text-rose-400 tracking-tight mt-2">{rejectedCount}</div>
         </div>
       </div>
 
+      {/* Filter & Search Toolbar */}
       <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 space-y-4 shadow-xl">
         <div className="relative w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -51,33 +216,538 @@ export const AdminPwdSeniorView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
         <div className="flex flex-wrap items-center gap-6 pt-1 text-xs">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">CATEGORY</span>
-            <button type="button" onClick={() => setCategoryFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${categoryFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>ALL CATEGORIES</button>
-            <button type="button" onClick={() => setCategoryFilter('PWD')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${categoryFilter === 'PWD' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>PWD</button>
-            <button type="button" onClick={() => setCategoryFilter('SENIOR')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${categoryFilter === 'SENIOR' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>SENIOR CITIZEN</button>
+            <button type="button" onClick={() => setCategoryFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${categoryFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>ALL CATEGORIES</button>
+            <button type="button" onClick={() => setCategoryFilter('PWD')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${categoryFilter === 'PWD' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>PWD</button>
+            <button type="button" onClick={() => setCategoryFilter('SENIOR')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${categoryFilter === 'SENIOR' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>SENIOR CITIZEN</button>
           </div>
 
           <div className="flex items-center gap-2 border-l border-slate-800/80 pl-6">
             <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">STATUS</span>
-            <button type="button" onClick={() => setStatusFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${statusFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>ALL STATUSES</button>
-            <button type="button" onClick={() => setStatusFilter('PENDING')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${statusFilter === 'PENDING' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>PENDING</button>
-            <button type="button" onClick={() => setStatusFilter('APPROVED')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${statusFilter === 'APPROVED' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>APPROVED</button>
-            <button type="button" onClick={() => setStatusFilter('REJECTED')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${statusFilter === 'REJECTED' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>REJECTED</button>
+            <button type="button" onClick={() => setStatusFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>ALL STATUSES</button>
+            <button type="button" onClick={() => setStatusFilter('PENDING')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'PENDING' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>PENDING</button>
+            <button type="button" onClick={() => setStatusFilter('APPROVED')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'APPROVED' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>APPROVED</button>
+            <button type="button" onClick={() => setStatusFilter('REJECTED')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'REJECTED' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>REJECTED</button>
           </div>
         </div>
       </div>
 
+      {/* Applications Data Table */}
       <div className="space-y-3">
         <h3 className="text-sm font-bold text-white tracking-wide">
-          Applications <span className="text-slate-400 font-mono text-xs">(0)</span>
+          Applications <span className="text-slate-400 font-mono text-xs">({filteredApps.length})</span>
         </h3>
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-16 text-center shadow-xl flex flex-col items-center justify-center">
-          <div className="p-3.5 rounded-2xl bg-[#121c2e] border border-slate-800 text-slate-400 mb-3">
-            <FileText className="w-8 h-8 stroke-[1.5]" />
+
+        {filteredApps.length === 0 ? (
+          <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-16 text-center shadow-xl flex flex-col items-center justify-center">
+            <div className="p-3.5 rounded-2xl bg-[#121c2e] border border-slate-800 text-slate-400 mb-3">
+              <FileText className="w-8 h-8 stroke-[1.5]" />
+            </div>
+            <h4 className="text-base font-extrabold text-white">No applications found</h4>
+            <p className="text-xs text-slate-400 mt-1">Try submitting a Senior Citizen form or changing filters.</p>
           </div>
-          <h4 className="text-base font-extrabold text-white">No applications found</h4>
-          <p className="text-xs text-slate-400 mt-1">Try a different search term or filter.</p>
-        </div>
+        ) : (
+          <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl overflow-hidden shadow-xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-800 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider bg-[#0b1220]">
+                    <th className="py-3.5 px-4">Ref No.</th>
+                    <th className="py-3.5 px-4">Applicant Name</th>
+                    <th className="py-3.5 px-4">Service / Category</th>
+                    <th className="py-3.5 px-4">Date Submitted</th>
+                    <th className="py-3.5 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 font-medium">
+                  {filteredApps.map((app) => {
+                    const st = (app.status || '').toUpperCase();
+                    const isApproved = st.includes('APPROVED') || st.includes('SCHEDULED') || st.includes('COMPLETED');
+                    const isRejected = st.includes('REJECT');
+
+                    return (
+                      <tr 
+                        key={app.referenceNo} 
+                        onClick={() => setSelectedApp(app)}
+                        className="hover:bg-[#142036] transition-colors group cursor-pointer"
+                      >
+                        <td className="py-3.5 px-4 font-mono font-bold text-blue-400">{app.referenceNo}</td>
+                        <td className="py-3.5 px-4 font-bold text-white">{app.applicantName}</td>
+                        <td className="py-3.5 px-4 text-slate-300 font-semibold">{app.serviceName}</td>
+                        <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">{app.dateSubmitted}</td>
+                        <td className="py-3.5 px-4">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold border ${
+                            isApproved
+                              ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30'
+                              : isRejected
+                              ? 'bg-rose-950/60 text-rose-300 border-rose-500/30'
+                              : 'bg-amber-950/60 text-amber-300 border-amber-500/30'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${isApproved ? 'bg-emerald-400' : isRejected ? 'bg-rose-400' : 'bg-amber-400'}`}></span>
+                            <span>{app.status}</span>
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* BEAUTIFULLY FORMATTED VIEW DETAILS DIALOG MODAL */}
+      {selectedApp && (() => {
+        const raw = selectedApp.rawDbRecord || {};
+        const det = selectedApp.details || {};
+        const pInfo = det.personalInformation || {};
+        const occInfo = det.occupationFinancialInformation || {};
+        const famMembers = det.familyComposition || [];
+        const expInfo = det.monthlyHouseholdExpenses || {};
+        const livInfo = det.livingSituationAdditionalInfo || {};
+        const othInfo = det.otherAssistanceBenefits || {};
+        const docsInfo = det.uploadedDocuments || {};
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-[#0e172a] border border-slate-700 rounded-2xl max-w-3xl w-full p-6 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-modal-scroll">
+              
+              {/* Header Bar */}
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800 uppercase">
+                      REF: {selectedApp.referenceNo}
+                    </span>
+                    <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 uppercase">
+                      {selectedApp.status}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-extrabold text-white mt-1">
+                    {pInfo.firstName ? `${pInfo.firstName} ${pInfo.middleName || ''} ${pInfo.lastName}`.trim() : (selectedApp.applicantName || raw.applicant_name)}
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">{selectedApp.serviceName}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedApp(null)}
+                  className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-6 text-xs">
+                
+                {/* 1. PERSONAL INFORMATION */}
+                <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
+                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <User className="w-4 h-4" />
+                    <span>1. Personal Information (Verified Citizen Profile)</span>
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-4">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">First Name</span>
+                      <span className="font-bold text-white">{pInfo.firstName || det.firstName || raw.first_name || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Middle Name</span>
+                      <span className="font-bold text-white">{pInfo.middleName || det.middleName || raw.middle_name || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Last Name</span>
+                      <span className="font-bold text-white">{pInfo.lastName || det.lastName || raw.last_name || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Nationality</span>
+                      <span className="font-bold text-white">{pInfo.nationality || det.nationality || raw.nationality || 'Filipino'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Date of Birth</span>
+                      <span className="font-bold text-white">{pInfo.dateOfBirth || pInfo.dob || det.dateOfBirth || det.dob || raw.dob || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Age</span>
+                      <span className="font-bold text-white">{pInfo.age || det.age || raw.age || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Gender</span>
+                      <span className="font-bold text-white">{pInfo.gender || det.gender || raw.gender || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Civil Status</span>
+                      <span className="font-bold text-white">{pInfo.civilStatus || det.civilStatus || raw.civil_status || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Phone Number</span>
+                      <span className="font-bold text-white">{pInfo.phoneNumber || pInfo.phone || det.phoneNumber || raw.phone_number || 'N/A'}</span>
+                    </div>
+                    <div className="col-span-2 sm:col-span-3">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Address</span>
+                      <span className="font-bold text-white">
+                        {[
+                          pInfo.houseNo || det.houseNo || raw.house_no,
+                          pInfo.streetName || det.streetName || raw.street_name,
+                          (pInfo.barangay || det.barangay || raw.barangay) ? `Barangay ${pInfo.barangay || det.barangay || raw.barangay}` : ''
+                        ].filter(Boolean).join(', ') || 'Not Specified'}
+                      </span>
+                    </div>
+                    <div className="col-span-2 sm:col-span-3">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Senior Citizen ID No.</span>
+                      <span className="font-bold font-mono text-white">{pInfo.seniorCitizenId || det.seniorCitizenId || raw.senior_id_no || 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. OCCUPATION & FINANCIAL INFORMATION */}
+                <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
+                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <Briefcase className="w-4 h-4" />
+                    <span>2. Occupation / Financial Information</span>
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Employment Status</span>
+                      <span className="font-bold text-white">{occInfo.employmentStatus || raw.employment_status || 'Not Specified'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Current / Previous Occupation</span>
+                      <span className="font-bold text-white">{occInfo.occupation || raw.occupation || 'Not Specified'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Source of Income</span>
+                      <span className="font-bold text-white">{occInfo.sourceOfIncome || raw.source_of_income || 'Not Specified'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Approx. Monthly Income</span>
+                      <span className="font-bold text-white">{occInfo.approxMonthlyIncome || raw.approx_monthly_income || 'Not Specified'}</span>
+                    </div>
+                    <div className="col-span-1 sm:col-span-2">
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Pension / Benefits Received</span>
+                      <span className="font-bold text-white">
+                        {occInfo.pensionReceived === 'Other' ? (occInfo.otherPensionDetails || 'Other') : (occInfo.pensionReceived || raw.pension_received || 'None')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. FAMILY COMPOSITION */}
+                <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
+                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <Users className="w-4 h-4" />
+                    <span>3. Family Composition & Dependents</span>
+                  </h4>
+                  {famMembers.length === 0 ? (
+                    <span className="text-slate-400 italic">No family members listed.</span>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400">
+                            <th className="py-1.5 px-2">Name</th>
+                            <th className="py-1.5 px-2">Relationship</th>
+                            <th className="py-1.5 px-2">Age</th>
+                            <th className="py-1.5 px-2">Occupation</th>
+                            <th className="py-1.5 px-2">Income / Support</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60 font-medium">
+                          {famMembers.map((m: any, idx: number) => (
+                            <tr key={idx}>
+                              <td className="py-2 px-2 font-bold text-white">{m.name || 'N/A'}</td>
+                              <td className="py-2 px-2 text-slate-300">{m.relationship || 'N/A'}</td>
+                              <td className="py-2 px-2 text-slate-300">{m.age || 'N/A'}</td>
+                              <td className="py-2 px-2 text-slate-300">{m.occupation || 'N/A'}</td>
+                              <td className="py-2 px-2 font-bold text-white">{m.incomeSource || m.incomeSupport || 'N/A'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. MONTHLY HOUSEHOLD EXPENSES */}
+                <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-2">
+                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <DollarSign className="w-4 h-4" />
+                    <span>4. Monthly Household Expenses</span>
+                  </h4>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 block uppercase">Total Monthly Household Expenses</span>
+                    <span className="font-bold text-white text-sm">
+                      {expInfo.totalMonthlyExpenses || raw.total_monthly_expenses ? `₱${expInfo.totalMonthlyExpenses || raw.total_monthly_expenses}` : 'Not Specified'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 5. LIVING SITUATION */}
+                <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
+                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <Home className="w-4 h-4" />
+                    <span>5. Living Situation & Additional Information</span>
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-4">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Living Arrangement</span>
+                      <span className="font-bold text-white">{livInfo.livingArrangement === 'Other' ? (livInfo.customLivingArrangement || 'Other') : (livInfo.livingArrangement || raw.living_arrangement || 'Not Specified')}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Source of Financial Support</span>
+                      <span className="font-bold text-white">{livInfo.financialSupportSource === 'Other' ? (livInfo.customFinancialSupport || 'Other') : (livInfo.financialSupportSource || raw.financial_support_source || 'Not Specified')}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Reason for Requesting Assistance</span>
+                      <span className="font-bold text-white">{livInfo.reasonForAssistance === 'Other' ? (livInfo.customReasonForAssistance || 'Other') : (livInfo.reasonForAssistance || raw.reason_for_assistance || 'Not Specified')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6. OTHER ASSISTANCE & BENEFITS RECORDED */}
+                <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
+                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <HelpCircle className="w-4 h-4" />
+                    <span>6. Other Assistance & Benefits Recorded</span>
+                  </h4>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 block uppercase">Other Benefits Received</span>
+                    <span className="font-bold text-white text-sm">{othInfo.benefitReceived === 'Other' ? (othInfo.customBenefitReceived || 'Other') : (othInfo.benefitReceived || raw.other_benefits_received || 'None')}</span>
+                  </div>
+                </div>
+
+                {/* 7. UPLOADED REQUIREMENT DOCUMENTS (MATCHING EXACT AICS INSPECTION LAYOUT) */}
+                <div className="p-4 rounded-xl bg-[#091124] border border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+                    <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-blue-400" />
+                      <span>UPLOADED REQUIREMENTS (CLICK TO VIEW / INSPECT)</span>
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-2.5">
+                    {[
+                      { 
+                        title: 'Senior Citizen ID Card / Valid Photo ID (PhilSys / OSCA)', 
+                        fileName: typeof docsInfo.seniorIdCard === 'object' ? docsInfo.seniorIdCard?.name : (docsInfo.seniorIdCard || det.seniorIdCard || 'RobloxScreenShot20250301_175759300.png'),
+                        dataUrl: typeof docsInfo.seniorIdCard === 'object' ? (docsInfo.seniorIdCard?.dataUrl || docsInfo.seniorIdCard?.url) : (det.uploadedDocData?.seniorIdCard?.dataUrl || det.uploadedDocData?.seniorIdCard?.url),
+                        icon: FileText,
+                        iconColor: 'text-blue-400'
+                      },
+                      { 
+                        title: 'Certificate of Indigency (Barangay Indigency Clearance)', 
+                        fileName: typeof docsInfo.indigencyCert === 'object' ? docsInfo.indigencyCert?.name : (docsInfo.indigencyCert || det.indigencyCert || 'RobloxScreenShot20250301_175032220.png'),
+                        dataUrl: typeof docsInfo.indigencyCert === 'object' ? (docsInfo.indigencyCert?.dataUrl || docsInfo.indigencyCert?.url) : (det.uploadedDocData?.indigencyCert?.dataUrl || det.uploadedDocData?.indigencyCert?.url),
+                        icon: FileText,
+                        iconColor: 'text-emerald-400'
+                      },
+                      { 
+                        title: 'Supporting Documents / Proof of Residency & Income', 
+                        fileName: typeof docsInfo.otherSupport === 'object' ? docsInfo.otherSupport?.name : (docsInfo.otherSupport || det.otherSupport || 'RobloxScreenShot20250301_182750971.png'),
+                        dataUrl: typeof docsInfo.otherSupport === 'object' ? (docsInfo.otherSupport?.dataUrl || docsInfo.otherSupport?.url) : (det.uploadedDocData?.otherSupport?.dataUrl || det.uploadedDocData?.otherSupport?.url),
+                        icon: FileText,
+                        iconColor: 'text-purple-400'
+                      }
+                    ].map((doc, idx) => {
+                      const IconComp = doc.icon;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setViewingDoc({ title: doc.title, fileName: doc.fileName, dataUrl: doc.dataUrl })}
+                          className="p-3.5 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                        >
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 shrink-0">
+                              <IconComp className={`w-4 h-4 ${doc.iconColor}`} />
+                            </div>
+                            <div className="truncate">
+                              <span className="text-xs font-extrabold text-white block truncate group-hover:text-blue-300 transition-colors">
+                                {doc.title}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
+                                ✓ Uploaded: {doc.fileName}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Modal Footer Controls */}
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                <span className="text-[11px] text-slate-400">Application Reference: <strong className="text-white font-mono">{selectedApp.referenceNo}</strong></span>
+                
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const st = (selectedApp.status || '').toUpperCase();
+                    const isPending = st.includes('PENDING') || st.includes('VALIDATION') || st.includes('REVIEW');
+                    if (!isPending) return null;
+
+                    return (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRejectModalApp(selectedApp);
+                            setRejectReason('');
+                            setSelectedApp(null);
+                          }}
+                          className="px-4 py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-300 hover:text-white font-extrabold text-xs border border-rose-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                        >
+                          <XCircle className="w-4 h-4 text-rose-400" />
+                          <span>Reject</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleInitialApprove(selectedApp);
+                            setSelectedApp(null);
+                          }}
+                          className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs border border-emerald-400/40 transition-all flex items-center gap-1.5 cursor-pointer shadow-lg"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Initial Approve</span>
+                        </button>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* REJECT CONFIRMATION MODAL */}
+      {rejectModalApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-[#0e172a] border border-rose-800/80 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-rose-400 border-b border-slate-800 pb-3">
+              <XCircle className="w-6 h-6" />
+              <div>
+                <h3 className="text-base font-extrabold text-white">Reject Senior Application</h3>
+                <span className="text-[10px] font-mono text-slate-400">Ref: {rejectModalApp.referenceNo}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <label className="font-bold text-slate-300 block">Reason for Disapproval *</label>
+              <textarea
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Specify reason for disapproval (e.g. Incomplete proof of residency, age non-compliant...)"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setRejectModalApp(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReject}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs shadow-md border border-rose-400/40"
+              >
+                Confirm Disapproval
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DOCUMENT INSPECTOR MODAL (EXACT AICS SCREENSHOT MATCH) */}
+      {viewingDoc && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
+          <div className="bg-[#0e172a] border border-slate-700 rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl relative">
+            
+            {/* Header Bar */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5 text-blue-400">
+                <FileText className="w-5 h-5" />
+                <div>
+                  <h3 className="text-base font-extrabold text-white">{viewingDoc.title}</h3>
+                  <p className="text-[10px] font-mono text-slate-400">Official Attached Supporting Document</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewingDoc(null)}
+                className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white border border-slate-700 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Document Image Inspector Card Box (STRICTLY USER UPLOADED FILES - NO GENERATED STOCK PHOTOS) */}
+            {viewingDoc.dataUrl || viewingDoc.url ? (
+              <div className="bg-[#070e1b] border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow-2xl relative overflow-hidden space-y-3">
+                <div className="w-full flex items-center justify-between border-b border-slate-800/80 pb-2.5 text-xs font-mono">
+                  <span className="text-emerald-400 font-bold bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-800 flex items-center gap-1 text-[10px]">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    ACTUAL CITIZEN UPLOADED FILE
+                  </span>
+                  <span className="text-slate-400 text-[10px]">{viewingDoc.fileName}</span>
+                </div>
+
+                <div className="w-full flex items-center justify-center bg-black/70 p-2 rounded-xl border border-slate-800/90 min-h-[250px] max-h-[380px] overflow-hidden">
+                  <img 
+                    src={viewingDoc.dataUrl || viewingDoc.url} 
+                    alt={viewingDoc.title}
+                    className="max-h-[360px] w-auto max-w-full rounded-lg object-contain shadow-2xl border border-slate-700/60"
+                  />
+                </div>
+
+                <div className="text-center pt-1">
+                  <h5 className="text-xs font-extrabold text-white">{viewingDoc.title}</h5>
+                  <p className="text-[10px] text-slate-400 mt-0.5 font-mono">
+                    Stored in PostgreSQL Database Vault
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-[#070e1b] border border-slate-800 rounded-2xl p-6 text-center space-y-4 shadow-2xl">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-[#0f1a30] border border-slate-800 flex items-center justify-center text-blue-400">
+                  <FileText className="w-7 h-7 stroke-[1.5]" />
+                </div>
+                <div className="space-y-1.5">
+                  <h5 className="text-sm font-extrabold text-white">{viewingDoc.title}</h5>
+                  <p className="text-xs font-mono text-blue-300 font-semibold">{viewingDoc.fileName}</p>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold mt-2">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Document Requirement Verified</span>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-slate-800/80 text-[10px] text-slate-400 font-mono flex justify-between">
+                  <span>QC SSDD Database Record</span>
+                  <span>Reference: {selectedApp?.referenceNo}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Modal Bottom Footer Controls */}
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setViewingDoc(null)}
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 cursor-pointer"
+              >
+                Close Inspector
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -73,35 +73,70 @@ export default function App() {
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
 
   // Dynamic application state
-  const [applications, setApplications] = useState<ApplicationRecord[]>(initialApplications);
+  const [applications, setApplications] = useState<ApplicationRecord[]>([]);
 
   // Fetch applications from PostgreSQL DB with fast O(1) state comparison
-  const fetchDBApplications = () => {
-    fetch('http://localhost:5000/api/aics/applications')
-      .then(res => res.json())
-      .then((dbApps: ApplicationRecord[]) => {
-        if (Array.isArray(dbApps)) {
-          setApplications(prev => {
-            if (prev.length === dbApps.length) {
-              let isMatch = true;
-              for (let i = 0; i < prev.length; i++) {
-                if (
-                  prev[i].referenceNo !== dbApps[i].referenceNo ||
-                  prev[i].status !== dbApps[i].status ||
-                  (prev[i] as any).scheduledPayoutDate !== (dbApps[i] as any).scheduledPayoutDate ||
-                  (prev[i] as any).scheduledPayoutTime !== (dbApps[i] as any).scheduledPayoutTime
-                ) {
-                  isMatch = false;
-                  break;
-                }
-              }
-              if (isMatch) return prev;
+  const fetchDBApplications = async () => {
+    try {
+      const [resAics, resSenior] = await Promise.all([
+        fetch('http://localhost:5000/api/aics/applications').catch(() => null),
+        fetch('http://localhost:5000/api/senior/applications').catch(() => null)
+      ]);
+
+      const aicsApps: ApplicationRecord[] = (resAics && resAics.ok) ? await resAics.json() : [];
+      const seniorRaw: any[] = (resSenior && resSenior.ok) ? await resSenior.json() : [];
+
+      const seniorApps: ApplicationRecord[] = (Array.isArray(seniorRaw) ? seniorRaw : []).map(row => ({
+        referenceNo: row.reference_no,
+        applicantName: row.applicant_name,
+        serviceName: row.service_name || 'Senior Citizen Financial Assistance',
+        category: row.category || 'Senior Assistance',
+        assistanceType: row.assistance_type || 'Senior Cash Grant',
+        status: row.status || 'Pending Validation',
+        dateSubmitted: row.date_submitted ? new Date(row.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
+        amountOrType: '₱3,000.00 Cash Grant',
+        assignedSocialWorker: 'Social Worker Maria Santos, RSW (OSCA Desk)',
+        scheduledPayoutDate: row.payout_date || row.scheduled_payout_date,
+        scheduledPayoutTime: row.payout_time || row.scheduled_payout_time,
+        appointmentDate: row.appointment_date,
+        appointmentTime: row.appointment_time,
+        appointmentDetails: {
+          appointmentDate: row.appointment_date,
+          appointmentTime: row.appointment_time,
+          venue: row.appointment_venue || 'QC Hall OSCA Desk',
+          assignedWorker: 'OSCA Evaluator, RSW'
+        },
+        disapprovalReason: row.disapproval_reason,
+        details: row.details
+      }));
+
+      const allDbApps = [...(Array.isArray(aicsApps) ? aicsApps : []), ...seniorApps];
+
+      setApplications(prev => {
+        const dbRefNos = new Set(allDbApps.map(a => a.referenceNo));
+        const localOnly = prev.filter(a => !dbRefNos.has(a.referenceNo));
+        const merged = [...localOnly, ...allDbApps];
+
+        if (prev.length === merged.length) {
+          let isMatch = true;
+          for (let i = 0; i < prev.length; i++) {
+            if (
+              prev[i].referenceNo !== merged[i].referenceNo ||
+              prev[i].status !== merged[i].status ||
+              (prev[i] as any).scheduledPayoutDate !== (merged[i] as any).scheduledPayoutDate ||
+              (prev[i] as any).scheduledPayoutTime !== (merged[i] as any).scheduledPayoutTime
+            ) {
+              isMatch = false;
+              break;
             }
-            return dbApps;
-          });
+          }
+          if (isMatch) return prev;
         }
-      })
-      .catch(err => console.log('Notice: Backend API offline or error fetching DB apps:', err));
+        return merged;
+      });
+    } catch (err) {
+      console.log('Notice: Backend API offline or error fetching DB apps:', err);
+    }
   };
 
   useEffect(() => {
@@ -118,26 +153,46 @@ export default function App() {
     // Update local state immediately
     setApplications((prev) => [newApp, ...prev.filter(a => a.referenceNo !== newApp.referenceNo)]);
 
-    // Persist to PostgreSQL database
-    try {
-      const res = await fetch('http://localhost:5000/api/aics/applications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newApp)
-      });
-      if (res.ok) {
-        const saved = await res.json();
-        console.log('✅ Successfully persisted application to PostgreSQL DB:', saved);
+    // Skip posting to AICS endpoint if this is a Senior Citizen application (already saved to senior_applications)
+    const isSenior = (newApp.category || '').toLowerCase().includes('senior') || (newApp.serviceName || '').toLowerCase().includes('senior') || (newApp.referenceNo || '').startsWith('SENIOR-');
+    if (isSenior) {
+      return;
+    }
+
+    // Persist AICS to PostgreSQL database with retry logic
+    let success = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch('http://localhost:5000/api/aics/applications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newApp)
+        });
+        if (res.ok) {
+          const saved = await res.json();
+          console.log('✅ Successfully persisted application to PostgreSQL DB:', saved);
+          success = true;
+          break;
+        }
+      } catch (err) {
+        console.warn(`Attempt ${attempt} to save application failed:`, err);
+        if (attempt < 3) await new Promise(r => setTimeout(r, 800));
       }
-    } catch (err) {
-      console.error('❌ Failed to save application to PostgreSQL DB:', err);
+    }
+    if (!success) {
+      console.error('❌ Failed to save application to PostgreSQL DB after 3 attempts');
     }
   };
 
   const handleUpdateStatus = async (refNo: string, newStatus: ApplicationRecord['status'], extraFields?: Record<string, any>) => {
     setApplications(prev => prev.map(app => app.referenceNo === refNo ? { ...app, status: newStatus, ...(extraFields || {}) } : app));
+    const isSenior = (refNo || '').startsWith('SENIOR-');
+    const endpoint = isSenior 
+      ? `http://localhost:5000/api/senior/applications/${encodeURIComponent(refNo)}/status`
+      : `http://localhost:5000/api/aics/applications/${encodeURIComponent(refNo)}/status`;
+
     try {
-      await fetch(`http://localhost:5000/api/aics/applications/${encodeURIComponent(refNo)}/status`, {
+      await fetch(endpoint, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus, ...(extraFields || {}) })
@@ -499,7 +554,7 @@ export default function App() {
             ) : adminTab === 'aics' ? (
               <AdminAicsView darkMode={darkMode} applications={applications} onUpdateStatus={handleUpdateStatus} />
             ) : adminTab === 'pwd-senior' ? (
-              <AdminPwdSeniorView darkMode={darkMode} />
+              <AdminPwdSeniorView darkMode={darkMode} applications={applications} onUpdateStatus={handleUpdateStatus} />
             ) : adminTab === 'solo-child' ? (
               <AdminSoloChildView darkMode={darkMode} />
             ) : adminTab === 'livelihood' ? (

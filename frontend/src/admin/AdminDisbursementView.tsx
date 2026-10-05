@@ -362,13 +362,6 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
                                 <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                                 <span>Payout Scheduled</span>
                               </span>
-                              <button
-                                type="button"
-                                onClick={() => setReleasingRecord(app)}
-                                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[11px] font-bold border border-slate-700 transition-all"
-                              >
-                                Edit
-                              </button>
                             </div>
                           ) : (
                             <button

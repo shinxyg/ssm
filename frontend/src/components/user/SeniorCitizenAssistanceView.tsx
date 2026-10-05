@@ -150,9 +150,9 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
   const [customOtherBenefit, setCustomOtherBenefit] = useState<string>('');
 
   // STEP 3 Upload States
-  const [docSeniorId, setDocSeniorId] = useState<{ name: string; url?: string } | null>(null);
-  const [docIndigency, setDocIndigency] = useState<{ name: string; url?: string } | null>(null);
-  const [docOtherSupport, setDocOtherSupport] = useState<{ name: string; url?: string } | null>(null);
+  const [docSeniorId, setDocSeniorId] = useState<{ name: string; url?: string; dataUrl?: string } | null>(null);
+  const [docIndigency, setDocIndigency] = useState<{ name: string; url?: string; dataUrl?: string } | null>(null);
+  const [docOtherSupport, setDocOtherSupport] = useState<{ name: string; url?: string; dataUrl?: string } | null>(null);
 
   // Step 4 Collapsible Accordion State
   const [collapsedSections, setCollapsedSections] = useState<{ [key: string]: boolean }>({});
@@ -235,38 +235,116 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
     setFamilyMembers((prev) => prev.filter((m) => m.id !== id));
   };
 
-  // Mock File Upload Handler
+  // File Upload Handler with dataUrl conversion
   const handleFileUpload = (
     e: React.ChangeEvent<HTMLInputElement>, 
-    setDoc: React.Dispatch<React.SetStateAction<{ name: string; url?: string } | null>>
+    setDoc: React.Dispatch<React.SetStateAction<{ name: string; url?: string; dataUrl?: string } | null>>
   ) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setDoc({ name: file.name, url });
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        setDoc({ name: file.name, url: dataUrl, dataUrl });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleFinalSubmit = () => {
-    const refNo = `SWA-SR-${Math.floor(100000 + Math.random() * 900000)}`;
+  const handleFinalSubmit = async () => {
+    const refNo = `SENIOR-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const fullApplicantName = `${firstName || 'Senior'} ${middleName ? middleName + ' ' : ''}${lastName || 'Citizen'} ${suffix}`.trim();
+
+    const fullPayload = {
+      referenceNo: refNo,
+      applicantName: fullApplicantName,
+      firstName,
+      middleName,
+      lastName,
+      suffix,
+      dob,
+      age,
+      gender,
+      civilStatus,
+      houseNo,
+      streetName: street,
+      barangay,
+      phoneNumber: phone,
+      seniorIdNo: seniorIdNumber || qcId || 'QC-SR-2026-88192',
+      status: 'Pending Validation',
+      details: {
+        personalInformation: {
+          firstName,
+          middleName,
+          lastName,
+          suffix,
+          nationality,
+          dateOfBirth: dob,
+          age,
+          gender,
+          civilStatus,
+          houseNo,
+          streetName: street,
+          barangay,
+          phoneNumber: phone,
+          seniorCitizenId: seniorIdNumber || qcId
+        },
+        occupationFinancialInformation: {
+          employmentStatus,
+          occupation,
+          sourceOfIncome,
+          approxMonthlyIncome,
+          pensionReceived: pensionsReceived,
+          otherPensionDetails
+        },
+        familyComposition: familyMembers,
+        monthlyHouseholdExpenses: {
+          totalMonthlyExpenses
+        },
+        livingSituationAdditionalInfo: {
+          livingArrangement,
+          customLivingArrangement,
+          financialSupportSource,
+          customFinancialSupport,
+          reasonForAssistance,
+          customReasonForAssistance
+        },
+        otherAssistanceBenefits: {
+          benefitReceived: otherBenefitsReceived,
+          customBenefitReceived: customOtherBenefit
+        },
+        uploadedDocuments: {
+          seniorIdCard: docSeniorId?.name || null,
+          indigencyCert: docIndigency?.name || null,
+          otherSupport: docOtherSupport?.name || null
+        },
+        uploadedDocData: {
+          seniorIdCard: docSeniorId ? { name: docSeniorId.name, dataUrl: docSeniorId.dataUrl || docSeniorId.url } : null,
+          indigencyCert: docIndigency ? { name: docIndigency.name, dataUrl: docIndigency.dataUrl || docIndigency.url } : null,
+          otherSupport: docOtherSupport ? { name: docOtherSupport.name, dataUrl: docOtherSupport.dataUrl || docOtherSupport.url } : null
+        }
+      }
+    };
+
+    try {
+      await fetch('http://localhost:5000/api/senior/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fullPayload)
+      });
+    } catch (err) {
+      console.warn('Backend API submission notice, saving locally:', err);
+    }
 
     const newApp: ApplicationRecord = {
       referenceNo: refNo,
-      serviceName: 'Senior Citizen Social Welfare Assistance (SWA)',
-      category: 'Senior Citizen Sector',
+      serviceName: 'Senior Citizen Financial Assistance',
+      category: 'Senior Assistance',
       dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
-      status: 'Under Review',
+      status: 'Pending Validation',
       assignedSocialWorker: 'Maria Santos, RSW (Senior Sector Dept)',
-      amountOrType: 'Financial Aid / Subsidy Grant',
-      details: {
-        applicantName: fullApplicantName,
-        age: age || '65',
-        seniorIdNo: seniorIdNumber || qcId || 'SR-2026-8891',
-        barangay: barangay || 'Quezon City',
-        livingArrangement: livingArrangement === 'Other' ? customLivingArrangement : livingArrangement,
-        reasonForAssistance: reasonForAssistance === 'Other' ? customReasonForAssistance : reasonForAssistance,
-      },
+      amountOrType: '₱3,000.00 Financial Assistance',
+      details: fullPayload.details
     };
 
     onAddApplication(newApp);
@@ -466,9 +544,10 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   </label>
                   <input
                     type="text"
+                    inputMode="numeric"
                     value={seniorIdNumber}
-                    onChange={(e) => setSeniorIdNumber(e.target.value)}
-                    placeholder="e.g. QC-SR-2026-991823"
+                    onChange={(e) => setSeniorIdNumber(e.target.value.replace(/\D/g, ''))}
+                    placeholder="e.g. 34234324"
                     className={`w-full px-4 py-2.5 rounded-xl text-sm font-semibold border focus:outline-none focus:border-blue-500 ${
                       darkMode 
                         ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' 
@@ -1330,7 +1409,7 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                     </div>
                     <div className="col-span-1 sm:col-span-3">
                       <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SENIOR CITIZEN ID</span>
-                      <span className="font-bold font-mono text-emerald-400">{seniorIdDetails || seniorIdNumber || qcId || 'QC-SR-2026-88192'}</span>
+                      <span className={`font-bold font-mono ${darkMode ? 'text-white' : 'text-slate-900'}`}>{seniorIdDetails || seniorIdNumber || qcId || 'QC-SR-2026-88192'}</span>
                     </div>
                   </div>
                 </div>
@@ -1386,7 +1465,7 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                               <td className="py-2 px-2 text-slate-400">{mem.relationship || 'N/A'}</td>
                               <td className="py-2 px-2 text-slate-400">{mem.age || 'N/A'}</td>
                               <td className="py-2 px-2 text-slate-400">{mem.occupation || 'N/A'}</td>
-                              <td className="py-2 px-2 text-emerald-400 font-bold">
+                              <td className={`py-2 px-2 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                                 {mem.incomeSource
                                   ? (mem.incomeSource.startsWith('₱')
                                       ? mem.incomeSource
@@ -1408,7 +1487,7 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
                   </h5>
                   <div className="text-xs">
                     <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>TOTAL MONTHLY HOUSEHOLD EXPENSES</span>
-                    <span className="font-bold text-amber-500">
+                    <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                       {totalMonthlyExpenses
                         ? (totalMonthlyExpenses.startsWith('₱')
                             ? totalMonthlyExpenses

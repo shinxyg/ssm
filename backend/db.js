@@ -143,14 +143,97 @@ export const initDB = async () => {
         id SERIAL PRIMARY KEY,
         reference_no VARCHAR(50) UNIQUE NOT NULL,
         applicant_name VARCHAR(255) NOT NULL,
-        osca_id_no VARCHAR(50),
+        first_name VARCHAR(100),
+        middle_name VARCHAR(100),
+        last_name VARCHAR(100),
+        suffix VARCHAR(20),
         dob VARCHAR(50),
         age VARCHAR(10),
+        gender VARCHAR(20),
+        civil_status VARCHAR(50),
+        house_no VARCHAR(100),
+        street_name VARCHAR(150),
         barangay VARCHAR(150),
         phone_number VARCHAR(50),
-        status VARCHAR(100) DEFAULT 'Pending Verification',
-        date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        senior_id_no VARCHAR(50),
+        employment_status VARCHAR(100),
+        occupation VARCHAR(255),
+        source_of_income VARCHAR(255),
+        approx_monthly_income VARCHAR(100),
+        pension_received VARCHAR(100),
+        pension_details VARCHAR(255),
+        total_monthly_expenses VARCHAR(100),
+        living_arrangement VARCHAR(100),
+        custom_living_arrangement VARCHAR(255),
+        financial_support_source VARCHAR(100),
+        custom_financial_support VARCHAR(255),
+        reason_for_assistance VARCHAR(100),
+        custom_reason_for_assistance VARCHAR(255),
+        other_benefits_received VARCHAR(100),
+        custom_other_benefit VARCHAR(255),
+        service_name VARCHAR(255) DEFAULT 'Senior Citizen Financial Assistance',
+        category VARCHAR(50) DEFAULT 'Senior Assistance',
+        assistance_type VARCHAR(100) DEFAULT 'Senior Cash Grant',
+        amount NUMERIC(10,2) DEFAULT 3000.00,
+        status VARCHAR(100) DEFAULT 'Pending Validation',
+        disapproval_reason TEXT,
+        appointment_date VARCHAR(50),
+        appointment_day VARCHAR(50),
+        appointment_time VARCHAR(50),
+        appointment_venue VARCHAR(255),
+        payout_date VARCHAR(50),
+        payout_day VARCHAR(50),
+        payout_time VARCHAR(50),
+        payout_venue VARCHAR(255),
+        details JSONB,
+        date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS first_name VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS middle_name VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS last_name VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS suffix VARCHAR(20);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS dob VARCHAR(50);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS age VARCHAR(10);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS gender VARCHAR(20);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS civil_status VARCHAR(50);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS house_no VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS street_name VARCHAR(150);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS barangay VARCHAR(150);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS senior_id_no VARCHAR(50);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS employment_status VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS occupation VARCHAR(255);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS source_of_income VARCHAR(255);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS approx_monthly_income VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS pension_received VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS pension_details VARCHAR(255);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS total_monthly_expenses VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS living_arrangement VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS custom_living_arrangement VARCHAR(255);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS financial_support_source VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS custom_financial_support VARCHAR(255);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS reason_for_assistance VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS custom_reason_for_assistance VARCHAR(255);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS other_benefits_received VARCHAR(100);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS custom_other_benefit VARCHAR(255);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS service_name VARCHAR(255) DEFAULT 'Senior Citizen Financial Assistance';
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'Senior Assistance';
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS assistance_type VARCHAR(100) DEFAULT 'Senior Cash Grant';
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS amount NUMERIC(10,2) DEFAULT 3000.00;
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS status VARCHAR(100) DEFAULT 'Pending Validation';
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS disapproval_reason TEXT;
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS appointment_date VARCHAR(50);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS appointment_day VARCHAR(50);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS appointment_time VARCHAR(50);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS appointment_venue VARCHAR(255);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS payout_date VARCHAR(50);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS payout_day VARCHAR(50);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS payout_time VARCHAR(50);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS payout_venue VARCHAR(255);
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS details JSONB;
+      ALTER TABLE senior_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
       CREATE TABLE IF NOT EXISTS livelihood_applications (
         id SERIAL PRIMARY KEY,
