@@ -423,7 +423,7 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                       }`}
                     >
                       <Calendar className="w-3.5 h-3.5 text-blue-400" />
-                      <span>View Schedule</span>
+                      <span>View Orientation</span>
                     </button>
                     <button
                       type="button"
