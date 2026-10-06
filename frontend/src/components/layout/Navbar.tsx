@@ -68,12 +68,13 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   });
 
-  // Persistent opened bell status from localStorage
-  const [hasOpenedBell, setHasOpenedBell] = useState<boolean>(() => {
+  // Persistent read notification IDs from localStorage
+  const [readIds, setReadIds] = useState<string[]>(() => {
     try {
-      return localStorage.getItem('govserve_bell_opened') === 'true';
+      const saved = localStorage.getItem('govserve_read_notifications');
+      return saved ? JSON.parse(saved) : [];
     } catch (e) {
-      return false;
+      return [];
     }
   });
 
@@ -86,14 +87,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   }, [dismissedIds]);
 
-  // Save hasOpenedBell state to localStorage whenever modified
+  // Save readIds to localStorage whenever modified
   useEffect(() => {
     try {
-      localStorage.setItem('govserve_bell_opened', hasOpenedBell ? 'true' : 'false');
+      localStorage.setItem('govserve_read_notifications', JSON.stringify(readIds));
     } catch (e) {
-      console.error('Failed to persist bell opened status', e);
+      console.error('Failed to persist read notifications', e);
     }
-  }, [hasOpenedBell]);
+  }, [readIds]);
 
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -102,10 +103,32 @@ export const Navbar: React.FC<NavbarProps> = ({
   const displaySubtitle = userSubtitle || (userRole === 'admin' ? 'Administrator' : 'Citizen Resident');
   const displayInitials = userInitials || (userRole === 'admin' ? 'AD' : 'JL');
 
-  // Generate Notifications derived from the 6-step application lifecycle
+  // Generate Notifications derived from application lifecycle (Citizen & Admin)
   const rawNotifications = useMemo(() => {
     const list: { id: string; title: string; message: string; time: string; type: 'info' | 'success' | 'warning' | 'error' }[] = [];
 
+    if (userRole === 'admin') {
+      // Admin Notifications: Alert when new pending applications arrive
+      applications.forEach((app) => {
+        const ref = app.referenceNo;
+        const serv = app.serviceName || 'Social Service Application';
+        const st = (app.status || '').toUpperCase();
+        const name = (app as any).applicantName || app.details?.applicantName || 'Applicant';
+
+        if (st.includes('PENDING') || st === 'SUBMITTED' || st.includes('EVALUATION')) {
+          list.unshift({
+            id: `admin-pending-${ref}`,
+            title: `New Application: ${serv}`,
+            message: `Applicant ${name} submitted application (Ref: ${ref}). Awaiting initial verification.`,
+            time: app.dateSubmitted || 'Just Now',
+            type: 'warning'
+          });
+        }
+      });
+      return list;
+    }
+
+    // Citizen Notifications: Derived from 6-step application lifecycle
     applications.forEach((app) => {
       const ref = app.referenceNo;
       const serv = app.serviceName;
@@ -148,7 +171,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       // Step 3: Interview Scheduled
       if (st.includes('INTERVIEW SCHEDULED') || st.includes('APPROVED BY OSCA') || st.includes('PAYOUT') || st.includes('RELEASED') || st.includes('COMPLETED')) {
-        const apptDate = app.appointmentDate || (app as any).appointmentDetails?.appointmentDate || 'QC Hall OSCA Desk';
+        const apptDate = app.appointmentDate || (app as any).appointmentDetails?.appointmentDate || 'QC Hall SSDD Desk';
         const apptTime = app.appointmentTime || (app as any).appointmentDetails?.appointmentTime || '';
         list.unshift({
           id: `${ref}-step3`,
@@ -161,11 +184,11 @@ export const Navbar: React.FC<NavbarProps> = ({
         });
       }
 
-      // Step 4: Physical Assessment at OSCA Approved
+      // Step 4: Physical Assessment Approved
       if (st.includes('APPROVED BY OSCA') || st.includes('PAYOUT') || st.includes('RELEASED') || st.includes('COMPLETED')) {
         list.unshift({
           id: `${ref}-step4-approved`,
-          title: 'Step 4: OSCA Assessment Passed',
+          title: 'Step 4: Assessment Passed',
           message: isSenior
             ? `QC Govt: Approved your Senior Assistance for ₱3,000 Cash Grant (Ref: ${ref}). Please wait for Payout schedule.`
             : `Your ${serv} (Ref: ${ref}) has been officially approved! Benefit ready for payout release.`,
@@ -212,19 +235,28 @@ export const Navbar: React.FC<NavbarProps> = ({
     });
 
     return list;
-  }, [applications]);
+  }, [applications, userRole]);
 
   // Active (non-dismissed) notifications
   const notificationsList = useMemo(() => {
     return rawNotifications.filter(n => !dismissedIds.includes(n.id));
   }, [rawNotifications, dismissedIds]);
 
-  // Unread badge count on Bell icon (disappears when bell icon is clicked/opened)
-  const unreadCount = hasOpenedBell ? 0 : notificationsList.length;
+  // Unread badge count on Bell icon (calculated from un-read notification IDs)
+  const unreadCount = useMemo(() => {
+    return notificationsList.filter(n => !readIds.includes(n.id)).length;
+  }, [notificationsList, readIds]);
 
   const handleToggleNotifications = () => {
-    setShowNotifications((prev) => !prev);
-    setHasOpenedBell(true); // When clicked, badge counter disappears!
+    setShowNotifications((prev) => {
+      const next = !prev;
+      if (next) {
+        // Mark all current visible notification IDs as read when bell panel is opened
+        const currentIds = notificationsList.map(n => n.id);
+        setReadIds(prevRead => Array.from(new Set([...prevRead, ...currentIds])));
+      }
+      return next;
+    });
   };
 
   const handleDismissSingle = (id: string, e: React.MouseEvent) => {
@@ -287,26 +319,25 @@ export const Navbar: React.FC<NavbarProps> = ({
           {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
-        {/* NOTIFICATION BELL ICON (ONLY FOR CITIZEN USER, NOT ADMIN) */}
-        {userRole !== 'admin' && (
-          <div className="relative" ref={notifRef}>
-            <button
-              type="button"
-              onClick={handleToggleNotifications}
-              className={`p-1.5 rounded-xl transition-colors cursor-pointer relative ${
-                darkMode 
-                  ? 'text-slate-300 hover:text-white hover:bg-slate-800/80' 
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-              title="Notifications Bell"
-            >
-              <Bell className="w-4 h-4" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-rose-500 text-white font-black text-[9px] rounded-full flex items-center justify-center leading-none shadow-md border border-[#070e1b] animate-pulse">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
+        {/* NOTIFICATION BELL ICON (CITIZEN & ADMIN) */}
+        <div className="relative" ref={notifRef}>
+          <button
+            type="button"
+            onClick={handleToggleNotifications}
+            className={`p-1.5 rounded-xl transition-colors cursor-pointer relative ${
+              darkMode 
+                ? 'text-slate-300 hover:text-white hover:bg-slate-800/80' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+            title="Notifications Bell"
+          >
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-4.5 px-1.5 bg-rose-500 text-white font-extrabold text-[10px] rounded-full flex items-center justify-center leading-none shadow-lg border border-[#070e1b] animate-pulse">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
 
             {/* NOTIFICATION DROPDOWN MENU */}
             {showNotifications && (
@@ -383,7 +414,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             )}
           </div>
-        )}
 
         {/* User Profile Pill Badge matching exact compact request */}
         <div className="relative" ref={profileRef}>
