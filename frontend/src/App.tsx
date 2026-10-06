@@ -78,12 +78,13 @@ export default function App() {
   // Fetch applications from PostgreSQL DB with fast O(1) state comparison
   const fetchDBApplications = async () => {
     try {
-      const [resAics, resSenior, resSolo, resEdu, resLivelihood] = await Promise.all([
+      const [resAics, resSenior, resSolo, resEdu, resLivelihood, resTraining] = await Promise.all([
         fetch('http://localhost:5000/api/aics/applications').catch(() => null),
         fetch('http://localhost:5000/api/senior/applications').catch(() => null),
         fetch('http://localhost:5000/api/solo-parent/applications').catch(() => null),
         fetch('http://localhost:5000/api/educational/applications').catch(() => null),
-        fetch('http://localhost:5000/api/livelihood/applications').catch(() => null)
+        fetch('http://localhost:5000/api/livelihood/applications').catch(() => null),
+        fetch('http://localhost:5000/api/training/applications').catch(() => null)
       ]);
 
       const aicsApps: ApplicationRecord[] = (resAics && resAics.ok) ? await resAics.json() : [];
@@ -91,6 +92,7 @@ export default function App() {
       const soloRaw: any[] = (resSolo && resSolo.ok) ? await resSolo.json() : [];
       const eduRaw: any[] = (resEdu && resEdu.ok) ? await resEdu.json() : [];
       const lvhRaw: any[] = (resLivelihood && resLivelihood.ok) ? await resLivelihood.json() : [];
+      const trnRaw: any[] = (resTraining && resTraining.ok) ? await resTraining.json() : [];
 
       const seniorApps: ApplicationRecord[] = (Array.isArray(seniorRaw) ? seniorRaw : []).map(row => ({
         referenceNo: row.reference_no,
@@ -188,12 +190,45 @@ export default function App() {
         details: row.details
       }));
 
+      const trnApps: ApplicationRecord[] = (Array.isArray(trnRaw) ? trnRaw : []).map(row => ({
+        referenceNo: row.reference_no,
+        applicantName: row.applicant_name,
+        serviceName: row.course_title || 'Skills & Vocational Training Program',
+        category: 'training',
+        assistanceType: 'Skills Training Program',
+        status: row.status || 'Pending Document Validation',
+        dateSubmitted: row.date_submitted ? new Date(row.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
+        amountOrType: 'Free Vocational Training & Orientation',
+        assignedSocialWorker: 'Vocational Training Officer, SSDD',
+        appointmentDate: row.orientation_date,
+        appointmentTime: row.orientation_time,
+        appointmentDetails: {
+          appointmentDate: row.orientation_date,
+          appointmentTime: row.orientation_time,
+          venue: row.orientation_venue || 'Quezon City SSDD Training Center',
+          assignedWorker: 'Training Evaluator, RSW'
+        },
+        disapprovalReason: row.rejection_reason,
+        details: {
+          courseTitle: row.course_title,
+          highestEdu: row.highest_edu,
+          schoolName: row.school_name,
+          trainingPurpose: row.training_purpose,
+          purposeReason: row.purpose_reason,
+          previousTraining: row.previous_training,
+          docRequestLetter: row.doc_request_letter,
+          docQcId: row.doc_qc_id,
+          docIndigency: row.doc_indigency
+        }
+      }));
+
       const allDbApps = [
         ...(Array.isArray(aicsApps) ? aicsApps : []), 
         ...seniorApps,
         ...soloApps,
         ...eduApps,
-        ...lvhApps
+        ...lvhApps,
+        ...trnApps
       ];
 
       const uniqueMap = new Map<string, ApplicationRecord>();

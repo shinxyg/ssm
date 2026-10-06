@@ -1441,6 +1441,225 @@ app.put('/api/livelihood/applications/:id/status', async (req, res) => {
   }
 });
 
+// GET all Skills Training Program applications from PostgreSQL DB
+app.get('/api/training/applications', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM training_applications ORDER BY date_submitted DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST submit new Skills Training Program application to PostgreSQL DB
+app.post('/api/training/applications', async (req, res) => {
+  const {
+    referenceNo,
+    courseTitle,
+    batchName,
+    applicantName,
+    firstName,
+    middleName,
+    lastName,
+    suffix,
+    nationality,
+    dob,
+    age,
+    gender,
+    civilStatus,
+    houseNo,
+    streetName,
+    barangay,
+    phoneNumber,
+    emailAddress,
+    highestEdu,
+    schoolName,
+    trainingPurpose,
+    purposeReason,
+    previousTraining,
+    docRequestLetter,
+    docQcId,
+    docIndigency,
+    uploadedDocuments,
+    status,
+    details
+  } = req.body;
+
+  try {
+    const refNo = referenceNo || `TRN-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const name = applicantName || details?.applicantName || `${firstName || 'JEFFERSON'} ${lastName || 'LEE'}`.trim();
+    const savedDetails = JSON.stringify(details || {});
+    const savedDocs = JSON.stringify(uploadedDocuments || {
+      docRequestLetter,
+      docQcId,
+      docIndigency
+    });
+
+    const query = `
+      INSERT INTO training_applications (
+        reference_no, course_title, batch_name, applicant_name, first_name, middle_name, last_name, suffix,
+        nationality, dob, age, gender, civil_status, house_no, street_name, barangay, phone_number,
+        highest_edu, school_name, training_purpose, purpose_reason, previous_training,
+        doc_request_letter, doc_qc_id, doc_indigency, status, uploaded_documents, details
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11, $12, $13, $14, $15, $16, $17,
+        $18, $19, $20, $21, $22,
+        $23, $24, $25, COALESCE($26, 'Pending Document Validation'), $27, $28
+      )
+      ON CONFLICT (reference_no) DO UPDATE SET
+        course_title = EXCLUDED.course_title,
+        batch_name = EXCLUDED.batch_name,
+        applicant_name = EXCLUDED.applicant_name,
+        highest_edu = EXCLUDED.highest_edu,
+        school_name = EXCLUDED.school_name,
+        training_purpose = EXCLUDED.training_purpose,
+        purpose_reason = EXCLUDED.purpose_reason,
+        previous_training = EXCLUDED.previous_training,
+        doc_request_letter = EXCLUDED.doc_request_letter,
+        doc_qc_id = EXCLUDED.doc_qc_id,
+        doc_indigency = EXCLUDED.doc_indigency,
+        uploaded_documents = EXCLUDED.uploaded_documents,
+        details = EXCLUDED.details,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *;
+    `;
+
+    const values = [
+      refNo,
+      courseTitle || 'Bread and Pastry Making',
+      batchName || '3rd Batch 2026',
+      name,
+      firstName || 'JEFFERSON',
+      middleName || 'FERNANDO',
+      lastName || 'LEE',
+      suffix || '',
+      nationality || 'FILIPINO',
+      dob || '27/09/2004',
+      age || '22',
+      gender || 'Male',
+      civilStatus || 'Single',
+      houseNo || '176',
+      streetName || '23',
+      barangay || 'Bagong Silangan',
+      phoneNumber || '09155582122',
+      highestEdu || 'College Level',
+      schoolName || '',
+      trainingPurpose || 'Employment / Job Application',
+      purposeReason || '',
+      previousTraining || 'Yes - TESDA Accredited Course',
+      typeof docRequestLetter === 'string' ? docRequestLetter : JSON.stringify(docRequestLetter || {}),
+      typeof docQcId === 'string' ? docQcId : JSON.stringify(docQcId || {}),
+      typeof docIndigency === 'string' ? docIndigency : JSON.stringify(docIndigency || {}),
+      status || 'Pending Document Validation',
+      savedDocs,
+      savedDetails
+    ];
+
+    const result = await pool.query(query, values);
+    const row = result.rows[0];
+
+    sendNotificationEmail({
+      to: emailAddress || 'clarencemillares15@gmail.com',
+      subject: `GovServe Notice: Training Application Received (${row.reference_no})`,
+      title: `Training Application Submitted!`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: row.status || 'Pending Document Validation',
+      detailsMessage: `Natanggap ang inyong Training Application Form para sa ${row.course_title}. Sinusuri ng Admin ang Barangay Clearance, Valid ID, at Qualification Form.`
+    });
+
+    res.status(201).json(row);
+  } catch (err) {
+    console.error('Error saving Training application:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update status/scheduling of a Training application
+app.put('/api/training/applications/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { 
+    status, 
+    rejectionReason,
+    disapprovalReason, 
+    appointmentDate, 
+    appointmentTime, 
+    appointmentVenue,
+    orientationDate,
+    orientationTime,
+    orientationVenue
+  } = req.body;
+
+  const apptDate = orientationDate || appointmentDate;
+  const apptTime = orientationTime || appointmentTime;
+  const apptVenue = orientationVenue || appointmentVenue;
+  const reason = rejectionReason || disapprovalReason;
+
+  try {
+    const query = `
+      UPDATE training_applications 
+      SET 
+        status = COALESCE($1, status),
+        rejection_reason = COALESCE($2, rejection_reason),
+        orientation_date = COALESCE($3, orientation_date),
+        orientation_time = COALESCE($4, orientation_time),
+        orientation_venue = COALESCE($5, orientation_venue),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id::text = $6 OR reference_no = $6
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [
+      status, reason, apptDate, apptTime, apptVenue, id
+    ]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Training application not found' });
+    }
+    const row = result.rows[0];
+
+    // Sync with appointments table
+    if (status === 'SSDD VALIDATED' || status === 'TRAINING SCHEDULED / ORIENTATION APPOINTED' || apptDate) {
+      const apptStatus = apptDate || status.includes('SCHEDULED') ? 'Orientation Scheduled' : 'Pending Schedule';
+      try {
+        const checkAppt = await pool.query(`SELECT id FROM appointments WHERE reference_no = $1`, [row.reference_no]);
+        if (checkAppt.rows.length > 0) {
+          await pool.query(`
+            UPDATE appointments 
+            SET 
+              appointment_date = COALESCE($1, appointment_date),
+              appointment_time = COALESCE($2, appointment_time),
+              venue = COALESCE($3, venue),
+              status = $4
+            WHERE reference_no = $5;
+          `, [apptDate || null, apptTime || null, apptVenue || null, apptStatus, row.reference_no]);
+        } else {
+          await pool.query(`
+            INSERT INTO appointments (reference_no, module_name, applicant_name, appointment_date, appointment_time, venue, purpose, status)
+            VALUES ($1, 'TRAINING', $2, $3, $4, COALESCE($5, 'Quezon City SSDD Training Center'), 'Skills Training Orientation & Initial Screening', $6);
+          `, [row.reference_no, row.applicant_name, apptDate || null, apptTime || null, apptVenue || null, apptStatus]);
+        }
+      } catch (e) {
+        console.warn('Sync training appointments warning:', e.message);
+      }
+    }
+
+    sendNotificationEmail({
+      to: 'clarencemillares15@gmail.com',
+      subject: `Training Application Update (${row.reference_no}): ${row.status}`,
+      title: `Training Application Status: ${row.status}`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: row.status,
+      detailsMessage: row.rejection_reason ? `Disapproved ang aplikasyon. Dahilan: ${row.rejection_reason}` : `May update sa inyong Training Application para sa ${row.course_title}. Current Status: ${row.status}`
+    });
+
+    res.json(row);
+  } catch (err) {
+    console.error('PUT training status error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET all appointments from PostgreSQL DB
 app.get('/api/appointments', async (req, res) => {
   try {

@@ -401,9 +401,80 @@ export const initDB = async () => {
         date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS training_applications (
+        id SERIAL PRIMARY KEY,
+        reference_no VARCHAR(50) UNIQUE NOT NULL,
+        course_title VARCHAR(255),
+        batch_name VARCHAR(100) DEFAULT '3rd Batch 2026',
+        applicant_name VARCHAR(255) NOT NULL,
+        first_name VARCHAR(100),
+        middle_name VARCHAR(100),
+        last_name VARCHAR(100),
+        suffix VARCHAR(20),
+        nationality VARCHAR(50) DEFAULT 'FILIPINO',
+        dob VARCHAR(50),
+        age VARCHAR(10),
+        gender VARCHAR(20),
+        civil_status VARCHAR(50),
+        house_no VARCHAR(100),
+        street_name VARCHAR(150),
+        barangay VARCHAR(150),
+        phone_number VARCHAR(50),
+        highest_edu VARCHAR(100),
+        school_name VARCHAR(255),
+        training_purpose VARCHAR(255),
+        purpose_reason TEXT,
+        previous_training VARCHAR(255),
+        doc_request_letter TEXT,
+        doc_qc_id TEXT,
+        doc_indigency TEXT,
+        status VARCHAR(100) DEFAULT 'Pending Document Validation',
+        orientation_date VARCHAR(50),
+        orientation_time VARCHAR(50),
+        orientation_venue VARCHAR(255),
+        rejection_reason TEXT,
+        uploaded_documents JSONB,
+        details JSONB,
+        date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS course_title VARCHAR(255);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS batch_name VARCHAR(100) DEFAULT '3rd Batch 2026';
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS first_name VARCHAR(100);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS middle_name VARCHAR(100);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS last_name VARCHAR(100);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS suffix VARCHAR(20);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS nationality VARCHAR(50) DEFAULT 'FILIPINO';
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS dob VARCHAR(50);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS age VARCHAR(10);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS gender VARCHAR(20);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS civil_status VARCHAR(50);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS house_no VARCHAR(100);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS street_name VARCHAR(150);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS barangay VARCHAR(150);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS highest_edu VARCHAR(100);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS school_name VARCHAR(255);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS training_purpose VARCHAR(255);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS purpose_reason TEXT;
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS previous_training VARCHAR(255);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS doc_request_letter TEXT;
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS doc_qc_id TEXT;
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS doc_indigency TEXT;
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS status VARCHAR(100) DEFAULT 'Pending Document Validation';
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS orientation_date VARCHAR(50);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS orientation_time VARCHAR(50);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS orientation_venue VARCHAR(255);
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS uploaded_documents JSONB;
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS details JSONB;
+      ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
     `);
 
-    console.log('✅ Database tables for AICS, Appointments, PWD, Senior, Livelihood, Solo Parent, Financial Disbursements, and Educational Assistance verified & ready!');
+    console.log('✅ Database tables for AICS, Appointments, PWD, Senior, Livelihood, Solo Parent, Financial Disbursements, Educational Assistance, and Training Applications verified & ready!');
     client.release();
   } catch (err) {
     console.error('❌ Database Connection Warning/Notice:', err.message);
