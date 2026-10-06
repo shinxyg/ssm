@@ -1770,9 +1770,60 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
               const isUnqualified = st.includes('UNQUALIFIED');
               const isSsddVal = st.includes('SSDD VALIDATED') || st.includes('VALIDATED');
 
-              const dateVal = activeApp.appointment_date || activeApp.appointmentDate || 'Oct 8, 2026';
-              const timeVal = activeApp.appointment_time || activeApp.appointmentTime || '09:00 AM';
-              const venueVal = activeApp.appointment_venue || activeApp.appointmentVenue || selectedScheduleModal.venue;
+              const rawDate = activeApp.orientation_date || activeApp.orientationDate || activeApp.appointment_date || activeApp.appointmentDate || '2026-10-08';
+              const rawTime = activeApp.orientation_time || activeApp.orientationTime || activeApp.appointment_time || activeApp.appointmentTime || '09:00 AM';
+              const venueVal = activeApp.orientation_venue || activeApp.orientationVenue || activeApp.appointment_venue || activeApp.appointmentVenue || selectedScheduleModal.venue || 'Quezon City Skills Development Center';
+
+              const formatDateDisplay = (dateStr?: string): string => {
+                if (!dateStr) return 'Oct 8, 2026';
+                if (
+                  dateStr.includes(',') || 
+                  dateStr.includes('Jan') || dateStr.includes('Feb') || dateStr.includes('Mar') || 
+                  dateStr.includes('Apr') || dateStr.includes('May') || dateStr.includes('Jun') || 
+                  dateStr.includes('Jul') || dateStr.includes('Aug') || dateStr.includes('Sep') || 
+                  dateStr.includes('Oct') || dateStr.includes('Nov') || dateStr.includes('Dec')
+                ) {
+                  return dateStr;
+                }
+                try {
+                  const parts = dateStr.split('-');
+                  if (parts.length === 3) {
+                    const year = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1;
+                    const day = parseInt(parts[2], 10);
+                    const d = new Date(year, month, day);
+                    if (!isNaN(d.getTime())) {
+                      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    }
+                  }
+                } catch (e) {}
+                return dateStr;
+              };
+
+              const formatTo12Hour = (timeStr?: string): string => {
+                if (!timeStr) return '09:00 AM';
+                if (timeStr.toUpperCase().includes('AM') || timeStr.toUpperCase().includes('PM')) {
+                  return timeStr;
+                }
+                try {
+                  const parts = timeStr.split(':');
+                  if (parts.length >= 2) {
+                    let hours = parseInt(parts[0], 10);
+                    const minutes = parts[1].padStart(2, '0');
+                    if (isNaN(hours)) return timeStr;
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12;
+                    hours = hours ? hours : 12;
+                    return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+                  }
+                } catch (e) {
+                  return timeStr;
+                }
+                return timeStr;
+              };
+
+              const dateVal = formatDateDisplay(rawDate);
+              const timeVal = formatTo12Hour(rawTime);
 
               return (
                 <div className="p-4 rounded-2xl bg-blue-950/40 border border-blue-500/40 space-y-3">

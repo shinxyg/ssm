@@ -1731,14 +1731,49 @@ app.post('/api/appointments', async (req, res) => {
       WHERE reference_no = $4;
     `, [appointmentDate, appointmentTime, venue, referenceNo]);
 
+    // Sync to training_applications
+    await pool.query(`
+      UPDATE training_applications 
+      SET orientation_date = $1, orientation_time = $2, orientation_venue = COALESCE($3, 'Quezon City Skills Development Center'), status = 'TRAINING SCHEDULED / ORIENTATION APPOINTED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $4;
+    `, [appointmentDate, appointmentTime, venue, referenceNo]);
+
+    // Sync to livelihood_applications
+    await pool.query(`
+      UPDATE livelihood_applications 
+      SET appointment_date = $1, appointment_time = $2, appointment_venue = $3, status = 'SITE ASSESSMENT SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $4;
+    `, [appointmentDate, appointmentTime, venue, referenceNo]);
+
+    // Sync to educational_applications
+    await pool.query(`
+      UPDATE educational_applications 
+      SET appointment_date = $1, appointment_time = $2, appointment_venue = $3, status = 'INTERVIEW SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $4;
+    `, [appointmentDate, appointmentTime, venue, referenceNo]);
+
+    // Sync to senior_applications
+    await pool.query(`
+      UPDATE senior_applications 
+      SET appointment_date = $1, appointment_time = $2, appointment_venue = $3, status = 'INTERVIEW SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $4;
+    `, [appointmentDate, appointmentTime, venue, referenceNo]);
+
+    // Sync to aics_applications
+    await pool.query(`
+      UPDATE aics_applications 
+      SET appointment_date = $1, appointment_time = $2, status = 'INTERVIEW SCHEDULED', updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $3;
+    `, [appointmentDate, appointmentTime, referenceNo]);
+
     sendNotificationEmail({
       to: 'clarencemillares15@gmail.com',
-      subject: `GovServe Notice: Solo Parent Interview Scheduled (${referenceNo})`,
-      title: `Solo Parent Interview Scheduled!`,
+      subject: `GovServe Notice: Appointment Scheduled (${referenceNo})`,
+      title: `Appointment / Orientation Scheduled!`,
       applicantName: row.applicant_name,
       refNo: referenceNo,
-      status: 'INTERVIEW SCHEDULED',
-      detailsMessage: `Naitakda ang inyong Solo Parent assessment interview sa Quezon City Hall SSDD Office.`,
+      status: 'SCHEDULED',
+      detailsMessage: `Naitakda ang inyong appointment/orientation schedule sa ${venue || 'Quezon City SSDD Office'}.`,
       appointmentInfo: `Petsa: ${appointmentDate} | Oras: ${appointmentTime} | Lugar: ${venue || 'QC Hall SSDD Office'}`
     });
 

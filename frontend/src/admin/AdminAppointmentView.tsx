@@ -89,12 +89,38 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
         const ampm = hours >= 12 ? 'PM' : 'AM';
         hours = hours % 12;
         hours = hours ? hours : 12;
-        return `${hours}:${minutes} ${ampm}`;
+        return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
       }
     } catch (e) {
       return timeStr;
     }
     return timeStr;
+  };
+
+  const formatDateDisplay = (dateStr?: string): string => {
+    if (!dateStr) return '';
+    if (
+      dateStr.includes(',') || 
+      dateStr.includes('Jan') || dateStr.includes('Feb') || dateStr.includes('Mar') || 
+      dateStr.includes('Apr') || dateStr.includes('May') || dateStr.includes('Jun') || 
+      dateStr.includes('Jul') || dateStr.includes('Aug') || dateStr.includes('Sep') || 
+      dateStr.includes('Oct') || dateStr.includes('Nov') || dateStr.includes('Dec')
+    ) {
+      return dateStr;
+    }
+    try {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const d = new Date(year, month, day);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+      }
+    } catch (e) {}
+    return dateStr;
   };
 
   const getCurrentTimeString = (): string => {
@@ -253,26 +279,43 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
   // Open Schedule Modal with default prefilled exact real time and date
   const handleOpenScheduleModal = (app: ApplicationRecord) => {
     setSchedulingApp(app);
-    const now = new Date();
-    setSchedDate(now.toISOString().split('T')[0]);
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    setSchedTime(`${hours}:${minutes}`);
+    const isTrn = (app.referenceNo || '').startsWith('TRN-') || app.category === 'training' || (app.serviceName || '').toLowerCase().includes('training') || (app.serviceName || '').toLowerCase().includes('barista') || (app.serviceName || '').toLowerCase().includes('hairdressing');
+
+    const existingDate = (app as any).orientation_date || (app as any).orientationDate || app.appointmentDate || (app as any).appointment_date || (isTrn ? '2026-10-08' : '');
+    const existingTime = (app as any).orientation_time || (app as any).orientationTime || app.appointmentTime || (app as any).appointment_time || (isTrn ? '09:00' : '');
+
+    if (existingDate && existingDate.includes('-')) {
+      setSchedDate(existingDate);
+    } else {
+      setSchedDate('2026-10-08');
+    }
+
+    if (existingTime) {
+      setSchedTime(existingTime.includes('AM') || existingTime.includes('PM') ? '09:00' : existingTime);
+    } else {
+      setSchedTime('09:00');
+    }
   };
 
   // Save Schedule to PostgreSQL DB & Update Application Status to 'Interview Scheduled'
   const handleSaveSchedule = async () => {
     if (!schedulingApp) return;
 
+    const isTrn = (schedulingApp.referenceNo || '').startsWith('TRN-') || schedulingApp.category === 'training' || (schedulingApp.serviceName || '').toLowerCase().includes('training') || (schedulingApp.serviceName || '').toLowerCase().includes('barista') || (schedulingApp.serviceName || '').toLowerCase().includes('hairdressing');
+
+    const targetStatus = isTrn ? 'TRAINING SCHEDULED / ORIENTATION APPOINTED' : 'Interview Scheduled';
+    const targetVenue = isTrn ? 'Quezon City Skills Development Center' : schedVenue;
+    const targetPurpose = isTrn ? 'Skills Training Orientation & Initial Screening' : 'Verification & Social Worker Intake';
+
     const newAppt: AppointmentEntry = {
       referenceNo: schedulingApp.referenceNo,
-      moduleName: schedulingApp.category || 'AICS',
+      moduleName: isTrn ? 'TRAINING' : (schedulingApp.category || 'AICS'),
       applicantName: (schedulingApp as any).applicantName || schedulingApp.details?.applicantName || 'Applicant Name',
       appointmentDate: schedDate,
       appointmentTime: schedTime,
-      venue: schedVenue,
-      purpose: 'Verification & Social Worker Intake',
-      status: 'Interview Scheduled',
+      venue: targetVenue,
+      purpose: targetPurpose,
+      status: isTrn ? ('Orientation Scheduled' as any) : 'Interview Scheduled',
       socialWorkerNotes: schedNotes
     };
 
@@ -297,13 +340,16 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
 
     setDbAppointments((prev) => [newAppt, ...prev.filter((a) => a.referenceNo !== newAppt.referenceNo)]);
     if (onUpdateStatus) {
-      onUpdateStatus(schedulingApp.referenceNo, 'Interview Scheduled', {
+      onUpdateStatus(schedulingApp.referenceNo, targetStatus as any, {
         appointmentDate: schedDate,
         appointmentTime: schedTime,
+        orientationDate: schedDate,
+        orientationTime: schedTime,
+        orientationVenue: targetVenue,
         appointmentDetails: {
           appointmentDate: schedDate,
           appointmentTime: schedTime,
-          venue: schedVenue,
+          venue: targetVenue,
           notes: schedNotes
         }
       });
@@ -422,8 +468,20 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                   {filteredList.map((app) => {
                     const name = (app as any).applicantName || app.details?.applicantName || 'Juan Dela Cruz';
                     const appt = app.appointmentDetails;
-                    const schedDate = appt?.appointmentDate || (app as any).appointmentDate || (app as any).appointment_date || (app as any).scheduledPayoutDate || (app as any).payout_date;
-                    const schedTime = appt?.appointmentTime || (app as any).appointmentTime || (app as any).appointment_time || (app as any).scheduledPayoutTime || (app as any).payout_time;
+
+                    const isTrn = (app.referenceNo || '').startsWith('TRN-') || app.category === 'training' || (app.serviceName || '').toLowerCase().includes('training') || (app.serviceName || '').toLowerCase().includes('barista') || (app.serviceName || '').toLowerCase().includes('hairdressing') || (app.serviceName || '').toLowerCase().includes('pastry');
+
+                    const rawDate = isTrn 
+                      ? ((app as any).orientation_date || (app as any).orientationDate || app.appointmentDate || (app as any).appointment_date || appt?.appointmentDate || '2026-10-08')
+                      : (appt?.appointmentDate || (app as any).appointmentDate || (app as any).appointment_date || (app as any).scheduledPayoutDate || (app as any).payout_date);
+
+                    const rawTime = isTrn 
+                      ? ((app as any).orientation_time || (app as any).orientationTime || app.appointmentTime || (app as any).appointment_time || appt?.appointmentTime || '09:00 AM')
+                      : (appt?.appointmentTime || (app as any).appointmentTime || (app as any).appointment_time || (app as any).scheduledPayoutTime || (app as any).payout_time);
+
+                    const schedDate = formatDateDisplay(rawDate);
+                    const schedTime = formatTo12Hour(rawTime);
+
                     const isScheduled = Boolean(schedDate && schedDate !== 'Awaiting Schedule' && appt?.status !== 'Pending Schedule');
                     const isGLPrintable = (app.serviceName.toLowerCase().includes('medical bill') || app.serviceName.toLowerCase().includes('hospital') || app.assistanceType?.toLowerCase().includes('medical bill') || app.serviceName.toLowerCase().includes('funeral') || app.serviceName.toLowerCase().includes('burial') || app.referenceNo.includes('FUN')) && !app.serviceName.toLowerCase().includes('medicine') && !(app.assistanceType || '').toLowerCase().includes('medicine');
 
