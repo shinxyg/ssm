@@ -64,11 +64,53 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
 
   // Helper to check if current date & time has reached or passed the appointment schedule
   const isScheduleTimeReached = (apptDate?: string, apptTime?: string) => {
-    if (!apptDate) return false;
+    if (!apptDate) return true;
     try {
-      const targetStr = apptTime ? `${apptDate}T${apptTime}:00` : `${apptDate}T00:00:00`;
-      const targetTime = new Date(targetStr).getTime();
-      return nowTick >= targetTime;
+      let year: number, month: number, day: number;
+
+      if (apptDate.includes('-')) {
+        const parts = apptDate.split('-');
+        year = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10) - 1;
+        day = parseInt(parts[2], 10);
+      } else {
+        const parsed = new Date(apptDate);
+        if (isNaN(parsed.getTime())) return true;
+        year = parsed.getFullYear();
+        month = parsed.getMonth();
+        day = parsed.getDate();
+      }
+
+      let hours = 0;
+      let minutes = 0;
+
+      if (apptTime) {
+        const timeUpper = apptTime.toUpperCase().trim();
+        const isPM = timeUpper.includes('PM');
+        const isAM = timeUpper.includes('AM');
+        const cleanTime = timeUpper.replace('AM', '').replace('PM', '').trim();
+        const timeParts = cleanTime.split(':');
+        
+        if (timeParts.length >= 1) {
+          hours = parseInt(timeParts[0], 10);
+          if (isNaN(hours)) hours = 0;
+        }
+        if (timeParts.length >= 2) {
+          minutes = parseInt(timeParts[1], 10);
+          if (isNaN(minutes)) minutes = 0;
+        }
+
+        if (isPM && hours < 12) {
+          hours += 12;
+        } else if (isAM && hours === 12) {
+          hours = 0;
+        }
+      }
+
+      const targetDate = new Date(year, month, day, hours, minutes, 0, 0);
+      if (isNaN(targetDate.getTime())) return true;
+
+      return nowTick >= targetDate.getTime();
     } catch (e) {
       return true;
     }
