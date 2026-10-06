@@ -65,6 +65,83 @@ interface TrainingProgramViewProps {
   darkMode?: boolean;
 }
 
+export const getBatchTimelineInfo = (durationStr?: string, customDate?: Date) => {
+  const now = customDate || new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  const is30Days = (durationStr || '').includes('30');
+
+  let batchName = `4th Batch ${year}`;
+  let opensDateStr = `October 1, ${year}`;
+  let deadlineDateStr = `October 15, ${year}`;
+  let startsDateStr = `November 3, ${year}`;
+  let endDateStr = is30Days ? `December 3, ${year}` : `November 20, ${year}`;
+  
+  let opensDateObj = new Date(year, 9, 1);
+  let deadlineDateObj = new Date(year, 9, 15, 23, 59, 59);
+  let startDateObj = new Date(year, 10, 3);
+  let endDateObj = is30Days ? new Date(year, 11, 3) : new Date(year, 10, 20);
+
+  if (month < 3) {
+    batchName = `1st Batch ${year}`;
+    opensDateStr = `January 15, ${year}`;
+    deadlineDateStr = `January 30, ${year}`;
+    startsDateStr = `February 1, ${year}`;
+    endDateStr = is30Days ? `March 3, ${year}` : `February 18, ${year}`;
+    opensDateObj = new Date(year, 0, 15);
+    deadlineDateObj = new Date(year, 0, 30, 23, 59, 59);
+    startDateObj = new Date(year, 1, 1);
+    endDateObj = is30Days ? new Date(year, 2, 3) : new Date(year, 1, 18);
+  } else if (month < 6) {
+    batchName = `2nd Batch ${year}`;
+    opensDateStr = `April 1, ${year}`;
+    deadlineDateStr = `April 15, ${year}`;
+    startsDateStr = `May 1, ${year}`;
+    endDateStr = is30Days ? `May 30, ${year}` : `May 18, ${year}`;
+    opensDateObj = new Date(year, 3, 1);
+    deadlineDateObj = new Date(year, 3, 15, 23, 59, 59);
+    startDateObj = new Date(year, 4, 1);
+    endDateObj = is30Days ? new Date(year, 4, 30) : new Date(year, 4, 18);
+  } else if (month < 9) {
+    batchName = `3rd Batch ${year}`;
+    opensDateStr = `July 1, ${year}`;
+    deadlineDateStr = `July 15, ${year}`;
+    startsDateStr = `August 1, ${year}`;
+    endDateStr = is30Days ? `August 30, ${year}` : `August 18, ${year}`;
+    opensDateObj = new Date(year, 6, 1);
+    deadlineDateObj = new Date(year, 6, 15, 23, 59, 59);
+    startDateObj = new Date(year, 7, 1);
+    endDateObj = is30Days ? new Date(year, 7, 30) : new Date(year, 7, 18);
+  } else {
+    batchName = `4th Batch ${year}`;
+    opensDateStr = `October 1, ${year}`;
+    deadlineDateStr = `October 15, ${year}`;
+    startsDateStr = `November 3, ${year}`;
+    endDateStr = is30Days ? `December 3, ${year}` : `November 20, ${year}`;
+    opensDateObj = new Date(year, 9, 1);
+    deadlineDateObj = new Date(year, 9, 15, 23, 59, 59);
+    startDateObj = new Date(year, 10, 3);
+    endDateObj = is30Days ? new Date(year, 11, 3) : new Date(year, 10, 20);
+  }
+
+  const isRegistrationOpen = now >= opensDateObj && now <= deadlineDateObj;
+  const isTrainingInSession = now >= startDateObj && now <= endDateObj;
+  const isTrainingFinished = now > endDateObj;
+
+  return {
+    batchName,
+    opensDateStr,
+    deadlineDateStr,
+    startsDateStr,
+    endDateStr,
+    isRegistrationOpen,
+    isTrainingInSession,
+    isTrainingFinished,
+    startsFormatted: `${startsDateStr.split(',')[0]} - ${endDateStr}`
+  };
+};
+
 export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({ 
   onApplyCourse, 
   onAddApplication,
@@ -91,10 +168,24 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
     return () => clearInterval(interval);
   }, []);
 
+  const completedAppTitles = useMemo(() => {
+    return existingApplications
+      .filter(a => {
+        const st = (a.status || '').toUpperCase();
+        return st.includes('GRADUAT') || st.includes('COMPLET') || st === 'COURSE COMPLETED';
+      })
+      .map(a => (a.course_title || a.assistance_type || '').toLowerCase());
+  }, [existingApplications]);
+
   const activeApp = useMemo(() => {
     return existingApplications.find((a) => {
       const st = (a.status || '').toUpperCase();
-      return !st.includes('REJECT') && !st.includes('DISAPPROV') && !st.includes('UNQUALIFIED');
+      return !st.includes('REJECT') && 
+             !st.includes('DISAPPROV') && 
+             !st.includes('UNQUALIFIED') && 
+             !st.includes('GRADUAT') && 
+             !st.includes('COMPLET') && 
+             st !== 'COURSE COMPLETED';
     });
   }, [existingApplications]);
 
@@ -470,97 +561,122 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                     </p>
 
                     {/* Metadata List */}
-                    <div className={`space-y-2 text-xs p-3 rounded-xl border ${
-                      darkMode ? 'bg-slate-900/60 border-slate-800/80 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
-                    }`}>
-                      <div className="flex items-center gap-2.5">
-                        <Calendar className="w-4 h-4 text-blue-500 shrink-0" />
-                        <span className={`font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>Training Batch:</span>
-                        <span>{course.batch}</span>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <Clock className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span className={`font-semibold ${darkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>Application Opens:</span>
-                        <span>{course.opens}</span>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
-                        <span className={`font-semibold ${darkMode ? 'text-amber-400' : 'text-amber-700'}`}>Application Deadline:</span>
-                        <span>{course.deadline}</span>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
-                        <span className={`font-semibold ${darkMode ? 'text-rose-400' : 'text-rose-700'}`}>Training Starts:</span>
-                        <span>{course.starts}</span>
-                      </div>
-                    </div>
-                  </div>
+                    {(() => {
+                      const batchInfo = getBatchTimelineInfo(course.duration);
+                      const courseTitleLower = course.title.toLowerCase();
+                      const isCompletedCourse = completedAppTitles.some(t => t.includes(courseTitleLower) || courseTitleLower.includes(t));
+                      const activeCourseTitle = (activeApp?.course_title || activeApp?.assistance_type || '').toLowerCase();
+                      const isAppliedCourse = activeApp && (activeCourseTitle.includes(courseTitleLower) || courseTitleLower.includes(activeCourseTitle));
+                      const isEnrolled = isAppliedCourse && (activeApp?.status || '').toUpperCase().includes('QUALIFIED');
 
-                  {/* Action Buttons Row */}
-                  <div className="pt-2 flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedScheduleModal({
-                        course: course.title,
-                        category: 'Livelihood & Skills Training',
-                        batch: course.batch,
-                        venue: course.venue || 'Quezon City Skills Development Center',
-                        address: course.address || 'Kamuning Road, Diliman, Quezon City',
-                        schedule: course.schedule || 'Monday to Friday (8:00 AM - 12:00 PM)',
-                        duration: course.duration,
-                        syllabus: course.syllabus || [
-                          'Orientation, Hygiene & Safety Standards',
-                          'Basic Principles & Practical Hands-on Operations',
-                          'Equipment Handling & Tools Management',
-                          'Assessment & Practical Certification Exam'
-                        ]
-                      })}
-                      className={`flex-1 py-2.5 text-xs font-bold rounded-xl border transition-colors flex items-center justify-center gap-1.5 ${
-                        darkMode 
-                          ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
-                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
-                      }`}
-                    >
-                      <Calendar className="w-3.5 h-3.5 text-blue-400" />
-                      <span>View Orientation</span>
-                    </button>
-                    {activeApp ? (
-                      (() => {
-                        const activeCourseTitle = (activeApp.course_title || activeApp.assistance_type || '').toLowerCase();
-                        const isAppliedCourse = activeCourseTitle.includes(course.title.toLowerCase()) || course.title.toLowerCase().includes(activeCourseTitle);
-                        if (isAppliedCourse) {
-                          return (
+                      return (
+                        <>
+                          <div className={`space-y-2 text-xs p-3 rounded-xl border ${
+                            darkMode ? 'bg-slate-900/60 border-slate-800/80 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700'
+                          }`}>
+                            <div className="flex items-center gap-2.5">
+                              <Calendar className="w-4 h-4 text-blue-500 shrink-0" />
+                              <span className={`font-semibold ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>Training Batch:</span>
+                              <span className="font-bold text-white">{batchInfo.batchName}</span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                              <Clock className="w-4 h-4 text-emerald-500 shrink-0" />
+                              <span className={`font-semibold ${darkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>Application Opens:</span>
+                              <span>{batchInfo.opensDateStr}</span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                              <span className={`font-semibold ${darkMode ? 'text-amber-400' : 'text-amber-700'}`}>Application Deadline:</span>
+                              <span>{batchInfo.deadlineDateStr}</span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                              <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
+                              <span className={`font-semibold ${darkMode ? 'text-rose-400' : 'text-rose-700'}`}>Training Starts:</span>
+                              <span>{batchInfo.startsFormatted}</span>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons Row */}
+                          <div className="pt-3 flex gap-3">
                             <button
                               type="button"
-                              disabled
-                              className="flex-1 py-2.5 bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-xs font-extrabold rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5"
+                              onClick={() => setSelectedScheduleModal({
+                                course: course.title,
+                                category: 'Livelihood & Skills Training',
+                                batch: batchInfo.batchName,
+                                venue: course.venue || 'Quezon City Skills Development Center',
+                                address: course.address || 'Kamuning Road, Diliman, Quezon City',
+                                schedule: course.schedule || 'Monday to Friday (8:00 AM - 12:00 PM)',
+                                duration: course.duration,
+                                startsDateStr: batchInfo.startsDateStr,
+                                endDateStr: batchInfo.endDateStr,
+                                syllabus: course.syllabus || [
+                                  'Orientation, Hygiene & Safety Standards',
+                                  'Basic Principles & Practical Hands-on Operations',
+                                  'Equipment Handling & Tools Management',
+                                  'Assessment & Practical Certification Exam'
+                                ]
+                              })}
+                              className={`flex-1 py-2.5 text-xs font-bold rounded-xl border transition-colors flex items-center justify-center gap-1.5 ${
+                                darkMode 
+                                  ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                              }`}
                             >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Applied ({activeApp.status})</span>
+                              <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                              <span>{isEnrolled ? 'View Class Schedule' : 'View Orientation'}</span>
                             </button>
-                          );
-                        }
-                        return (
-                          <button
-                            type="button"
-                            disabled
-                            className="flex-1 py-2.5 bg-slate-900/80 border border-slate-800 text-slate-500 text-xs font-bold rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5"
-                          >
-                            <Lock className="w-3.5 h-3.5" />
-                            <span>Active Application Exists</span>
-                          </button>
-                        );
-                      })()
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleStartApply(course.title)}
-                        className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <span>Apply Now</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+
+                            {isCompletedCourse ? (
+                              <button
+                                type="button"
+                                disabled
+                                className="flex-1 py-2.5 bg-emerald-950/50 border border-emerald-600/50 text-emerald-300 text-xs font-bold rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Course Completed (Graduated)</span>
+                              </button>
+                            ) : isAppliedCourse ? (
+                              <button
+                                type="button"
+                                disabled
+                                className="flex-1 py-2.5 bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-xs font-extrabold rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Applied ({activeApp.status})</span>
+                              </button>
+                            ) : activeApp ? (
+                              <button
+                                type="button"
+                                disabled
+                                className="flex-1 py-2.5 bg-slate-900/80 border border-slate-800 text-slate-500 text-xs font-bold rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5"
+                              >
+                                <Lock className="w-3.5 h-3.5" />
+                                <span>Active Application Exists</span>
+                              </button>
+                            ) : !batchInfo.isRegistrationOpen ? (
+                              <button
+                                type="button"
+                                disabled
+                                className="flex-1 py-2.5 bg-slate-900/80 border border-slate-800 text-amber-400/90 text-[11px] font-bold rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5"
+                              >
+                                <Clock className="w-3.5 h-3.5 text-amber-400" />
+                                <span>Waiting for Registration (Opens: {batchInfo.opensDateStr})</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleStartApply(course.title)}
+                                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <span>Apply Now</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               );
@@ -1830,7 +1946,7 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                   <div className="flex items-center justify-between border-b border-blue-900/60 pb-2">
                     <span className="text-xs font-black uppercase text-blue-300 tracking-wider flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-blue-400" />
-                      <span>YOUR ORIENTATION & APPLICATION STATUS</span>
+                      <span>{isEnrolled ? 'YOUR CLASS ENROLLMENT & BATCH SCHEDULE' : 'YOUR ORIENTATION & APPLICATION STATUS'}</span>
                     </span>
                     <span className="font-mono text-xs font-bold text-blue-300 bg-blue-900/60 px-2.5 py-0.5 rounded-lg">
                       REF: {activeApp.reference_no || activeApp.referenceNo}
@@ -1842,20 +1958,41 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                       <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/50 text-emerald-300">
                         <div className="font-extrabold text-sm mb-1 text-emerald-300 flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                          <span>🟢 QUALIFIED / ENROLLED</span>
+                          <span>QUALIFIED / ENROLLED</span>
                         </div>
                         <p className="text-[11px] leading-relaxed">
-                          Congratulations! You are now Qualified and Enrolled in the Training Program!
+                          Congratulations! You are officially Qualified and Enrolled in {selectedScheduleModal.course}!
                         </p>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
-                        <span className="text-[10px] font-extrabold uppercase text-amber-400 block tracking-wider">NOTICE OF ADMISSION & CLASS RULES</span>
-                        <div className="text-xs font-bold text-white">Class Batch Number: Batch 3 (2026)</div>
-                        <ul className="list-disc list-inside text-[11px] text-slate-300 space-y-0.5">
-                          <li>A minimum of 80% attendance is required for live training modules.</li>
-                          <li>Follow proper dress code and safety guidelines of Quezon City Skills Development Center.</li>
-                        </ul>
+                      <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+                        <span className="text-[10px] font-extrabold uppercase text-amber-400 block tracking-wider">OFFICIAL CLASS PASS & BATCH SCHEDULE</span>
+                        <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-200">
+                          <div>
+                            <span className="text-slate-400 block text-[10px]">TRAINING BATCH:</span>
+                            <strong className="text-white">{selectedScheduleModal.batch || '4th Batch 2026'}</strong>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px]">TRAINING VENUE:</span>
+                            <strong className="text-white">{selectedScheduleModal.venue || 'QC Skills Development Center'}</strong>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px]">CLASS START DATE:</span>
+                            <strong className="text-emerald-400">{selectedScheduleModal.startsDateStr || 'November 3, 2026'}</strong>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px]">EXPECTED GRADUATION:</span>
+                            <strong className="text-amber-400">{selectedScheduleModal.endDateStr || 'November 20, 2026'}</strong>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-800/80 space-y-1">
+                          <span className="text-[10px] font-extrabold uppercase text-blue-400 block">NOTICE OF ADMISSION & CLASS RULES</span>
+                          <ul className="list-disc list-inside text-[11px] text-slate-300 space-y-0.5">
+                            <li>A minimum of 80% attendance is required for live training modules.</li>
+                            <li>Follow proper dress code and safety guidelines of Quezon City Skills Development Center.</li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   ) : isUnqualified ? (
