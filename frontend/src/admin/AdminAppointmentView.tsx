@@ -176,6 +176,25 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
         appointmentDetails: dbAppt
       };
     });
+
+    // Also include any appointments from PostgreSQL database table that are not yet in merged array
+    dbAppointments.forEach((appt) => {
+      if (!merged.some(m => m.referenceNo === appt.referenceNo)) {
+        merged.push({
+          referenceNo: appt.referenceNo,
+          applicantName: appt.applicantName,
+          serviceName: appt.purpose || 'Livelihood & Enterprise Assistance Program',
+          category: (appt.moduleName || 'LIVELIHOOD').toLowerCase(),
+          assistanceType: appt.purpose || 'Livelihood Assessment',
+          status: 'APPROVED BY ADMIN',
+          dateSubmitted: 'Recent',
+          amountOrType: 'Livelihood Assistance',
+          assignedSocialWorker: 'Livelihood Social Worker Officer, RSW',
+          appointmentDetails: appt
+        });
+      }
+    });
+
     return merged;
   }, [applications, dbAppointments]);
 

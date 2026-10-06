@@ -78,17 +78,19 @@ export default function App() {
   // Fetch applications from PostgreSQL DB with fast O(1) state comparison
   const fetchDBApplications = async () => {
     try {
-      const [resAics, resSenior, resSolo, resEdu] = await Promise.all([
+      const [resAics, resSenior, resSolo, resEdu, resLivelihood] = await Promise.all([
         fetch('http://localhost:5000/api/aics/applications').catch(() => null),
         fetch('http://localhost:5000/api/senior/applications').catch(() => null),
         fetch('http://localhost:5000/api/solo-parent/applications').catch(() => null),
-        fetch('http://localhost:5000/api/educational/applications').catch(() => null)
+        fetch('http://localhost:5000/api/educational/applications').catch(() => null),
+        fetch('http://localhost:5000/api/livelihood/applications').catch(() => null)
       ]);
 
       const aicsApps: ApplicationRecord[] = (resAics && resAics.ok) ? await resAics.json() : [];
       const seniorRaw: any[] = (resSenior && resSenior.ok) ? await resSenior.json() : [];
       const soloRaw: any[] = (resSolo && resSolo.ok) ? await resSolo.json() : [];
       const eduRaw: any[] = (resEdu && resEdu.ok) ? await resEdu.json() : [];
+      const lvhRaw: any[] = (resLivelihood && resLivelihood.ok) ? await resLivelihood.json() : [];
 
       const seniorApps: ApplicationRecord[] = (Array.isArray(seniorRaw) ? seniorRaw : []).map(row => ({
         referenceNo: row.reference_no,
@@ -162,14 +164,46 @@ export default function App() {
         details: row.details
       }));
 
+      const lvhApps: ApplicationRecord[] = (Array.isArray(lvhRaw) ? lvhRaw : []).map(row => ({
+        referenceNo: row.reference_no,
+        applicantName: row.applicant_name,
+        serviceName: row.service_name || 'Livelihood & Enterprise Assistance Program',
+        category: 'livelihood',
+        assistanceType: row.assistance_type || 'Livelihood Capital Grant',
+        status: row.status || 'Pending Document Validation',
+        dateSubmitted: row.date_submitted ? new Date(row.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
+        amountOrType: row.assistance_type === 'Materials / Supplies' ? 'Materials / Starter Kit' : '₱15,000.00 Capital Grant',
+        assignedSocialWorker: 'Social Worker Officer (Livelihood Division)',
+        scheduledPayoutDate: row.payout_date,
+        scheduledPayoutTime: row.payout_time,
+        appointmentDate: row.appointment_date,
+        appointmentTime: row.appointment_time,
+        appointmentDetails: {
+          appointmentDate: row.appointment_date,
+          appointmentTime: row.appointment_time,
+          venue: row.appointment_venue || 'Quezon City Hall SSDD Livelihood Desk',
+          assignedWorker: 'Livelihood Evaluator, RSW'
+        },
+        disapprovalReason: row.disapproval_reason,
+        details: row.details
+      }));
+
       const allDbApps = [
         ...(Array.isArray(aicsApps) ? aicsApps : []), 
         ...seniorApps,
         ...soloApps,
-        ...eduApps
+        ...eduApps,
+        ...lvhApps
       ];
 
-      setApplications(allDbApps);
+      const uniqueMap = new Map<string, ApplicationRecord>();
+      allDbApps.forEach(item => {
+        if (item && item.referenceNo && !uniqueMap.has(item.referenceNo)) {
+          uniqueMap.set(item.referenceNo, item);
+        }
+      });
+
+      setApplications(Array.from(uniqueMap.values()));
     } catch (err) {
       console.log('Notice: Backend API offline or error fetching DB apps:', err);
     }
@@ -192,8 +226,9 @@ export default function App() {
     const isSenior = (newApp.category || '').toLowerCase().includes('senior') || (newApp.serviceName || '').toLowerCase().includes('senior') || (newApp.referenceNo || '').startsWith('SENIOR-');
     const isSolo = (newApp.category || '').toLowerCase() === 'soloparent' || (newApp.referenceNo || '').startsWith('SP-SUBSIDY-') || (newApp.referenceNo || '').startsWith('SP-');
     const isEdu = (newApp.category || '').toLowerCase() === 'educational' || (newApp.referenceNo || '').startsWith('QC-SP-EDU-');
+    const isLvh = (newApp.category || '').toLowerCase() === 'livelihood' || (newApp.referenceNo || '').startsWith('LVH-');
 
-    if (isSenior || isSolo || isEdu) {
+    if (isSenior || isSolo || isEdu || isLvh) {
       return;
     }
 
@@ -227,6 +262,7 @@ export default function App() {
     const isSenior = (refNo || '').startsWith('SENIOR-');
     const isSolo = (refNo || '').startsWith('SP-SUBSIDY-') || (refNo || '').startsWith('SP-');
     const isEdu = (refNo || '').startsWith('QC-SP-EDU-');
+    const isLvh = (refNo || '').startsWith('LVH-');
 
     let endpoint = `http://localhost:5000/api/aics/applications/${encodeURIComponent(refNo)}/status`;
     if (isSenior) {
@@ -235,6 +271,8 @@ export default function App() {
       endpoint = `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`;
     } else if (isEdu) {
       endpoint = `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`;
+    } else if (isLvh) {
+      endpoint = `http://localhost:5000/api/livelihood/applications/${encodeURIComponent(refNo)}/status`;
     }
 
     try {

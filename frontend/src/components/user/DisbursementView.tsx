@@ -76,23 +76,29 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
 
   // Categorize Applications into Active vs History (Ensure records NEVER disappear!)
   const { activeApplications, historyApplications } = useMemo(() => {
-    const active: ApplicationRecord[] = [];
-    const history: ApplicationRecord[] = [];
+    const activeMap = new Map<string, ApplicationRecord>();
+    const historyMap = new Map<string, ApplicationRecord>();
 
     applications.forEach((app) => {
+      if (!app || !app.referenceNo) return;
       const st = (app.status || '').toUpperCase();
       const isRejected = st === 'REJECTED' || st === 'DISAPPROVED' || st === 'DISQUALIFIED' || st.includes('REJECT') || st.includes('DISAPPROV');
 
       // History tab keeps all records permanently
-      history.push(app);
+      if (!historyMap.has(app.referenceNo)) {
+        historyMap.set(app.referenceNo, app);
+      }
 
-      // Active tab keeps all non-rejected applications permanently (including COMPLETED/RELEASED) so records never disappear!
-      if (!isRejected) {
-        active.push(app);
+      // Active tab keeps all non-rejected applications permanently
+      if (!isRejected && !activeMap.has(app.referenceNo)) {
+        activeMap.set(app.referenceNo, app);
       }
     });
 
-    return { activeApplications: active, historyApplications: history };
+    return { 
+      activeApplications: Array.from(activeMap.values()), 
+      historyApplications: Array.from(historyMap.values()) 
+    };
   }, [applications]);
 
   // Current working list based on tab
@@ -222,6 +228,17 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
         >
           SENIOR CITIZEN
         </button>
+        <button
+          type="button"
+          onClick={() => setSelectedModuleFilter('livelihood')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+            selectedModuleFilter === 'livelihood'
+              ? 'bg-blue-600 text-white shadow-lg border border-blue-400/40'
+              : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
+          }`}
+        >
+          LIVELIHOOD PROGRAM
+        </button>
       </div>
 
       {/* APPLICATIONS LIST */}
@@ -233,7 +250,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
 
         {filteredApps.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
-            {filteredApps.map((app) => {
+            {filteredApps.map((app, idx) => {
               const statusText = (app.status as string) || 'Pending';
               const name = (app as any).applicantName || app.details?.applicantName || 'Juan Dela Cruz';
               const isSoloParent = (app.category || '').toLowerCase().includes('solo') || (app.serviceName || '').toLowerCase().includes('solo') || app.referenceNo.startsWith('SP-');
@@ -343,7 +360,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
 
               return (
                 <div
-                  key={app.referenceNo}
+                  key={`${app.referenceNo}-${idx}`}
                   className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-6 shadow-xl space-y-4 hover:border-slate-700 transition-all"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
@@ -374,14 +391,22 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
 
                     <div className="p-3 rounded-xl bg-[#080f1e] border border-slate-800 space-y-1">
                       <span className="text-slate-400 text-[10px] font-semibold uppercase block">Assigned Unit / Worker</span>
-                      <div className="font-bold text-slate-200">{app.assignedSocialWorker || 'Ms. Jocelyn Reyes, RSW'}</div>
-                      <div className="text-slate-400 text-[11px]">QC Hall SSDD Solo Parent Welfare</div>
+                      <div className="font-bold text-slate-200">
+                        {app.assignedSocialWorker || (app.referenceNo.startsWith('LVH-') ? 'Social Worker Officer (Livelihood Division)' : 'Ms. Jocelyn Reyes, RSW')}
+                      </div>
+                      <div className="text-slate-400 text-[11px]">
+                        {app.referenceNo.startsWith('LVH-') ? 'QC Hall SSDD Livelihood Division' : isSoloParent ? 'QC Hall SSDD Solo Parent Welfare' : 'QC Hall Social Services Department'}
+                      </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#080f1e] border border-slate-800 space-y-1">
                       <span className="text-slate-400 text-[10px] font-semibold uppercase block">Benefit Entitlement</span>
                       <div className="font-bold text-amber-400">
-                        {isSoloParent ? '₱3,000.00 FIXED SOLO PARENT CASH SUBSIDY' : (app.amountOrType || 'Financial Assistance Grant')}
+                        {isSoloParent 
+                          ? '₱3,000.00 FIXED SOLO PARENT CASH SUBSIDY' 
+                          : app.referenceNo.startsWith('LVH-') 
+                          ? (app.assistanceType === 'Materials / Supplies' ? 'Materials & Starter Kit' : '₱15,000.00 Livelihood Capital Grant')
+                          : (app.amountOrType || 'Financial Assistance Grant')}
                       </div>
                       <div className="text-slate-400 text-[11px]">Quezon City Social Services Department</div>
                     </div>

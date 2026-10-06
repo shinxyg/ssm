@@ -109,7 +109,7 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
         : statusFilter === 'PENDING'
         ? st.includes('PENDING') || st.includes('UNDER REVIEW') || st.includes('VALIDATION')
         : statusFilter === 'APPROVED'
-        ? st.includes('APPROVED') || st.includes('SCHEDULED') || st.includes('COMPLETED')
+        ? st.includes('APPROVED') || st.includes('SCHEDULED') || st.includes('COMPLETED') || st.includes('RELEASED') || st.includes('PAYOUT') || st.includes('INTERVIEW')
         : st.includes('REJECT') || st.includes('DISQUALIFIED');
 
       return searchPass && catPass && statusPass;
@@ -124,7 +124,7 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
   }).length;
   const approvedCount = combinedApps.filter(a => {
     const st = (a.status || '').toUpperCase();
-    return st.includes('APPROVED') || st.includes('SCHEDULED') || st.includes('COMPLETED');
+    return st.includes('APPROVED') || st.includes('SCHEDULED') || st.includes('COMPLETED') || st.includes('RELEASED') || st.includes('PAYOUT') || st.includes('INTERVIEW');
   }).length;
   const rejectedCount = combinedApps.filter(a => {
     const st = (a.status || '').toUpperCase();

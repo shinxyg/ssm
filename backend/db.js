@@ -236,9 +236,48 @@ export const initDB = async () => {
         proposal_title VARCHAR(255),
         barangay VARCHAR(150),
         phone_number VARCHAR(50),
-        status VARCHAR(100) DEFAULT 'Under Evaluation',
+        status VARCHAR(100) DEFAULT 'Pending Validation',
         date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      -- Ensure livelihood_applications has all standard columns
+      ALTER TABLE livelihood_applications ALTER COLUMN program_name DROP NOT NULL;
+      ALTER TABLE livelihood_applications ALTER COLUMN program_name SET DEFAULT 'Livelihood Assistance Program';
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS email_address VARCHAR(255);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS sector VARCHAR(100);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS employment_status VARCHAR(100);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS has_existing_business VARCHAR(10);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS type_of_business VARCHAR(150);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS specified_other_business VARCHAR(255);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS qc_id_no VARCHAR(50);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS first_name VARCHAR(100);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS middle_name VARCHAR(100);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS last_name VARCHAR(100);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS suffix VARCHAR(20);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS nationality VARCHAR(50) DEFAULT 'FILIPINO';
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS dob VARCHAR(50);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS age VARCHAR(10);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS gender VARCHAR(20);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS civil_status VARCHAR(50);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS blood_type VARCHAR(20);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS house_no VARCHAR(100);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS street_name VARCHAR(150);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS reason_for_assistance TEXT;
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS requested_materials_items JSONB;
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS service_name VARCHAR(255) DEFAULT 'Livelihood Capital Assistance Grant';
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'livelihood';
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS assistance_type VARCHAR(100) DEFAULT 'Livelihood Assistance Grant';
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS amount NUMERIC(10,2) DEFAULT 15000.00;
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS disapproval_reason TEXT;
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS appointment_date VARCHAR(50);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS appointment_time VARCHAR(50);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS appointment_venue VARCHAR(255);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS payout_date VARCHAR(50);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS payout_time VARCHAR(50);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS payout_venue VARCHAR(255);
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS uploaded_documents JSONB;
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS details JSONB;
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
       CREATE TABLE IF NOT EXISTS solo_parent_applications (
         id SERIAL PRIMARY KEY,

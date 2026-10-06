@@ -53,6 +53,10 @@ interface TrainingCourse {
   deadline: string;
   starts: string;
   icon: any;
+  schedule?: string;
+  venue?: string;
+  address?: string;
+  syllabus?: string[];
 }
 
 interface TrainingProgramViewProps {
@@ -397,14 +401,29 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                   <div className="pt-2 flex gap-3">
                     <button
                       type="button"
-                      onClick={() => handleStartApply(course.title)}
-                      className={`flex-1 py-2.5 text-xs font-bold rounded-xl border transition-colors ${
+                      onClick={() => setSelectedScheduleModal({
+                        course: course.title,
+                        category: 'Livelihood & Skills Training',
+                        batch: course.batch,
+                        venue: course.venue || 'Quezon City Skills Development Center',
+                        address: course.address || 'Kamuning Road, Diliman, Quezon City',
+                        schedule: course.schedule || 'Monday to Friday (8:00 AM - 12:00 PM)',
+                        duration: course.duration,
+                        syllabus: course.syllabus || [
+                          'Orientation, Hygiene & Safety Standards',
+                          'Basic Principles & Practical Hands-on Operations',
+                          'Equipment Handling & Tools Management',
+                          'Assessment & Practical Certification Exam'
+                        ]
+                      })}
+                      className={`flex-1 py-2.5 text-xs font-bold rounded-xl border transition-colors flex items-center justify-center gap-1.5 ${
                         darkMode 
                           ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                       }`}
                     >
-                      View Details
+                      <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                      <span>View Schedule</span>
                     </button>
                     <button
                       type="button"

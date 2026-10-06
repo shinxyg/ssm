@@ -1230,6 +1230,217 @@ app.put('/api/educational/applications/:id/status', async (req, res) => {
   }
 });
 
+// GET all Livelihood Assistance applications from PostgreSQL DB
+app.get('/api/livelihood/applications', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM livelihood_applications ORDER BY date_submitted DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST submit new Livelihood Assistance application to PostgreSQL DB
+app.post('/api/livelihood/applications', async (req, res) => {
+  const {
+    referenceNo,
+    applicantName,
+    firstName,
+    middleName,
+    lastName,
+    suffix,
+    nationality,
+    dob,
+    age,
+    gender,
+    civilStatus,
+    bloodType,
+    houseNo,
+    streetName,
+    barangay,
+    phoneNumber,
+    emailAddress,
+    sector,
+    employmentStatus,
+    hasExistingBusiness,
+    typeOfBusiness,
+    specifiedOtherBusiness,
+    assistanceType,
+    reasonForAssistance,
+    requestedMaterialsItems,
+    uploadedDocuments,
+    details,
+    amount
+  } = req.body;
+
+  try {
+    const query = `
+      INSERT INTO livelihood_applications (
+        reference_no, applicant_name, program_name, first_name, middle_name, last_name, suffix, nationality,
+        dob, age, gender, civil_status, blood_type, house_no, street_name, barangay, phone_number,
+        email_address, sector, employment_status, has_existing_business, type_of_business,
+        specified_other_business, assistance_type, reason_for_assistance, requested_materials_items,
+        uploaded_documents, details, amount, service_name, category, status
+      ) VALUES (
+        $1, $2, 'Livelihood Assistance Program', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21,
+        $22, $23, $24, $25, $26, $27, COALESCE($28, 15000.00), 'Livelihood Capital Assistance Grant', 'livelihood', 'Pending Document Validation'
+      )
+      ON CONFLICT (reference_no) DO UPDATE SET
+        applicant_name = EXCLUDED.applicant_name,
+        sector = EXCLUDED.sector,
+        employment_status = EXCLUDED.employment_status,
+        has_existing_business = EXCLUDED.has_existing_business,
+        type_of_business = EXCLUDED.type_of_business,
+        specified_other_business = EXCLUDED.specified_other_business,
+        assistance_type = EXCLUDED.assistance_type,
+        reason_for_assistance = EXCLUDED.reason_for_assistance,
+        requested_materials_items = EXCLUDED.requested_materials_items,
+        uploaded_documents = EXCLUDED.uploaded_documents,
+        details = EXCLUDED.details,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *;
+    `;
+    const values = [
+      referenceNo || `LVH-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      applicantName || `${firstName || ''} ${lastName || ''}`.trim() || 'Applicant',
+      firstName, middleName, lastName, suffix, nationality || 'FILIPINO',
+      dob, age, gender, civilStatus, bloodType, houseNo, streetName, barangay, phoneNumber,
+      emailAddress, sector, employmentStatus, hasExistingBusiness, typeOfBusiness,
+      specifiedOtherBusiness, assistanceType, reasonForAssistance,
+      requestedMaterialsItems ? JSON.stringify(requestedMaterialsItems) : null,
+      uploadedDocuments ? JSON.stringify(uploadedDocuments) : null,
+      details ? JSON.stringify(details) : null,
+      amount || 15000.00
+    ];
+
+    const result = await pool.query(query, values);
+    const row = result.rows[0];
+
+    sendNotificationEmail({
+      to: emailAddress || 'clarencemillares15@gmail.com',
+      subject: `GovServe Notice: Livelihood Application Received (${row.reference_no})`,
+      title: `Livelihood Application Received!`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: 'Pending Document Validation',
+      detailsMessage: `Natanggap ang inyong Livelihood Program Assistance form. Sinusuri na ng SSDD Admin ang inyong requirements.`
+    });
+
+    res.status(201).json(row);
+  } catch (err) {
+    console.error('Error saving Livelihood application:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update status/scheduling of a Livelihood application
+app.put('/api/livelihood/applications/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { 
+    status, 
+    disapprovalReason, 
+    appointmentDate, 
+    appointmentTime, 
+    appointmentVenue, 
+    payoutDate, 
+    payoutTime, 
+    payoutVenue 
+  } = req.body;
+
+  try {
+    const query = `
+      UPDATE livelihood_applications 
+      SET 
+        status = COALESCE($1, status),
+        disapproval_reason = COALESCE($2, disapproval_reason),
+        appointment_date = COALESCE($3, appointment_date),
+        appointment_time = COALESCE($4, appointment_time),
+        appointment_venue = COALESCE($5, appointment_venue),
+        payout_date = COALESCE($6, payout_date),
+        payout_time = COALESCE($7, payout_time),
+        payout_venue = COALESCE($8, payout_venue),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id::text = $9 OR reference_no = $9
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [
+      status, disapprovalReason, appointmentDate, appointmentTime, appointmentVenue,
+      payoutDate, payoutTime, payoutVenue, id
+    ]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Livelihood application not found' });
+    }
+    const row = result.rows[0];
+
+    // Sync with appointments table
+    if (status === 'APPROVED BY ADMIN' || status === 'INTERVIEW SCHEDULED' || status === 'SITE ASSESSMENT SCHEDULED' || appointmentDate) {
+      const apptStatus = appointmentDate || status.includes('SCHEDULED') ? 'Interview Scheduled' : 'Pending Schedule';
+      try {
+        const checkAppt = await pool.query(`SELECT id FROM appointments WHERE reference_no = $1`, [row.reference_no]);
+        if (checkAppt.rows.length > 0) {
+          await pool.query(`
+            UPDATE appointments 
+            SET 
+              appointment_date = COALESCE($1, appointment_date),
+              appointment_time = COALESCE($2, appointment_time),
+              venue = COALESCE($3, venue),
+              status = $4
+            WHERE reference_no = $5;
+          `, [appointmentDate || null, appointmentTime || null, appointmentVenue || null, apptStatus, row.reference_no]);
+        } else {
+          await pool.query(`
+            INSERT INTO appointments (reference_no, module_name, applicant_name, appointment_date, appointment_time, venue, purpose, status)
+            VALUES ($1, 'LIVELIHOOD', $2, $3, $4, COALESCE($5, 'Quezon City Hall SSDD Office'), 'Livelihood Assessment & Site Inspection Interview', $6);
+          `, [row.reference_no, row.applicant_name, appointmentDate || null, appointmentTime || null, appointmentVenue || null, apptStatus]);
+        }
+      } catch (e) {
+        console.warn('Sync appointments warning:', e.message);
+      }
+    }
+
+    // Sync with financial_disbursements table
+    if (status === 'APPROVED' || status === 'APPROVED FOR LIVELIHOOD GRANT' || status === 'Payout Scheduled' || status === 'PAYOUT SCHEDULED') {
+      const finStatus = (status === 'Payout Scheduled' || status === 'PAYOUT SCHEDULED') ? 'PAYOUT SCHEDULED' : 'PENDING PAYOUT SCHEDULE';
+      try {
+        const checkFin = await pool.query(`SELECT id FROM financial_disbursements WHERE reference_no = $1`, [row.reference_no]);
+        if (checkFin.rows.length > 0) {
+          await pool.query(`
+            UPDATE financial_disbursements 
+            SET 
+              payout_date = COALESCE($1, payout_date),
+              payout_start_time = COALESCE($2, payout_start_time),
+              venue = COALESCE($3, venue),
+              status = $4,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE reference_no = $5;
+          `, [payoutDate || row.payout_date || null, payoutTime || row.payout_time || null, payoutVenue || row.payout_venue || null, finStatus, row.reference_no]);
+        } else {
+          await pool.query(`
+            INSERT INTO financial_disbursements (reference_no, applicant_name, module_name, benefit_name, amount, payout_date, payout_start_time, venue, status)
+            VALUES ($1, $2, 'LIVELIHOOD', '₱15,000 Livelihood Capital Assistance Grant', 15000.00, $3, $4, $5, $6);
+          `, [row.reference_no, row.applicant_name, payoutDate || row.payout_date || null, payoutTime || row.payout_time || null, payoutVenue || row.payout_venue || null, finStatus]);
+        }
+      } catch (e) {
+        console.warn('Sync financial_disbursements warning:', e.message);
+      }
+    }
+
+    sendNotificationEmail({
+      to: row.email_address || 'clarencemillares15@gmail.com',
+      subject: `Livelihood Assistance Update (${row.reference_no}): ${row.status}`,
+      title: `Livelihood Assistance Status: ${row.status}`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: row.status,
+      detailsMessage: row.disapproval_reason ? `Disapproved ang request. Dahilan: ${row.disapproval_reason}` : `May update sa inyong Livelihood Assistance application. Current Status: ${row.status}`
+    });
+
+    res.json(row);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET all appointments from PostgreSQL DB
 app.get('/api/appointments', async (req, res) => {
   try {

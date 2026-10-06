@@ -151,6 +151,19 @@ export const LivelihoodProgramView: React.FC<LivelihoodProgramViewProps> = ({
   const [submittedApp, setSubmittedApp] = useState<ApplicationRecord | null>(null);
 
   const handleStartApply = () => {
+    setSectorClassification('');
+    setEmploymentStatus('');
+    setExistingBusiness('');
+    setTypeOfBusiness('');
+    setOtherBusinessSpecification('');
+    setAssistanceNeeded('');
+    setReasonPurpose('');
+    setMaterialItems([{ id: '1', name: '', quantity: '' }]);
+    setDocValidId(null);
+    setDocResidency(null);
+    setDocOther(null);
+    setIsSubmitting(false);
+    setIsEditingFromStep4(false);
     setIsApplying(true);
     setCurrentStep(1);
   };
@@ -179,7 +192,79 @@ export const LivelihoodProgramView: React.FC<LivelihoodProgramViewProps> = ({
     setCurrentStep(targetStep);
   };
 
-  const handleFinalSubmit = () => {
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const handleFinalSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    const refNo = `LVH-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const payload = {
+      referenceNo: refNo,
+      applicantName: `${firstName} ${middleName} ${lastName}`.replace(/\s+/g, ' ').trim(),
+      firstName,
+      middleName,
+      lastName,
+      suffix,
+      nationality,
+      dob,
+      age,
+      gender,
+      civilStatus,
+      bloodType,
+      houseNo,
+      streetName: street,
+      barangay,
+      phoneNumber: phone,
+      emailAddress: email,
+      sector: sectorClassification,
+      employmentStatus,
+      hasExistingBusiness: existingBusiness,
+      typeOfBusiness,
+      specifiedOtherBusiness: otherBusinessSpecification,
+      assistanceType: assistanceNeeded,
+      reasonForAssistance: reasonPurpose,
+      requestedMaterialsItems: assistanceNeeded === 'Materials / Supplies' ? materialItems.filter(i => i.name.trim()) : null,
+      uploadedDocuments: {
+        valid_id: docValidId,
+        proof_of_residency: docResidency,
+        other_documents: docOther
+      },
+      details: {
+        sectorClassification,
+        employmentStatus,
+        existingBusiness,
+        typeOfBusiness,
+        otherBusinessSpecification,
+        assistanceNeeded,
+        reasonPurpose,
+        materialItems
+      },
+      amount: assistanceNeeded === 'Materials / Supplies' ? 0.00 : 15000.00
+    };
+
+    try {
+      const res = await fetch('http://localhost:5000/api/livelihood/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const savedData = await res.json();
+      if (onAddApplication) {
+        onAddApplication({
+          id: savedData.reference_no || refNo,
+          referenceNo: savedData.reference_no || refNo,
+          serviceName: 'Livelihood Capital Assistance Grant',
+          applicantName: `${firstName} ${lastName}`,
+          category: 'livelihood',
+          status: 'Pending Document Validation',
+          dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          details: payload.details
+        } as any);
+      }
+    } catch (err) {
+      console.error('Error submitting livelihood application:', err);
+    }
+
     setIsApplying(false);
     if (onBack) onBack();
   };
@@ -798,6 +883,11 @@ export const LivelihoodProgramView: React.FC<LivelihoodProgramViewProps> = ({
                         </div>
 
                         <div className="space-y-2.5">
+                          <div className="flex items-center gap-2.5 px-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                            <span className="flex-1">Item Name / Description</span>
+                            <span className="w-28 text-center">Quantity / Set</span>
+                            {materialItems.length > 1 && <span className="w-8"></span>}
+                          </div>
                           {materialItems.map((item) => (
                             <div key={item.id} className="flex items-center gap-2.5">
                               <input

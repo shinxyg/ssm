@@ -207,15 +207,24 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
 
   // Summary Metrics
   const pendingCount = useMemo(() => {
-    return applications.filter(a => a.status === 'Pending Document Validation' || a.status === 'Under Review').length;
+    return applications.filter(a => {
+      const st = (a.status || '').toUpperCase();
+      return st === 'PENDING DOCUMENT VALIDATION' || st === 'UNDER REVIEW' || st.includes('PENDING') || st === 'SUBMITTED' || st === 'FOR VALIDATION';
+    }).length;
   }, [applications]);
 
   const approvedCount = useMemo(() => {
-    return applications.filter(a => a.status.includes('APPROVED') || a.status.includes('Approved') || a.status.includes('COMPLETED') || a.status === 'Ready for Payout' || a.status === 'PAYOUT SCHEDULED').length;
+    return applications.filter(a => {
+      const st = (a.status || '').toUpperCase();
+      return st.includes('APPROVED') || st.includes('RELEASED') || st.includes('COMPLETED') || st.includes('PAYOUT') || st.includes('SCHEDULED') || st.includes('INTERVIEW');
+    }).length;
   }, [applications]);
 
   const rejectedCount = useMemo(() => {
-    return applications.filter(a => a.status === 'REJECTED' || a.status === 'Disapproved' || a.status === 'Rejected').length;
+    return applications.filter(a => {
+      const st = (a.status || '').toUpperCase();
+      return st.includes('REJECT') || st.includes('DISQUAL') || st.includes('DISAPPROVED');
+    }).length;
   }, [applications]);
 
   // Filtered List matching exact AICS filter structure
@@ -227,10 +236,14 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
       if (categoryFilter === 'SUBSIDY' && !(lowerService.includes('sp-subsidy') || lowerCategory.includes('unmarried') || lowerCategory.includes('parent'))) return false;
       if (categoryFilter === 'EDUCATIONAL' && !(lowerService.includes('edu') || lowerCategory.includes('educational'))) return false;
 
-      const st = app.status;
-      if (statusFilter === 'pending' && !(st === 'Pending Document Validation' || st === 'Under Review')) return false;
-      if (statusFilter === 'approved' && !(st.includes('APPROVED') || st.includes('Approved') || st.includes('COMPLETED') || st === 'Ready for Payout' || st === 'PAYOUT SCHEDULED')) return false;
-      if (statusFilter === 'rejected' && !(st === 'REJECTED' || st === 'Disapproved' || st === 'Rejected')) return false;
+      const st = (app.status || '').toUpperCase();
+      const isApproved = st.includes('APPROVED') || st.includes('RELEASED') || st.includes('COMPLETED') || st.includes('PAYOUT') || st.includes('SCHEDULED') || st.includes('INTERVIEW');
+      const isPending = st === 'PENDING DOCUMENT VALIDATION' || st === 'UNDER REVIEW' || st.includes('PENDING') || st === 'SUBMITTED' || st === 'FOR VALIDATION';
+      const isRejected = st.includes('REJECT') || st.includes('DISQUAL') || st.includes('DISAPPROVED');
+
+      if (statusFilter === 'pending' && !isPending) return false;
+      if (statusFilter === 'approved' && !isApproved) return false;
+      if (statusFilter === 'rejected' && !isRejected) return false;
 
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();
