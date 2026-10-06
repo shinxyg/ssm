@@ -203,7 +203,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
     if (!status) return false;
     const s = status.toUpperCase();
     if (s === 'APPROVED BY ADMIN') return false;
-    return s.includes('APPROVED BY OSCA') || s.includes('READY FOR PAYOUT') || s.includes('PAYOUT') || s.includes('RELEASED') || s.includes('COMPLETED') || s === 'APPROVED';
+    return s.includes('APPROVED BY OSCA') || s.includes('READY FOR PAYOUT') || s.includes('PAYOUT') || s.includes('RELEASED') || s.includes('COMPLETED') || s.includes('QUALIFIED') || s.includes('ENROLLED') || s === 'APPROVED';
   };
 
   // Metrics Counters
@@ -481,9 +481,9 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                                 : app.status === 'Referred to Partner Agency' || app.status === 'Referred'
                                 ? 'Referred to Partner Agency'
                                 : isAppApproved(app.status) || isAppApproved(appt?.status)
-                                ? (app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed' ? 'Released & Archived' : 'Approved & Ready for Payout')
+                                ? (app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed' ? 'Released & Archived' : ((app.referenceNo || '').startsWith('TRN-') || app.category === 'training' || (app.serviceName || '').toLowerCase().includes('training') || (app.serviceName || '').toLowerCase().includes('barista')) ? 'Qualified / Enrolled' : 'Approved & Ready for Payout')
                                 : isScheduled
-                                ? 'Interview Scheduled'
+                                ? (((app.referenceNo || '').startsWith('TRN-') || app.category === 'training' || (app.serviceName || '').toLowerCase().includes('training') || (app.serviceName || '').toLowerCase().includes('barista')) ? 'Orientation Scheduled' : 'Interview Scheduled')
                                 : 'Pending Schedule'}
                             </span>
                           </span>
@@ -569,7 +569,9 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
             <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-[#131f37]">
               <div>
                 <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider">{schedulingApp.referenceNo}</span>
-                <h3 className="text-base font-extrabold text-white mt-0.5">Set Appointment Schedule</h3>
+                <h3 className="text-base font-extrabold text-white mt-0.5">
+                  {((schedulingApp as any)?.category === 'training' || schedulingApp.referenceNo.startsWith('TRN') || schedulingApp.serviceName.toLowerCase().includes('training') || schedulingApp.serviceName.toLowerCase().includes('pastry') || schedulingApp.serviceName.toLowerCase().includes('welding') || schedulingApp.serviceName.toLowerCase().includes('barista')) ? 'Schedule Training Orientation' : 'Set Appointment Schedule'}
+                </h3>
               </div>
               <button
                 type="button"
@@ -594,7 +596,9 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider block mb-1">Appointment Date</label>
+                  <label className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider block mb-1">
+                    {((schedulingApp as any)?.category === 'training' || schedulingApp.referenceNo.startsWith('TRN') || schedulingApp.serviceName.toLowerCase().includes('training') || schedulingApp.serviceName.toLowerCase().includes('pastry') || schedulingApp.serviceName.toLowerCase().includes('welding') || schedulingApp.serviceName.toLowerCase().includes('barista')) ? 'Orientation Date' : 'Appointment Date'}
+                  </label>
                   <input
                     type="date"
                     value={schedDate}
@@ -618,7 +622,15 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                 <label className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider block mb-1">Venue / Office Desk</label>
                 <input
                   type="text"
-                  value="SSDD Medical Assistance Desk, QC Hall"
+                  value={
+                    ((schedulingApp as any)?.category === 'training' || schedulingApp.referenceNo.startsWith('TRN') || schedulingApp.serviceName.toLowerCase().includes('training') || schedulingApp.serviceName.toLowerCase().includes('pastry') || schedulingApp.serviceName.toLowerCase().includes('welding') || schedulingApp.serviceName.toLowerCase().includes('barista'))
+                      ? 'Quezon City Skills Development Center, Kamuning Rd, QC'
+                      : ((schedulingApp as any)?.category === 'soloparent' || schedulingApp.referenceNo.startsWith('SP') || schedulingApp.serviceName.toLowerCase().includes('solo'))
+                      ? 'QC Hall SSDD Solo Parent Welfare Desk'
+                      : ((schedulingApp as any)?.category === 'livelihood' || schedulingApp.referenceNo.startsWith('LVH') || schedulingApp.serviceName.toLowerCase().includes('livelihood'))
+                      ? 'QC Hall SSDD Livelihood Division, Desk 2'
+                      : 'SSDD Medical Assistance Desk, QC Hall'
+                  }
                   disabled
                   readOnly
                   className="w-full bg-[#0b1220]/60 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-400 cursor-not-allowed select-none opacity-80"
@@ -629,7 +641,15 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                 <label className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider block mb-1">Instructions for Applicant</label>
                 <textarea
                   rows={2}
-                  value="Please bring original Statement of Account (SOA) and valid ID."
+                  value={
+                    ((schedulingApp as any)?.category === 'training' || schedulingApp.referenceNo.startsWith('TRN') || schedulingApp.serviceName.toLowerCase().includes('training') || schedulingApp.serviceName.toLowerCase().includes('pastry') || schedulingApp.serviceName.toLowerCase().includes('welding') || schedulingApp.serviceName.toLowerCase().includes('barista'))
+                      ? 'Please bring original Request Letter, QC ID/Proof of Residency, Barangay Indigency, and printed Orientation Slip.'
+                      : ((schedulingApp as any)?.category === 'soloparent' || schedulingApp.referenceNo.startsWith('SP') || schedulingApp.serviceName.toLowerCase().includes('solo'))
+                      ? 'Please bring original Solo Parent Booklet / ID, Affidavit, and valid Photo ID.'
+                      : ((schedulingApp as any)?.category === 'livelihood' || schedulingApp.referenceNo.startsWith('LVH') || schedulingApp.serviceName.toLowerCase().includes('livelihood'))
+                      ? 'Please bring valid Photo ID, Business Plan / Project Proposal, and Barangay Clearance.'
+                      : 'Please bring original Statement of Account (SOA) and valid ID.'
+                  }
                   disabled
                   readOnly
                   className="w-full bg-[#0b1220]/60 border border-slate-800 rounded-xl p-3 text-xs text-slate-400 cursor-not-allowed select-none opacity-80 resize-none"
@@ -665,7 +685,15 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
             <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-[#131f37]">
               <div>
                 <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider">{assessmentApp.referenceNo}</span>
-                <h3 className="text-base font-extrabold text-white mt-0.5">Social Worker Physical Assessment & Decision</h3>
+                <h3 className="text-base font-extrabold text-white mt-0.5">
+                  {((assessmentApp as any)?.category === 'training' || assessmentApp.referenceNo.startsWith('TRN') || assessmentApp.serviceName.toLowerCase().includes('training') || assessmentApp.serviceName.toLowerCase().includes('pastry') || assessmentApp.serviceName.toLowerCase().includes('welding') || assessmentApp.serviceName.toLowerCase().includes('barista'))
+                    ? 'Vocational Training Assessment & Enrollment'
+                    : ((assessmentApp as any)?.category === 'soloparent' || assessmentApp.referenceNo.startsWith('SP') || assessmentApp.serviceName.toLowerCase().includes('solo'))
+                    ? 'Solo Parent Physical Intake & Decision'
+                    : ((assessmentApp as any)?.category === 'livelihood' || assessmentApp.referenceNo.startsWith('LVH') || assessmentApp.serviceName.toLowerCase().includes('livelihood'))
+                    ? 'Livelihood Assessment & Decision'
+                    : 'Social Worker Physical Assessment & Decision'}
+                </h3>
               </div>
               <button
                 type="button"
@@ -689,8 +717,24 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
               </div>
 
               <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-800/40 text-emerald-300 space-y-1">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">PHYSICAL INTAKE VERIFICATION</span>
-                <p className="text-[11px]">Social worker verified original documents (Statement of Account / Medical Certificate). Choose final case assessment decision below:</p>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">
+                  {((assessmentApp as any)?.category === 'training' || assessmentApp.referenceNo.startsWith('TRN') || assessmentApp.serviceName.toLowerCase().includes('training') || assessmentApp.serviceName.toLowerCase().includes('pastry') || assessmentApp.serviceName.toLowerCase().includes('welding') || assessmentApp.serviceName.toLowerCase().includes('barista'))
+                    ? 'TRAINING ORIENTATION & DOCUMENT VERIFICATION'
+                    : ((assessmentApp as any)?.category === 'soloparent' || assessmentApp.referenceNo.startsWith('SP') || assessmentApp.serviceName.toLowerCase().includes('solo'))
+                    ? 'SOLO PARENT BOOKLET & PHYSICAL VERIFICATION'
+                    : ((assessmentApp as any)?.category === 'livelihood' || assessmentApp.referenceNo.startsWith('LVH') || assessmentApp.serviceName.toLowerCase().includes('livelihood'))
+                    ? 'LIVELIHOOD PROJECT & DOCUMENT VERIFICATION'
+                    : 'PHYSICAL INTAKE VERIFICATION'}
+                </span>
+                <p className="text-[11px]">
+                  {((assessmentApp as any)?.category === 'training' || assessmentApp.referenceNo.startsWith('TRN') || assessmentApp.serviceName.toLowerCase().includes('training') || assessmentApp.serviceName.toLowerCase().includes('pastry') || assessmentApp.serviceName.toLowerCase().includes('welding') || assessmentApp.serviceName.toLowerCase().includes('barista'))
+                    ? 'Vocational Training Officer verified original documents (Request Letter, QC Residency ID, Barangay Indigency) and orientation attendance. Choose final case assessment decision below:'
+                    : ((assessmentApp as any)?.category === 'soloparent' || assessmentApp.referenceNo.startsWith('SP') || assessmentApp.serviceName.toLowerCase().includes('solo'))
+                    ? 'Social Worker verified original Solo Parent Booklet / ID, affidavit, and indigency documents. Choose final case assessment decision below:'
+                    : ((assessmentApp as any)?.category === 'livelihood' || assessmentApp.referenceNo.startsWith('LVH') || assessmentApp.serviceName.toLowerCase().includes('livelihood'))
+                    ? 'Social Worker verified project proposal, business plan, and residency documents. Choose final case assessment decision below:'
+                    : 'Social worker verified original documents (Statement of Account / Medical Certificate). Choose final case assessment decision below:'}
+                </p>
               </div>
             </div>
 
@@ -704,27 +748,75 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
               </button>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onUpdateStatus) onUpdateStatus(assessmentApp.referenceNo, 'Rejected');
-                    setAssessmentApp(null);
-                  }}
-                  className="px-4 py-2 bg-rose-950/70 hover:bg-rose-900 border border-rose-700/60 text-rose-300 font-bold text-xs rounded-xl transition-colors"
-                >
-                  Reject
-                </button>
+                {((assessmentApp as any)?.category === 'training' || assessmentApp.referenceNo.startsWith('TRN') || assessmentApp.serviceName.toLowerCase().includes('training') || assessmentApp.serviceName.toLowerCase().includes('pastry') || assessmentApp.serviceName.toLowerCase().includes('welding') || assessmentApp.serviceName.toLowerCase().includes('barista')) ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const ref = assessmentApp.referenceNo;
+                        try {
+                          await fetch(`http://localhost:5000/api/training/applications/${ref}/status`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'Unqualified', rejectionReason: 'Did not pass training orientation requirements' })
+                          });
+                        } catch (e) {
+                          console.warn("API update warning:", e);
+                        }
+                        if (onUpdateStatus) onUpdateStatus(ref, 'Unqualified');
+                        setAssessmentApp(null);
+                      }}
+                      className="px-4 py-2 bg-rose-950/70 hover:bg-rose-900 border border-rose-700/60 text-rose-300 font-bold text-xs rounded-xl transition-colors"
+                    >
+                      ❌ Unqualified
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onUpdateStatus) onUpdateStatus(assessmentApp.referenceNo, 'Ready for Payout');
-                    setAssessmentApp(null);
-                  }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-colors"
-                >
-                  Approve Aid
-                </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const ref = assessmentApp.referenceNo;
+                        try {
+                          await fetch(`http://localhost:5000/api/training/applications/${ref}/status`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'Qualified / Enrolled' })
+                          });
+                        } catch (e) {
+                          console.warn("API update warning:", e);
+                        }
+                        if (onUpdateStatus) onUpdateStatus(ref, 'Qualified / Enrolled');
+                        setAssessmentApp(null);
+                      }}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-colors"
+                    >
+                      ✅ Enroll Trainee
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onUpdateStatus) onUpdateStatus(assessmentApp.referenceNo, 'Rejected');
+                        setAssessmentApp(null);
+                      }}
+                      className="px-4 py-2 bg-rose-950/70 hover:bg-rose-900 border border-rose-700/60 text-rose-300 font-bold text-xs rounded-xl transition-colors"
+                    >
+                      Reject
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onUpdateStatus) onUpdateStatus(assessmentApp.referenceNo, 'Ready for Payout');
+                        setAssessmentApp(null);
+                      }}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-colors"
+                    >
+                      Approve
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>

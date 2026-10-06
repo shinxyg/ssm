@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   BookOpen, 
@@ -70,6 +70,34 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
   onAddApplication,
   darkMode = true 
 }) => {
+  // Active Applications Tracking State
+  const [existingApplications, setExistingApplications] = useState<any[]>([]);
+
+  const fetchExistingApplications = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/training/applications');
+      if (res.ok) {
+        const data = await res.json();
+        setExistingApplications(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.warn('Error fetching training applications:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchExistingApplications();
+    const interval = setInterval(fetchExistingApplications, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const activeApp = useMemo(() => {
+    return existingApplications.find((a) => {
+      const st = (a.status || '').toUpperCase();
+      return !st.includes('REJECT') && !st.includes('DISAPPROV') && !st.includes('UNQUALIFIED');
+    });
+  }, [existingApplications]);
+
   // Navigation Tabs State (1: Available Training, 2: Apply for Training, 3: Schedule, 4: History)
   const [activeTab, setActiveTab] = useState<number>(1);
 
@@ -285,7 +313,67 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
     closeCameraModal();
   };
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
+    const refNo = `TRN-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const appData = {
+      referenceNo: refNo,
+      courseTitle: selectedCourseTitle || 'Bread and Pastry Making',
+      batchName: '3rd Batch 2026',
+      applicantName: 'JEFFERSON FERNANDO LEE',
+      firstName: 'JEFFERSON',
+      middleName: 'FERNANDO',
+      lastName: 'LEE',
+      suffix: '',
+      nationality: 'FILIPINO',
+      dob: '27/09/2004',
+      age: '22',
+      gender: 'Male',
+      civilStatus: 'Single',
+      houseNo: '176',
+      streetName: '23',
+      barangay: 'Bagong Silangan',
+      phoneNumber: '09155582122',
+      emailAddress: 'jeffersonlee1234@gmail.com',
+      highestEdu: highestEdu || 'College Level',
+      schoolName: schoolName || 'Batasan Hills National High School',
+      trainingPurpose: trainingPurpose || 'Employment / Job Application',
+      purposeReason: purposeReason || 'Skills enhancement and employment opportunity',
+      previousTraining: previousTraining || 'Yes - TESDA Accredited Course',
+      docRequestLetter: docIndigency?.url || docIndigency?.name || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80',
+      docQcId: docQcId?.url || docQcId?.name || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80',
+      docIndigency: docPhotoId?.url || docPhotoId?.name || 'https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=500&auto=format&fit=crop&q=80',
+      status: 'Pending Document Validation'
+    };
+
+    try {
+      await fetch('http://localhost:5000/api/training/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appData)
+      });
+    } catch (e) {
+      console.warn("API post warning:", e);
+    }
+
+    if (onAddApplication) {
+      onAddApplication({
+        referenceNo: refNo,
+        applicantName: 'JEFFERSON FERNANDO LEE',
+        serviceName: selectedCourseTitle || 'Bread and Pastry Making',
+        category: 'training',
+        assistanceType: 'Skills Training Program',
+        status: 'Pending Document Validation',
+        dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        amountOrType: 'Free Vocational Training & Orientation',
+        assignedSocialWorker: 'Vocational Training Officer, SSDD',
+        details: {
+          courseTitle: selectedCourseTitle,
+          highestEdu,
+          trainingPurpose
+        }
+      });
+    }
+
     setApplyStep(1);
     setIsEditingFromStep4(false);
     setActiveTab(1);
@@ -305,6 +393,17 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
       {/* ========================================================================= */}
       {activeTab === 1 && (
         <div className="space-y-6">
+          {/* Active Application Notice Banner */}
+          {activeApp && (
+            <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/40 text-amber-200 text-xs flex items-center gap-3 shadow-lg">
+              <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
+              <div>
+                <span className="font-extrabold text-amber-300 block">Existing Active Training Application ({activeApp.reference_no})</span>
+                <span>You currently have an active application for <strong>{activeApp.course_title || activeApp.assistance_type || 'Skills Training'}</strong> with status <strong className="text-amber-300">{activeApp.status}</strong>. Only 1 active training program application is allowed per resident at a time.</span>
+              </div>
+            </div>
+          )}
+
           {/* Sub-header Title Row */}
           <div className="flex justify-between items-center">
             <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
@@ -425,14 +524,43 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                       <Calendar className="w-3.5 h-3.5 text-blue-400" />
                       <span>View Orientation</span>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStartApply(course.title)}
-                      className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5"
-                    >
-                      <span>Apply Now</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                    {activeApp ? (
+                      (() => {
+                        const activeCourseTitle = (activeApp.course_title || activeApp.assistance_type || '').toLowerCase();
+                        const isAppliedCourse = activeCourseTitle.includes(course.title.toLowerCase()) || course.title.toLowerCase().includes(activeCourseTitle);
+                        if (isAppliedCourse) {
+                          return (
+                            <button
+                              type="button"
+                              disabled
+                              className="flex-1 py-2.5 bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-xs font-extrabold rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Applied ({activeApp.status})</span>
+                            </button>
+                          );
+                        }
+                        return (
+                          <button
+                            type="button"
+                            disabled
+                            className="flex-1 py-2.5 bg-slate-900/80 border border-slate-800 text-slate-500 text-xs font-bold rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5"
+                          >
+                            <Lock className="w-3.5 h-3.5" />
+                            <span>Active Application Exists</span>
+                          </button>
+                        );
+                      })()
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleStartApply(course.title)}
+                        className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <span>Apply Now</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -448,6 +576,30 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
         <div className={`max-w-4xl mx-auto rounded-3xl border overflow-hidden ${
           darkMode ? 'bg-[#0d162a] border-slate-800' : 'bg-white border-slate-200 shadow-xl'
         }`}>
+          {activeApp ? (
+            <div className="p-10 text-center space-y-4 max-w-xl mx-auto my-8">
+              <div className="w-14 h-14 rounded-2xl bg-amber-950/80 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto shadow-lg">
+                <AlertCircle className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-black text-white">Active Application Already Exists</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                You have an active training application for <strong className="text-blue-400">{activeApp.course_title || activeApp.assistance_type}</strong> (Ref: <span className="font-mono text-blue-400 font-bold">{activeApp.reference_no}</span>) with current status <strong className="text-amber-400">{activeApp.status}</strong>.
+              </p>
+              <p className="text-xs text-slate-400">
+                Quezon City SSDD regulations permit one (1) active training application per resident at a time. Please wait for document validation and orientation schedule updates.
+              </p>
+              <div className="pt-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(1)}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition-all shadow-md cursor-pointer"
+                >
+                  Return to Available Programs
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
           {/* Header Title Bar */}
           <div className="p-6 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800">
             <div>
@@ -1404,6 +1556,8 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
           </div>
         </div>
       )}
+    </div>
+  )}
 
       {/* ========================================================================= */}
       {/* TAB 3: TRAINING SCHEDULE                                                   */}
@@ -1563,45 +1717,153 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
 
       {/* MODAL: SYLLABUS & VENUE DETAIL MODAL                                        */}
       {selectedScheduleModal && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-          <div className={`relative w-full max-w-2xl rounded-3xl border p-6 space-y-5 shadow-2xl ${
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+          <div className={`relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl border shadow-2xl overflow-hidden ${
             darkMode ? 'bg-[#0f192e] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
           }`}>
-            <button
-              type="button"
-              onClick={() => setSelectedScheduleModal(null)}
-              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-full bg-slate-800/60 hover:bg-slate-700 transition-all cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-start gap-3">
-              <div className="p-3 bg-blue-600/20 text-blue-400 rounded-2xl border border-blue-500/30 shrink-0">
-                <BookOpen className="w-6 h-6" />
+            {/* Sticky Header with Always-Visible Close Button */}
+            <div className="p-5 border-b border-slate-800/80 flex items-center justify-between shrink-0 bg-[#0f192e]/95 backdrop-blur-md z-10">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-600/20 text-blue-400 rounded-2xl border border-blue-500/30 shrink-0">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-white">{selectedScheduleModal.course}</h3>
+                  <span className="text-xs font-bold text-blue-400">{selectedScheduleModal.category} • {selectedScheduleModal.batch}</span>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-extrabold">{selectedScheduleModal.course}</h3>
-                <span className="text-xs font-bold text-blue-400">{selectedScheduleModal.category} • {selectedScheduleModal.batch}</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedScheduleModal(null)}
+                className="p-2 text-slate-400 hover:text-white rounded-full bg-slate-800/80 hover:bg-slate-700 transition-all cursor-pointer"
+                title="Close modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Venue & Time Overview */}
-            <div className={`p-4 rounded-2xl border space-y-2.5 text-xs ${
-              darkMode ? 'bg-slate-900/80 border-slate-800/90' : 'bg-slate-50 border-slate-200'
-            }`}>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
-                <div>
-                  <span className={`font-bold block ${darkMode ? 'text-white' : 'text-slate-900'}`}>{selectedScheduleModal.venue}</span>
-                  <span className="text-slate-400 block text-[11px]">{selectedScheduleModal.address}</span>
+            {/* Scrollable Modal Content Body */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1 custom-modal-scroll">
+              {/* Venue & Time Overview */}
+              <div className={`p-4 rounded-2xl border space-y-2.5 text-xs ${
+                darkMode ? 'bg-slate-900/80 border-slate-800/90' : 'bg-slate-50 border-slate-200'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div>
+                    <span className={`font-bold block ${darkMode ? 'text-white' : 'text-slate-900'}`}>{selectedScheduleModal.venue}</span>
+                    <span className="text-slate-400 block text-[11px]">{selectedScheduleModal.address}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-800/60">
+                  <Clock className="w-4 h-4 text-blue-400 shrink-0" />
+                  <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{selectedScheduleModal.schedule} • ({selectedScheduleModal.duration})</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-800/60">
-                <Clock className="w-4 h-4 text-blue-400 shrink-0" />
-                <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{selectedScheduleModal.schedule} • ({selectedScheduleModal.duration})</span>
-              </div>
-            </div>
+            {/* Active Application Status & Orientation Details (If User Applied) */}
+            {activeApp && (activeApp.course_title === selectedScheduleModal.course || activeApp.assistance_type === selectedScheduleModal.course || (activeApp.serviceName || '').toLowerCase().includes(selectedScheduleModal.course.toLowerCase())) && (() => {
+              const st = (activeApp.status || '').toUpperCase();
+              const isScheduled = st.includes('SCHEDULED') || st.includes('APPOINTED');
+              const isEnrolled = st.includes('QUALIFIED') || st.includes('ENROLLED');
+              const isUnqualified = st.includes('UNQUALIFIED');
+              const isSsddVal = st.includes('SSDD VALIDATED') || st.includes('VALIDATED');
+
+              const dateVal = activeApp.appointment_date || activeApp.appointmentDate || 'Oct 8, 2026';
+              const timeVal = activeApp.appointment_time || activeApp.appointmentTime || '09:00 AM';
+              const venueVal = activeApp.appointment_venue || activeApp.appointmentVenue || selectedScheduleModal.venue;
+
+              return (
+                <div className="p-4 rounded-2xl bg-blue-950/40 border border-blue-500/40 space-y-3">
+                  <div className="flex items-center justify-between border-b border-blue-900/60 pb-2">
+                    <span className="text-xs font-black uppercase text-blue-300 tracking-wider flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-blue-400" />
+                      <span>YOUR ORIENTATION & APPLICATION STATUS</span>
+                    </span>
+                    <span className="font-mono text-xs font-bold text-blue-300 bg-blue-900/60 px-2.5 py-0.5 rounded-lg">
+                      REF: {activeApp.reference_no || activeApp.referenceNo}
+                    </span>
+                  </div>
+
+                  {isEnrolled ? (
+                    <div className="space-y-2 text-xs">
+                      <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/50 text-emerald-300">
+                        <div className="font-extrabold text-sm mb-1 text-emerald-300 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span>🟢 QUALIFIED / ENROLLED</span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed">
+                          Congratulations! You are now Qualified and Enrolled in the Training Program!
+                        </p>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
+                        <span className="text-[10px] font-extrabold uppercase text-amber-400 block tracking-wider">NOTICE OF ADMISSION & CLASS RULES</span>
+                        <div className="text-xs font-bold text-white">Class Batch Number: Batch 3 (2026)</div>
+                        <ul className="list-disc list-inside text-[11px] text-slate-300 space-y-0.5">
+                          <li>A minimum of 80% attendance is required for live training modules.</li>
+                          <li>Follow proper dress code and safety guidelines of Quezon City Skills Development Center.</li>
+                        </ul>
+                      </div>
+                    </div>
+                  ) : isUnqualified ? (
+                    <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/50 text-rose-300 text-xs space-y-1">
+                      <div className="font-extrabold text-sm flex items-center gap-1.5">
+                        <X className="w-4 h-4 text-rose-400" />
+                        <span>🔴 UNQUALIFIED</span>
+                      </div>
+                      <p className="text-[11px]">Sorry, you were Unqualified during the Orientation Assessment.</p>
+                    </div>
+                  ) : isScheduled ? (
+                    <div className="space-y-2 text-xs">
+                      <div className="p-3 rounded-xl bg-blue-950/60 border border-blue-500/50 text-blue-200 space-y-2">
+                        <div className="font-extrabold text-sm text-blue-300 flex items-center gap-1.5">
+                          <Clock className="w-4 h-4 text-blue-400" />
+                          <span>🔵 TRAINING SCHEDULED / ORIENTATION APPOINTED</span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed text-slate-200">
+                          Training Orientation has been set at <strong className="text-white">{venueVal}</strong>.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-blue-900/60 font-mono text-[11px]">
+                          <div>
+                            <span className="text-slate-400 text-[10px] block font-sans">DATE:</span>
+                            <span className="font-bold text-amber-300">{dateVal}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 text-[10px] block font-sans">TIME:</span>
+                            <span className="font-bold text-amber-300">{timeVal}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 text-[10px] block font-sans">VENUE:</span>
+                            <span className="font-bold text-slate-200 truncate block">{venueVal}</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] text-slate-400 italic block pt-0.5">
+                          (Pure Text Info — No Download Button)
+                        </span>
+                      </div>
+                    </div>
+                  ) : isSsddVal ? (
+                    <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-600/40 text-emerald-300 text-xs space-y-1">
+                      <div className="font-extrabold text-sm flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span>🟢 SSDD VALIDATED</span>
+                      </div>
+                      <p className="text-[11px]">Your documents and qualification form have been validated. Moved to Stage 2 (Scheduling).</p>
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-600/40 text-amber-300 text-xs space-y-1">
+                      <div className="font-extrabold text-sm flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-amber-400" />
+                        <span>🟡 PENDING (Pending SSDD Validation)</span>
+                      </div>
+                      <p className="text-[11px]">Admin is reviewing your Barangay Clearance, Valid ID, and Qualification Form.</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Syllabus Topics */}
             <div className="space-y-2">
@@ -1617,19 +1879,41 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                 ))}
               </div>
             </div>
+          </div>
 
-            {/* Modal Bottom Actions */}
-            <div className="flex justify-end items-center gap-3 pt-3 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setSelectedScheduleModal(null)}
-                className={`px-5 py-2.5 rounded-xl border text-xs font-bold transition-all ${
-                  darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                Close
-              </button>
+          {/* Modal Bottom Actions */}
+          <div className="p-4 border-t border-slate-800 flex justify-end items-center gap-3 shrink-0 bg-[#0f192e]/95 backdrop-blur-md">
+            <button
+              type="button"
+              onClick={() => setSelectedScheduleModal(null)}
+              className={`px-5 py-2.5 rounded-xl border text-xs font-bold transition-all ${
+                darkMode ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              Close
+            </button>
 
+            {activeApp ? (
+              activeApp.course_title === selectedScheduleModal.course || activeApp.assistance_type === selectedScheduleModal.course ? (
+                <button
+                  type="button"
+                  disabled
+                  className="px-5 py-2.5 bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-xs font-extrabold rounded-xl cursor-not-allowed flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Applied ({activeApp.status})</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="px-5 py-2.5 bg-slate-900/80 border border-slate-800 text-slate-500 text-xs font-bold rounded-xl cursor-not-allowed flex items-center gap-1.5"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Active Application Exists</span>
+                </button>
+              )
+            ) : (
               <button
                 type="button"
                 onClick={() => {
@@ -1643,11 +1927,12 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                 <span>Apply for this Training</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
-            </div>
+            )}
           </div>
-        </div>,
-        document.body
-      )}
+        </div>
+      </div>,
+      document.body
+    )}
     </div>
   );
 };

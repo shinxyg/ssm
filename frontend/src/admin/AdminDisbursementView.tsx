@@ -89,6 +89,8 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
   // Filter approved/ready applications for financial disbursement (Step 5 Payout Masterlist)
   const disbursementRecords = useMemo(() => {
     return applications.filter((app) => {
+      const isTrn = (app.category || '').toLowerCase() === 'training' || (app.serviceName || '').toLowerCase().includes('training') || (app.referenceNo || '').startsWith('TRN-');
+      if (isTrn) return false; // Skills Training has NO financial grant or payout!
       const st = (app.status || '').toUpperCase();
       // Exclude initial 'APPROVED BY ADMIN' step 2 applications until they complete Step 4 interview approval!
       return (
@@ -319,19 +321,23 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
                   let locationText = 'Quezon City General Hospital (QCGH)';
 
                   const s = app.serviceName.toLowerCase();
+                  const cat = (app.category || '').toLowerCase();
                   if (s.includes('medicine')) {
                     benefitText = 'Pharmacy Voucher / Reseta Authorization';
                     locationText = 'Accredited Partner Pharmacy';
                   } else if (s.includes('funeral') || s.includes('burial')) {
                     benefitText = 'Up to ₱25,000 Funeral Guarantee';
                     locationText = 'Partner Funeral Parlor';
-                  } else if (s.includes('pwd')) {
+                  } else if (s.includes('pwd') || cat.includes('pwd')) {
                     benefitText = 'Assistive Device & Financial Aid';
                     locationText = 'PDAO Center, QC Hall';
-                  } else if (s.includes('senior')) {
+                  } else if (s.includes('senior') || cat.includes('senior')) {
                     benefitText = '₱3,000 Quarterly Social Pension';
                     locationText = 'OSCA Distribution Desk';
-                  } else if (s.includes('solo') || s.includes('parent')) {
+                  } else if (s.includes('livelihood') || cat.includes('livelihood') || app.referenceNo.startsWith('LVH-')) {
+                    benefitText = '₱15,000.00 Livelihood Capital Grant';
+                    locationText = 'Quezon City Hall Cashier / SSDD Office';
+                  } else if (s.includes('solo') || s.includes('parent') || cat.includes('solo') || cat.includes('edu')) {
                     benefitText = '₱3,000.00 Fixed Cash Subsidy';
                     locationText = 'Quezon City Hall Cashier / SSDD Office';
                   }

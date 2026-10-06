@@ -262,8 +262,9 @@ export default function App() {
     const isSolo = (newApp.category || '').toLowerCase() === 'soloparent' || (newApp.referenceNo || '').startsWith('SP-SUBSIDY-') || (newApp.referenceNo || '').startsWith('SP-');
     const isEdu = (newApp.category || '').toLowerCase() === 'educational' || (newApp.referenceNo || '').startsWith('QC-SP-EDU-');
     const isLvh = (newApp.category || '').toLowerCase() === 'livelihood' || (newApp.referenceNo || '').startsWith('LVH-');
+    const isTrn = (newApp.category || '').toLowerCase() === 'training' || (newApp.referenceNo || '').startsWith('TRN-');
 
-    if (isSenior || isSolo || isEdu || isLvh) {
+    if (isSenior || isSolo || isEdu || isLvh || isTrn) {
       return;
     }
 
@@ -298,6 +299,7 @@ export default function App() {
     const isSolo = (refNo || '').startsWith('SP-SUBSIDY-') || (refNo || '').startsWith('SP-');
     const isEdu = (refNo || '').startsWith('QC-SP-EDU-');
     const isLvh = (refNo || '').startsWith('LVH-');
+    const isTrn = (refNo || '').startsWith('TRN-');
 
     let endpoint = `http://localhost:5000/api/aics/applications/${encodeURIComponent(refNo)}/status`;
     if (isSenior) {
@@ -308,6 +310,8 @@ export default function App() {
       endpoint = `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`;
     } else if (isLvh) {
       endpoint = `http://localhost:5000/api/livelihood/applications/${encodeURIComponent(refNo)}/status`;
+    } else if (isTrn) {
+      endpoint = `http://localhost:5000/api/training/applications/${encodeURIComponent(refNo)}/status`;
     }
 
     try {

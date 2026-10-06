@@ -1660,6 +1660,19 @@ app.put('/api/training/applications/:id/status', async (req, res) => {
   }
 });
 
+// DELETE Training application from DB to allow re-applying
+app.delete('/api/training/applications/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM training_applications WHERE reference_no = $1 OR id::text = $1 RETURNING *', [id]);
+    await pool.query('DELETE FROM appointments WHERE reference_no = $1', [id]).catch(() => null);
+    res.json({ success: true, message: `Training application ${id} deleted successfully.`, deletedCount: result.rowCount });
+  } catch (err) {
+    console.error('DELETE training application error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET all appointments from PostgreSQL DB
 app.get('/api/appointments', async (req, res) => {
   try {

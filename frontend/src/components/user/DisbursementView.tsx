@@ -83,14 +83,15 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
       if (!app || !app.referenceNo) return;
       const st = (app.status || '').toUpperCase();
       const isRejected = st === 'REJECTED' || st === 'DISAPPROVED' || st === 'DISQUALIFIED' || st.includes('REJECT') || st.includes('DISAPPROV');
+      const isTrn = (app.category || '').toLowerCase() === 'training' || (app.serviceName || '').toLowerCase().includes('training') || app.referenceNo.startsWith('TRN-');
 
       // History tab keeps all records permanently
       if (!historyMap.has(app.referenceNo)) {
         historyMap.set(app.referenceNo, app);
       }
 
-      // Active tab keeps all non-rejected applications permanently
-      if (!isRejected && !activeMap.has(app.referenceNo)) {
+      // Active tab keeps all non-rejected & non-training applications permanently (Training applications have NO financial payout)
+      if (!isRejected && !isTrn && !activeMap.has(app.referenceNo)) {
         activeMap.set(app.referenceNo, app);
       }
     });
@@ -254,6 +255,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               const statusText = (app.status as string) || 'Pending';
               const name = (app as any).applicantName || app.details?.applicantName || 'Juan Dela Cruz';
               const isSoloParent = (app.category || '').toLowerCase().includes('solo') || (app.serviceName || '').toLowerCase().includes('solo') || app.referenceNo.startsWith('SP-');
+              const isTrn = (app.category || '').toLowerCase() === 'training' || (app.serviceName || '').toLowerCase().includes('training') || app.referenceNo.startsWith('TRN-');
 
               const appt = (app as any).appointmentDetails;
               const dbAppt = dbAppointments.find((a) => (a.reference_no || a.referenceNo) === app.referenceNo);
@@ -268,7 +270,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               const hasExplicitPayoutSched = !!(rawPayoutDate || rawPayoutTime) || statusText === 'PAYOUT SCHEDULED' || statusText === 'Payout Scheduled';
               const isPayoutScheduled = statusText === 'PAYOUT SCHEDULED' || statusText === 'Payout Scheduled';
               const isApprovedByAdmin = statusText === 'APPROVED BY ADMIN' || statusText === 'Approved by Admin';
-              const isInterviewScheduled = statusText === 'INTERVIEW SCHEDULED' || statusText === 'Interview Scheduled';
+              const isInterviewScheduled = statusText === 'INTERVIEW SCHEDULED' || statusText === 'Interview Scheduled' || statusText === 'Approved for Orientation';
               const isApproved = statusText === 'APPROVED' || statusText === 'Approved' || statusText === 'Approved by Social Worker';
               const isReleased = statusText === 'RELEASED / COMPLETED' || statusText === 'COMPLETED' || statusText === 'Completed' || statusText === 'Released';
               const isRejected = statusText === 'REJECTED' || statusText === 'Rejected' || statusText === 'Disapproved' || statusText === 'DISAPPROVED';
@@ -297,16 +299,55 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               const interviewDateFormatted = formatScheduleDate(rawInterviewDate) || 'Oct 8, 2026';
               const interviewTimeFormatted = rawInterviewTime ? formatTo12Hour(rawInterviewTime) : '09:00 AM';
 
+              const isSsddValidated = statusText === 'SSDD VALIDATED' || statusText === 'APPROVED BY ADMIN' || statusText === 'Approved for Orientation';
+              const isTrnScheduled = statusText === 'TRAINING SCHEDULED / ORIENTATION APPOINTED' || statusText === 'TRAINING SCHEDULED' || statusText === 'ORIENTATION APPOINTED' || statusText === 'INTERVIEW SCHEDULED' || statusText === 'Interview Scheduled';
+              const isTrnEnrolled = statusText === 'QUALIFIED / ENROLLED' || statusText === 'QUALIFIED' || statusText === 'ENROLLED';
+              const isTrnUnqualified = statusText === 'UNQUALIFIED' || statusText === 'Unqualified';
+
               let statusBadge = (
                 <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                  🟡 PENDING (Pending Document Validation)
+                  {isTrn ? '🟡 PENDING (Pending SSDD Validation)' : '🟡 PENDING (Pending Document Validation)'}
                 </span>
               );
 
-              let processExplanation = "Sinusuri ng Admin ang Solo Parent Booklet / ID / Affidavit. Hintayin ang aksyon.";
+              let processExplanation = isTrn
+                ? "Sinusuri ng Admin ang Barangay Clearance, Valid ID, at Qualification Form."
+                : "Sinusuri ng Admin ang Solo Parent Booklet / ID / Affidavit. Hintayin ang aksyon.";
 
-              if (isApprovedByAdmin) {
+              if (isTrn && isTrnUnqualified) {
+                statusBadge = (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+                    🔴 UNQUALIFIED
+                  </span>
+                );
+                processExplanation = "Pasensya na, ikaw ay Unqualified sa Orientation Assessment.";
+              } else if (isTrn && isTrnEnrolled) {
+                statusBadge = (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    🟢 QUALIFIED / ENROLLED
+                  </span>
+                );
+                processExplanation = "Binabati kita! Qualified at Enrolled ka na sa Training Program! Class Batch Number: Batch 3 (2026). (Non-Financial Program — Walang Financial Payout / Disbursement).";
+              } else if (isTrn && isTrnScheduled) {
+                statusBadge = (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                    🔵 TRAINING SCHEDULED / ORIENTATION APPOINTED
+                  </span>
+                );
+                processExplanation = `Naitakda ang Training Orientation sa Quezon City Skills Development Center sa ${interviewDateFormatted} sa ganap na ${interviewTimeFormatted || '09:00 AM'}.`;
+              } else if (isTrn && isSsddValidated) {
+                statusBadge = (
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    🟢 SSDD VALIDATED
+                  </span>
+                );
+                processExplanation = "Validated na ang inyong qualification at mga dokumento. Inilipat sa Stage 2 (Scheduling).";
+              } else if (isApprovedByAdmin) {
                 statusBadge = (
                   <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -342,10 +383,12 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                 statusBadge = (
                   <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 border border-purple-500/30 text-purple-300 flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-                    🟣 COMPLETED (₱3,000 Cash Subsidy Release Completed)
+                    🟣 COMPLETED ({isTrn ? 'Training Completed' : '₱3,000 Cash Subsidy Release Completed'})
                   </span>
                 );
-                processExplanation = "Nailabas na ang inyong ₱3,000 Solo Parent Subsidy. Maraming salamat!";
+                processExplanation = isTrn
+                  ? "Nakatapos sa Skills Training Program. Maraming salamat!"
+                  : "Nailabas na ang inyong ₱3,000 Solo Parent Subsidy. Maraming salamat!";
               } else if (isRejected) {
                 statusBadge = (
                   <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center gap-1.5">
@@ -392,17 +435,19 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                     <div className="p-3 rounded-xl bg-[#080f1e] border border-slate-800 space-y-1">
                       <span className="text-slate-400 text-[10px] font-semibold uppercase block">Assigned Unit / Worker</span>
                       <div className="font-bold text-slate-200">
-                        {app.assignedSocialWorker || (app.referenceNo.startsWith('LVH-') ? 'Social Worker Officer (Livelihood Division)' : 'Ms. Jocelyn Reyes, RSW')}
+                        {app.assignedSocialWorker || (isTrn ? 'Vocational Training Officer, SSDD' : app.referenceNo.startsWith('LVH-') ? 'Social Worker Officer (Livelihood Division)' : 'Ms. Jocelyn Reyes, RSW')}
                       </div>
                       <div className="text-slate-400 text-[11px]">
-                        {app.referenceNo.startsWith('LVH-') ? 'QC Hall SSDD Livelihood Division' : isSoloParent ? 'QC Hall SSDD Solo Parent Welfare' : 'QC Hall Social Services Department'}
+                        {isTrn ? 'QC Skills Development Center (SSDD)' : app.referenceNo.startsWith('LVH-') ? 'QC Hall SSDD Livelihood Division' : isSoloParent ? 'QC Hall SSDD Solo Parent Welfare' : 'QC Hall Social Services Department'}
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#080f1e] border border-slate-800 space-y-1">
                       <span className="text-slate-400 text-[10px] font-semibold uppercase block">Benefit Entitlement</span>
                       <div className="font-bold text-amber-400">
-                        {isSoloParent 
+                        {isTrn
+                          ? 'Free Vocational Training & Orientation'
+                          : isSoloParent 
                           ? '₱3,000.00 FIXED SOLO PARENT CASH SUBSIDY' 
                           : app.referenceNo.startsWith('LVH-') 
                           ? (app.assistanceType === 'Materials / Supplies' ? 'Materials & Starter Kit' : '₱15,000.00 Livelihood Capital Grant')
@@ -447,16 +492,16 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                   )}
 
                   {/* ACTION BUTTONS (IF ANY) */}
-                  {isInterviewScheduled && (
+                  {isInterviewScheduled && !isTrn && (
                     <div className="p-3.5 rounded-xl bg-[#091326] border border-slate-800/90 flex flex-wrap items-center justify-end gap-2">
-                      {/* Step 3: Appointment Slip Button */}
+                      {/* Step 3: Appointment / Orientation Slip Button */}
                       <button
                         type="button"
                         onClick={() => setModalApptSlip(app)}
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>📥 I-download ang Appointment Slip</span>
+                        <span>📥 I-download ang {isTrn ? 'Orientation Slip' : 'Appointment Slip'}</span>
                       </button>
                     </div>
                   )}
@@ -491,8 +536,12 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               <div className="flex items-center gap-3">
                 <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-9 h-9 object-contain" />
                 <div>
-                  <h3 className="text-base font-black text-white uppercase tracking-wider">OFFICIAL APPOINTMENT SLIP</h3>
-                  <span className="text-[10px] text-blue-400 font-mono">QC SSDD SOLO PARENT DIVISION</span>
+                  <h3 className="text-base font-black text-white uppercase tracking-wider">
+                    {((modalApptSlip.category || '').toLowerCase() === 'training' || (modalApptSlip.serviceName || '').toLowerCase().includes('training') || modalApptSlip.referenceNo.startsWith('TRN-')) ? 'OFFICIAL ORIENTATION SLIP' : 'OFFICIAL APPOINTMENT SLIP'}
+                  </h3>
+                  <span className="text-[10px] text-blue-400 font-mono">
+                    {((modalApptSlip.category || '').toLowerCase() === 'training' || (modalApptSlip.serviceName || '').toLowerCase().includes('training') || modalApptSlip.referenceNo.startsWith('TRN-')) ? 'QC SSDD SKILLS TRAINING DIVISION' : 'QC SSDD SOLO PARENT DIVISION'}
+                  </span>
                 </div>
               </div>
               <button
@@ -506,7 +555,9 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
 
             <div className="bg-[#0e1b36] border border-blue-900/60 rounded-2xl p-4 space-y-3 text-xs">
               <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                <span className="text-slate-400 font-bold uppercase text-[10px]">APPOINTMENT REF NO:</span>
+                <span className="text-slate-400 font-bold uppercase text-[10px]">
+                  {((modalApptSlip.category || '').toLowerCase() === 'training' || (modalApptSlip.serviceName || '').toLowerCase().includes('training') || modalApptSlip.referenceNo.startsWith('TRN-')) ? 'ORIENTATION REF NO:' : 'APPOINTMENT REF NO:'}
+                </span>
                 <span className="font-mono font-extrabold text-blue-400 text-sm">{modalApptSlip.referenceNo}</span>
               </div>
 
@@ -517,7 +568,9 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
-                  <span className="text-slate-400 font-bold uppercase text-[10px] block">PETSA NG INTERVIEW:</span>
+                  <span className="text-slate-400 font-bold uppercase text-[10px] block">
+                    {((modalApptSlip.category || '').toLowerCase() === 'training' || (modalApptSlip.serviceName || '').toLowerCase().includes('training') || modalApptSlip.referenceNo.startsWith('TRN-')) ? 'PETSA NG ORIENTATION:' : 'PETSA NG INTERVIEW:'}
+                  </span>
                   <span className="font-extrabold text-amber-400">
                     {(modalApptSlip as any).appointmentDate || 'Oct 8, 2026'}
                   </span>
@@ -531,17 +584,32 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               </div>
 
               <div>
-                <span className="text-slate-400 font-bold uppercase text-[10px] block">LUGAR NG INTERVIEW:</span>
-                <span className="font-bold text-slate-200">Quezon City Hall SSDD Office, Assessment Desk 3</span>
+                <span className="text-slate-400 font-bold uppercase text-[10px] block">
+                  {((modalApptSlip.category || '').toLowerCase() === 'training' || (modalApptSlip.serviceName || '').toLowerCase().includes('training') || modalApptSlip.referenceNo.startsWith('TRN-')) ? 'LUGAR NG ORIENTATION:' : 'LUGAR NG INTERVIEW:'}
+                </span>
+                <span className="font-bold text-slate-200">
+                  {((modalApptSlip.category || '').toLowerCase() === 'training' || (modalApptSlip.serviceName || '').toLowerCase().includes('training') || modalApptSlip.referenceNo.startsWith('TRN-')) ? 'Quezon City Skills Development Center, Kamuning Road, Diliman, QC' : 'Quezon City Hall SSDD Office, Assessment Desk 3'}
+                </span>
               </div>
 
               <div className="pt-2 border-t border-slate-800">
                 <span className="text-slate-400 font-bold uppercase text-[10px] block mb-1">MGA DADALHING DOKUMENTO:</span>
                 <ul className="list-disc list-inside text-[11px] text-slate-300 space-y-0.5">
-                  <li>Original Solo Parent ID / Booklet</li>
-                  <li>Valid Photo ID (PhilSys / Comelec / UMID)</li>
-                  <li>Barangay Certificate of Indigency</li>
-                  <li>Printed Copy ng Appointment Slip na ito</li>
+                  {((modalApptSlip.category || '').toLowerCase() === 'training' || (modalApptSlip.serviceName || '').toLowerCase().includes('training') || modalApptSlip.referenceNo.startsWith('TRN-')) ? (
+                    <>
+                      <li>Original Request Letter / Letter of Intent</li>
+                      <li>Valid Photo ID / QC ID (Proof of Residency)</li>
+                      <li>Barangay Certificate of Residency or Indigency</li>
+                      <li>Printed Copy ng Orientation Slip na ito</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Original Solo Parent ID / Booklet</li>
+                      <li>Valid Photo ID (PhilSys / Comelec / UMID)</li>
+                      <li>Barangay Certificate of Indigency</li>
+                      <li>Printed Copy ng Appointment Slip na ito</li>
+                    </>
+                  )}
                 </ul>
               </div>
 

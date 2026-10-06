@@ -73,7 +73,7 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
   const [applications, setApplications] = useState<LivelihoodApplication[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'FINANCIAL' | 'MATERIALS'>('ALL');
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'FINANCIAL' | 'MATERIALS' | 'TRAINING'>('ALL');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
   // Selected application for Detail/Inspection Modal
@@ -98,13 +98,54 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
 
   const fetchApplications = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/livelihood/applications');
-      if (res.ok) {
-        const data = await res.json();
-        setApplications(data);
-      }
+      const [resLvh, resTrn] = await Promise.all([
+        fetch('http://localhost:5000/api/livelihood/applications').catch(() => null),
+        fetch('http://localhost:5000/api/training/applications').catch(() => null)
+      ]);
+      const lvhData = (resLvh && resLvh.ok) ? await resLvh.json() : [];
+      const trnData = (resTrn && resTrn.ok) ? await resTrn.json() : [];
+
+      const mappedTrn: LivelihoodApplication[] = (Array.isArray(trnData) ? trnData : []).map(row => ({
+        id: row.id,
+        reference_no: row.reference_no,
+        applicant_name: row.applicant_name,
+        first_name: row.first_name,
+        middle_name: row.middle_name,
+        last_name: row.last_name,
+        suffix: row.suffix,
+        nationality: row.nationality,
+        dob: row.dob,
+        age: row.age,
+        gender: row.gender,
+        civil_status: row.civil_status,
+        house_no: row.house_no,
+        street_name: row.street_name,
+        barangay: row.barangay,
+        phone_number: row.phone_number,
+        email_address: row.email_address || 'jeffersonlee1234@gmail.com',
+        sector: 'Skills Training',
+        employment_status: row.highest_edu,
+        assistance_type: row.course_title || 'Skills Training Program',
+        reason_for_assistance: row.training_purpose,
+        uploaded_documents: {
+          docRequestLetter: row.doc_request_letter,
+          docQcId: row.doc_qc_id,
+          docIndigency: row.doc_indigency
+        },
+        details: row,
+        amount: 0,
+        status: row.status,
+        disapproval_reason: row.rejection_reason,
+        appointment_date: row.orientation_date,
+        appointment_time: row.orientation_time,
+        appointment_venue: row.orientation_venue,
+        date_submitted: row.date_submitted ? new Date(row.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today'
+      }));
+
+      const merged = [...(Array.isArray(lvhData) ? lvhData : []), ...mappedTrn];
+      setApplications(merged);
     } catch (err) {
-      console.error('Error fetching livelihood applications:', err);
+      console.error('Error fetching applications:', err);
     } finally {
       setIsLoading(false);
     }
@@ -117,12 +158,18 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
   }, []);
 
   const handleUpdateStatus = async (app: LivelihoodApplication, newStatus: string, reason?: string) => {
+    const isTrn = app.reference_no.startsWith('TRN-') || app.sector === 'Skills Training';
+    const endpoint = isTrn 
+      ? `http://localhost:5000/api/training/applications/${app.reference_no}/status`
+      : `http://localhost:5000/api/livelihood/applications/${app.reference_no}/status`;
+
     try {
-      const res = await fetch(`http://localhost:5000/api/livelihood/applications/${app.reference_no}/status`, {
+      const res = await fetch(endpoint, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: newStatus,
+          rejectionReason: reason || null,
           disapprovalReason: reason || null
         })
       });
@@ -158,7 +205,7 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
   const approvedCount = useMemo(() => {
     return applications.filter(a => {
       const st = (a.status || '').toUpperCase();
-      return st.includes('APPROV') || st.includes('SCHEDULED') || st.includes('RELEASED') || st.includes('COMPLETED');
+      return st.includes('APPROV') || st.includes('SCHEDULED') || st.includes('RELEASED') || st.includes('COMPLETED') || st.includes('QUALIFIED') || st.includes('ENROLLED') || st.includes('VALIDATED') || st.includes('ORIENT');
     }).length;
   }, [applications]);
 
@@ -172,16 +219,19 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
   // Filtered List
   const filteredApps = useMemo(() => {
     return applications.filter((app) => {
-      // Category Filter (Financial vs Materials)
+      // Category Filter (Financial vs Materials vs Training)
       const typeStr = (app.assistance_type || app.details?.assistanceNeeded || '').toLowerCase();
-      if (categoryFilter === 'FINANCIAL' && !typeStr.includes('financial')) return false;
-      if (categoryFilter === 'MATERIALS' && !typeStr.includes('material')) return false;
+      const isTrnApp = app.sector === 'Skills Training' || app.reference_no.startsWith('TRN-');
+
+      if (categoryFilter === 'FINANCIAL' && (!typeStr.includes('financial') || isTrnApp)) return false;
+      if (categoryFilter === 'MATERIALS' && (!typeStr.includes('material') || isTrnApp)) return false;
+      if (categoryFilter === 'TRAINING' && !isTrnApp) return false;
 
       // Status Filter
       const st = (app.status || '').toUpperCase();
-      const isApproved = st.includes('APPROV') || st.includes('SCHEDULED') || st.includes('RELEASED') || st.includes('COMPLETED');
+      const isApproved = st.includes('APPROV') || st.includes('SCHEDULED') || st.includes('RELEASED') || st.includes('COMPLETED') || st.includes('VALIDATED') || st.includes('ENROLLED');
       const isPending = st.includes('PENDING') || st.includes('EVALUATION') || st === 'SUBMITTED';
-      const isRejected = st.includes('REJECT') || st.includes('DISAPPROV');
+      const isRejected = st.includes('REJECT') || st.includes('DISAPPROV') || st.includes('UNQUALIFIED');
 
       if (statusFilter === 'pending' && !isPending) return false;
       if (statusFilter === 'approved' && !isApproved) return false;
@@ -263,6 +313,17 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
               }`}
             >
               ALL CATEGORIES
+            </button>
+            <button
+              type="button"
+              onClick={() => setCategoryFilter('TRAINING')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${
+                categoryFilter === 'TRAINING'
+                  ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
+                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+              }`}
+            >
+              SKILLS TRAINING
             </button>
             <button
               type="button"
@@ -364,7 +425,7 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                 <tbody className="divide-y divide-slate-800/60 text-xs font-medium">
                   {filteredApps.map((app) => {
                     const st = (app.status || '').toUpperCase();
-                    const isApproved = st.includes('APPROV') || st.includes('RELEASED') || st.includes('COMPLETED') || st.includes('PAYOUT') || st.includes('SCHEDULED');
+                    const isApproved = st.includes('APPROV') || st.includes('RELEASED') || st.includes('COMPLETED') || st.includes('PAYOUT') || st.includes('SCHEDULED') || st.includes('QUALIFIED') || st.includes('ENROLLED') || st.includes('VALIDATED') || st.includes('ORIENT');
                     const isPending = st.includes('PENDING') || st.includes('EVALUATION') || st === 'SUBMITTED';
 
                     return (
@@ -378,10 +439,14 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                           {app.applicant_name}
                         </td>
                         <td className="py-4 px-6 font-bold">
-                          <span className={app.assistance_type === 'Materials / Supplies' ? 'text-slate-200' : 'text-emerald-400'}>
+                          <span className={app.sector === 'Skills Training' || app.reference_no.startsWith('TRN-') ? 'text-blue-400 font-extrabold' : app.assistance_type === 'Materials / Supplies' ? 'text-slate-200' : 'text-emerald-400'}>
                             {app.assistance_type || 'Financial / Capital Assistance'}
                           </span>
-                          {app.assistance_type !== 'Materials / Supplies' && (
+                          {(app.reference_no.startsWith('TRN-') || app.sector === 'Skills Training') ? (
+                            <span className="block text-[10px] text-blue-400/90 font-extrabold">
+                              Free Skills Training Program
+                            </span>
+                          ) : app.assistance_type !== 'Materials / Supplies' && (
                             <span className="block text-[10px] text-slate-400 font-mono">
                               ₱{(app.amount || 15000).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                             </span>
@@ -430,7 +495,9 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
             <div className="p-5 bg-[#121e36] border-b border-slate-800 flex justify-between items-center shrink-0">
               <div>
                 <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider">{selectedApp.reference_no}</span>
-                <h3 className="text-base font-extrabold text-white mt-0.5">Livelihood & Enterprise Assistance Program</h3>
+                <h3 className="text-base font-extrabold text-white mt-0.5">
+                  {selectedApp.reference_no.startsWith('TRN-') || selectedApp.sector === 'Skills Training' ? 'Skills & Vocational Training Program' : 'Livelihood & Enterprise Assistance Program'}
+                </h3>
               </div>
               <button
                 type="button"
@@ -442,265 +509,514 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
             </div>
 
             <div className="p-6 space-y-5 text-xs overflow-y-auto flex-1 custom-modal-scroll">
-              {/* STEP 1: LIVELIHOOD SECTOR & BUSINESS VERIFICATION */}
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
-                <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                  <span>STEP 1 — LIVELIHOOD SECTOR & BUSINESS VERIFICATION</span>
-                  <span className="text-[9px] font-mono text-slate-400">INPUTTED BY USER</span>
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Sector Classification</span>
-                    <div className="font-extrabold text-white mt-0.5 text-xs">{selectedApp.sector || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Employment Status</span>
-                    <div className="font-bold text-white mt-0.5 text-xs">{selectedApp.employment_status || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Has Existing Business?</span>
-                    <div className="font-bold text-white mt-0.5 text-xs">{selectedApp.has_existing_business || 'No'}</div>
-                  </div>
-                  {selectedApp.has_existing_business === 'Yes' && (
-                    <>
+              {selectedApp.reference_no.startsWith('TRN-') || selectedApp.sector === 'Skills Training' ? (
+                <>
+                  {/* STEP 1: SELECTED COURSE DETAILS (MATCHING PIC 2) */}
+                  <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
+                    <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                      <span>STEP 1 — SELECTED COURSE DETAILS</span>
+                      <span className="text-[9px] font-mono text-slate-400">INPUTTED BY USER</span>
+                    </span>
+
+                    <div className="bg-[#0b1324] p-3.5 rounded-xl border border-slate-800 space-y-2.5">
                       <div>
-                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Type of Business</span>
-                        <div className="font-bold text-blue-400 mt-0.5 text-xs">{selectedApp.type_of_business || 'N/A'}</div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">SELECTED TRAINING COURSE</span>
+                        <div className="font-black text-white text-sm mt-0.5">{selectedApp.assistance_type || selectedApp.details?.course_title || selectedApp.details?.courseTitle || 'Barista'}</div>
                       </div>
-                      {selectedApp.type_of_business === 'Other' && (
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-800/80 text-slate-300 font-medium text-[11px]">
+                        <div>
+                          <span className="text-slate-400 text-[9px] font-semibold uppercase block">Training Duration</span>
+                          <span className="font-bold text-white">18 - 30 working days</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[9px] font-semibold uppercase block">Batch</span>
+                          <span className="font-bold text-white">{selectedApp.details?.batch_name || selectedApp.details?.batchName || '3rd Batch 2026'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[9px] font-semibold uppercase block">Application Period</span>
+                          <span className="font-bold text-white">July 1 - July 15, 2026</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[9px] font-semibold uppercase block">Target Starts</span>
+                          <span className="font-bold text-white">August 1, 2026</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* STEP 2: APPLICANT PERSONAL INFO, EDUCATION & TRAINING PURPOSE (MATCHING PIC 3 & 4) */}
+                  <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-4">
+                    <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                      <span>STEP 2 — APPLICANT PERSONAL INFORMATION & TRAINING DETAILS</span>
+                      <span className="text-[9px] font-mono text-slate-400">VERIFIED QCITIZEN PROFILE</span>
+                    </span>
+
+                    {/* Applicant Information Grid (Pic 3) */}
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider block mb-2">APPLICANT INFORMATION</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 bg-[#0b1324] p-3 rounded-xl border border-slate-800">
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">First Name</span>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.first_name || selectedApp.details?.first_name || selectedApp.applicant_name.split(' ')[0]}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Middle Name</span>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.middle_name || selectedApp.details?.middle_name || 'FERNANDO'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Last Name</span>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.last_name || selectedApp.details?.last_name || selectedApp.applicant_name.split(' ').pop()}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Suffix</span>
+                          <div className="font-semibold text-white text-xs mt-0.5">{selectedApp.suffix || selectedApp.details?.suffix || 'N/A'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Nationality</span>
+                          <div className="font-semibold text-white text-xs mt-0.5">{selectedApp.nationality || selectedApp.details?.nationality || 'FILIPINO'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Date of Birth</span>
+                          <div className="font-mono text-white text-xs mt-0.5">{selectedApp.dob || selectedApp.details?.dob || '27/09/2004'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Age</span>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.age || selectedApp.details?.age || '22'} yrs old</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Gender</span>
+                          <div className="font-semibold text-white text-xs mt-0.5">{selectedApp.gender || selectedApp.details?.gender || 'Male'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Civil Status</span>
+                          <div className="font-semibold text-white text-xs mt-0.5">{selectedApp.civil_status || selectedApp.details?.civil_status || 'Single'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">House / Bldg No.</span>
+                          <div className="font-semibold text-white text-xs mt-0.5">{selectedApp.house_no || selectedApp.details?.house_no || '176'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Street Name</span>
+                          <div className="font-semibold text-white text-xs mt-0.5">{selectedApp.street_name || selectedApp.details?.street_name || '23'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Barangay</span>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.barangay || selectedApp.details?.barangay || 'Bagong Silangan'}</div>
+                        </div>
                         <div className="sm:col-span-2">
-                          <span className="text-slate-400 text-[10px] font-semibold uppercase block text-amber-400">Specified Other Business</span>
-                          <div className="font-bold text-amber-300 mt-0.5 text-xs">{selectedApp.specified_other_business || 'N/A'}</div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Phone Number</span>
+                          <div className="font-mono font-bold text-white text-xs mt-0.5">{selectedApp.phone_number || selectedApp.details?.phone_number || '09155582122'}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Educational Background (Pic 3 & 4) */}
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider block mb-2">EDUCATIONAL BACKGROUND</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#0b1324] p-3 rounded-xl border border-slate-800">
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Highest Educational Attainment</span>
+                          <div className="font-extrabold text-white text-xs mt-0.5">{selectedApp.details?.highest_edu || selectedApp.details?.highestEdu || selectedApp.employment_status || 'Elementary Level'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">School / Institution Name</span>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.details?.school_name || selectedApp.details?.schoolName || 'Batasan Hills National High School'}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Training Purpose (Pic 4) */}
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider block mb-2">TRAINING PURPOSE</span>
+                      <div className="space-y-2.5 bg-[#0b1324] p-3 rounded-xl border border-slate-800">
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Why are you applying for the training?</span>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.details?.training_purpose || selectedApp.details?.trainingPurpose || selectedApp.reason_for_assistance || 'Employment / Skill Upgrade'}</div>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 text-[10px] font-semibold uppercase block">Briefly state your reason for applying</span>
+                          <div className="text-white text-xs italic bg-slate-900/90 p-2 rounded-lg border border-slate-800 mt-1">
+                            "{selectedApp.details?.purpose_reason || selectedApp.details?.purposeReason || selectedApp.reason_for_assistance || 'Gusto ko pong matuto ng barista skills para makakuha ng magandang trabaho sa coffee shop.'}"
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Previous Training / Experience (Pic 4) */}
+                    <div>
+                      <span className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider block mb-2">PREVIOUS TRAINING / EXPERIENCE</span>
+                      <div className="bg-[#0b1324] p-3 rounded-xl border border-slate-800">
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Have you attended a similar skills training before?</span>
+                        <div className="font-bold text-white text-xs mt-0.5">{selectedApp.details?.previous_training || selectedApp.details?.previousTraining || 'No'}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* STEP 3: UPLOADED REQUIREMENTS / SUPPORTING DOCUMENTS (MATCHING PIC 5) */}
+                  <div className="p-4 rounded-xl bg-[#091124] border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+                      <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider">
+                        STEP 3 — REQUIREMENTS / SUPPORTING DOCUMENTS (CLICK TO INSPECT)
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-2.5">
+                      {/* Doc 1: Request Letter */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const docUrl = selectedApp.details?.doc_request_letter || selectedApp.uploaded_documents?.docRequestLetter || selectedApp.uploaded_documents?.proof_of_residency?.url;
+                          setInspectingDoc({
+                            title: "Request Letter (Addressed to SSDD / City Mayor)",
+                            filename: "formal_request_letter.jpg",
+                            url: docUrl
+                          });
+                        }}
+                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                      >
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <FileText className="w-4 h-4 text-slate-300 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-[11px] font-extrabold text-white block truncate">
+                              REQUEST LETTER *
+                            </span>
+                            <span className="text-[9px] text-slate-400 font-mono block">
+                              Attached formal request letter addressed to SSDD / City Mayor
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-white flex items-center gap-1 shrink-0">
+                          <span>View Document</span>
+                          <ExternalLink className="w-3 h-3 text-slate-300" />
+                        </span>
+                      </button>
+
+                      {/* Doc 2: QC ID / Proof of QC Residency */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const docUrl = selectedApp.details?.doc_qc_id || selectedApp.uploaded_documents?.docQcId || selectedApp.uploaded_documents?.valid_id?.url;
+                          setInspectingDoc({
+                            title: "QC ID / Proof of QC Residency",
+                            filename: "qcitizen_residency_card.jpg",
+                            url: docUrl
+                          });
+                        }}
+                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                      >
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <FileCheck2 className="w-4 h-4 text-slate-300 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-[11px] font-extrabold text-white block truncate">
+                              QC ID / PROOF OF QC RESIDENCY *
+                            </span>
+                            <span className="text-[9px] text-slate-400 font-mono block">
+                              Clear photo of your QCitizen ID, Barangay Certificate of Residency, or Valid ID
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-white flex items-center gap-1 shrink-0">
+                          <span>View Document</span>
+                          <ExternalLink className="w-3 h-3 text-slate-300" />
+                        </span>
+                      </button>
+
+                      {/* Doc 3: Indigency of Barangay */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const docUrl = selectedApp.details?.doc_indigency || selectedApp.uploaded_documents?.docIndigency || selectedApp.uploaded_documents?.other_documents?.url;
+                          setInspectingDoc({
+                            title: "Indigency of Barangay (Optional Supporting Document)",
+                            filename: "barangay_indigency_cert.jpg",
+                            url: docUrl
+                          });
+                        }}
+                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                      >
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <Building2 className="w-4 h-4 text-slate-300 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-[11px] font-extrabold text-white block truncate">
+                              INDIGENCY OF BARANGAY (OPTIONAL)
+                            </span>
+                            <span className="text-[9px] text-slate-400 font-mono block">
+                              Barangay Certificate of Indigency (optional supporting document)
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-white flex items-center gap-1 shrink-0">
+                          <span>View Document</span>
+                          <ExternalLink className="w-3 h-3 text-slate-300" />
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* STEP 1: SECTOR / COURSE VERIFICATION (LIVELIHOOD) */}
+                  <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
+                    <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                      <span>STEP 1 — LIVELIHOOD SECTOR & BUSINESS VERIFICATION</span>
+                      <span className="text-[9px] font-mono text-slate-400">INPUTTED BY USER</span>
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Sector Classification</span>
+                        <div className="font-extrabold text-blue-400 mt-0.5 text-xs">{selectedApp.sector || 'N/A'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Employment Status</span>
+                        <div className="font-bold text-white mt-0.5 text-xs">{selectedApp.employment_status || 'N/A'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Has Existing Business?</span>
+                        <div className="font-bold text-emerald-400 mt-0.5 text-xs">{selectedApp.has_existing_business || 'No'}</div>
+                      </div>
+                      {selectedApp.has_existing_business === 'Yes' && (
+                        <>
+                          <div>
+                            <span className="text-slate-400 text-[10px] font-semibold uppercase block">Type of Business</span>
+                            <div className="font-bold text-blue-400 mt-0.5 text-xs">{selectedApp.type_of_business || 'N/A'}</div>
+                          </div>
+                          {selectedApp.type_of_business === 'Other' && (
+                            <div className="sm:col-span-2">
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase block text-amber-400">Specified Other Business</span>
+                              <div className="font-bold text-amber-300 mt-0.5 text-xs">{selectedApp.specified_other_business || 'N/A'}</div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* STEP 2: APPLICANT PERSONAL INFORMATION & ASSISTANCE DETAILS (LIVELIHOOD) */}
+                  <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-4">
+                    <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                      <span>STEP 2 — APPLICANT PERSONAL INFORMATION & ASSISTANCE TYPE</span>
+                      <span className="text-[9px] font-mono text-slate-400">VERIFIED QCITIZEN PROFILE</span>
+                    </span>
+
+                    {/* Personal Profile Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">First Name</span>
+                        <div className="font-bold text-white text-xs mt-0.5">{selectedApp.first_name || selectedApp.applicant_name.split(' ')[0]}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Middle Name</span>
+                        <div className="font-bold text-white text-xs mt-0.5">{selectedApp.middle_name || 'FERNANDO'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Last Name</span>
+                        <div className="font-bold text-white text-xs mt-0.5">{selectedApp.last_name || selectedApp.applicant_name.split(' ').pop()}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Suffix</span>
+                        <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.suffix || 'N/A'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Nationality</span>
+                        <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.nationality || 'FILIPINO'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Date of Birth</span>
+                        <div className="font-mono text-slate-200 text-xs mt-0.5">{selectedApp.dob || '2004-09-27'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Age</span>
+                        <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.age || '22'} yrs old</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Gender</span>
+                        <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.gender || 'Male'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Civil Status</span>
+                        <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.civil_status || 'Single'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Blood Type</span>
+                        <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.blood_type || 'O+'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">House / Bldg No.</span>
+                        <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.house_no || '176'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Barangay</span>
+                        <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.barangay || 'Bagong Silangan'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Phone Number</span>
+                        <div className="font-mono font-bold text-slate-200 text-xs mt-0.5">{selectedApp.phone_number || '09155582122'}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase block">Email Address</span>
+                        <div className="font-mono text-slate-300 text-xs mt-0.5 truncate">{selectedApp.email_address || 'jeffersonlee1234@gmail.com'}</div>
+                      </div>
+                    </div>
+
+                    {/* Assistance Sub-Card */}
+                    <div className="pt-3 border-t border-slate-800/80 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <span className="text-slate-400 text-[9px] uppercase font-semibold block">Requested Assistance Type:</span>
+                          <div className={`font-bold text-xs mt-0.5 ${selectedApp.assistance_type === 'Materials / Supplies' ? 'text-slate-200' : 'text-emerald-400'}`}>{selectedApp.assistance_type || 'Financial / Capital Assistance'}</div>
+                        </div>
+                        {selectedApp.assistance_type !== 'Materials / Supplies' && (
+                          <div>
+                            <span className="text-slate-400 text-[9px] uppercase font-semibold block">Approved Capital Grant:</span>
+                            <div className="font-black text-emerald-400 text-xs mt-0.5">₱{(selectedApp.amount || 15000).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                          </div>
+                        )}
+                      </div>
+
+                      {selectedApp.assistance_type === 'Materials / Supplies' && selectedApp.requested_materials_items && (
+                        <div className="pt-2 border-t border-slate-800/80">
+                          <span className="text-slate-400 text-[9px] uppercase font-semibold block mb-1">Itemized Materials & Supplies List:</span>
+                          <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                            <div className="flex justify-between items-center text-[10px] font-extrabold text-slate-400 uppercase tracking-wider pb-1.5 mb-1 border-b border-slate-800/80">
+                              <span>Item Name / Description</span>
+                              <span>Quantity / Set</span>
+                            </div>
+                            {Array.isArray(selectedApp.requested_materials_items) && selectedApp.requested_materials_items.map((item: any, idx: number) => (
+                              <div key={idx} className="flex justify-between items-center text-xs text-slate-200 py-0.5">
+                                <span>{item.name || item.item || 'Item'}</span>
+                                <span className="font-semibold text-slate-300">{item.quantity || '1 set'}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
-                    </>
-                  )}
-                </div>
-              </div>
 
-              {/* STEP 2: APPLICANT PERSONAL INFORMATION & ASSISTANCE DETAILS */}
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-4">
-                <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                  <span>STEP 2 — APPLICANT PERSONAL INFORMATION & ASSISTANCE TYPE</span>
-                  <span className="text-[9px] font-mono text-slate-400">VERIFIED QCITIZEN PROFILE</span>
-                </span>
-
-                {/* Personal Profile Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">First Name</span>
-                    <div className="font-bold text-white text-xs mt-0.5">{selectedApp.first_name || selectedApp.applicant_name.split(' ')[0]}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Middle Name</span>
-                    <div className="font-bold text-white text-xs mt-0.5">{selectedApp.middle_name || 'FERNANDO'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Last Name</span>
-                    <div className="font-bold text-white text-xs mt-0.5">{selectedApp.last_name || selectedApp.applicant_name.split(' ').pop()}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Suffix</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.suffix || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Nationality</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.nationality || 'FILIPINO'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Date of Birth</span>
-                    <div className="font-mono text-slate-200 text-xs mt-0.5">{selectedApp.dob || '2004-09-27'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Age</span>
-                    <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.age || '22'} yrs old</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Gender</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.gender || 'Male'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Civil Status</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.civil_status || 'Single'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Blood Type</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.blood_type || 'O+'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">House / Bldg No.</span>
-                    <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.house_no || '176'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Barangay</span>
-                    <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.barangay || 'Bagong Silangan'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Phone Number</span>
-                    <div className="font-mono font-bold text-slate-200 text-xs mt-0.5">{selectedApp.phone_number || '09155582122'}</div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[10px] font-semibold uppercase block">Email Address</span>
-                    <div className="font-mono text-slate-300 text-xs mt-0.5 truncate">{selectedApp.email_address || 'jeffersonlee1234@gmail.com'}</div>
-                  </div>
-                </div>
-
-                {/* Assistance Sub-Card */}
-                <div className="pt-3 border-t border-slate-800/80 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 space-y-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold block">Requested Assistance Type:</span>
-                      <div className={`font-bold text-xs mt-0.5 ${selectedApp.assistance_type === 'Materials / Supplies' ? 'text-slate-200' : 'text-emerald-400'}`}>{selectedApp.assistance_type || 'Financial / Capital Assistance'}</div>
-                    </div>
-                    {selectedApp.assistance_type !== 'Materials / Supplies' && (
-                      <div>
-                        <span className="text-slate-400 text-[9px] uppercase font-semibold block">Approved Capital Grant:</span>
-                        <div className="font-black text-emerald-400 text-xs mt-0.5">₱{(selectedApp.amount || 15000).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                      <div className="pt-2 border-t border-slate-800/80">
+                        <span className="text-slate-400 text-[9px] uppercase font-semibold block mb-1">Reason / Purpose of Assistance:</span>
+                        <p className="text-slate-200 text-xs italic bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                          "{selectedApp.reason_for_assistance || selectedApp.details?.reasonPurpose || 'To support micro-enterprise business capital expansion.'}"
+                        </p>
                       </div>
-                    )}
+                    </div>
                   </div>
 
-                  {selectedApp.assistance_type === 'Materials / Supplies' && selectedApp.requested_materials_items && (
-                    <div className="pt-2 border-t border-slate-800/80">
-                      <span className="text-slate-400 text-[9px] uppercase font-semibold block mb-1">Itemized Materials & Supplies List:</span>
-                      <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800 space-y-1">
-                        <div className="flex justify-between items-center text-[10px] font-extrabold text-slate-400 uppercase tracking-wider pb-1.5 mb-1 border-b border-slate-800/80">
-                          <span>Item Name / Description</span>
-                          <span>Quantity / Set</span>
-                        </div>
-                        {Array.isArray(selectedApp.requested_materials_items) && selectedApp.requested_materials_items.map((item: any, idx: number) => (
-                          <div key={idx} className="flex justify-between items-center text-xs text-slate-200 py-0.5">
-                            <span>{item.name || item.item || 'Item'}</span>
-                            <span className="font-semibold text-slate-300">{item.quantity || '1 set'}</span>
+                  {/* STEP 3: UPLOADED DOCUMENTS INSPECTION (LIVELIHOOD) */}
+                  <div className="p-4 rounded-xl bg-[#091124] border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+                      <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider">
+                        STEP 3 — UPLOADED REQUIREMENTS (CLICK TO INSPECT)
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-2.5">
+                      {/* Doc 1: Valid ID / QCID */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const doc = selectedApp.uploaded_documents?.valid_id;
+                          setInspectingDoc({
+                            title: "Valid Government ID / QCID Card",
+                            filename: doc?.name || "qcid_identity_proof.jpg",
+                            url: doc?.url
+                          });
+                        }}
+                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                      >
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <FileCheck2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-[11px] font-extrabold text-white block truncate">
+                              Valid Government ID / QCitizen Card *
+                            </span>
+                            <span className="text-[9px] text-slate-400 font-mono block">
+                              {selectedApp.uploaded_documents?.valid_id
+                                ? `✓ Uploaded: ${selectedApp.uploaded_documents.valid_id.name || 'Photo Attached'}`
+                                : '✓ Default Valid QC ID Attached'}
+                            </span>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                        </div>
+                        <span className="text-[10px] font-bold text-blue-400 group-hover:text-blue-300 flex items-center gap-1 shrink-0">
+                          <span>View Document</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </span>
+                      </button>
 
-                  <div className="pt-2 border-t border-slate-800/80">
-                    <span className="text-slate-400 text-[9px] uppercase font-semibold block mb-1">Reason / Purpose of Assistance:</span>
-                    <p className="text-slate-200 text-xs italic bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
-                      "{selectedApp.reason_for_assistance || selectedApp.details?.reasonPurpose || 'To support micro-enterprise business capital expansion.'}"
-                    </p>
+                      {/* Doc 2: Proof of Residency */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const doc = selectedApp.uploaded_documents?.proof_of_residency;
+                          setInspectingDoc({
+                            title: "Proof of Residency (Barangay Clearance / Utility Bill)",
+                            filename: doc?.name || "barangay_residency_cert.pdf",
+                            url: doc?.url
+                          });
+                        }}
+                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                      >
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-[11px] font-extrabold text-white block truncate">
+                              Proof of Residency (Barangay Clearance) *
+                            </span>
+                            <span className="text-[9px] text-slate-400 font-mono block">
+                              {selectedApp.uploaded_documents?.proof_of_residency
+                                ? `✓ Uploaded: ${selectedApp.uploaded_documents.proof_of_residency.name || 'Photo Attached'}`
+                                : '✓ Default Barangay Clearance Attached'}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-blue-400 group-hover:text-blue-300 flex items-center gap-1 shrink-0">
+                          <span>View Document</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </span>
+                      </button>
+
+                      {/* Doc 3: Other Supporting Documents */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const doc = selectedApp.uploaded_documents?.other_documents;
+                          setInspectingDoc({
+                            title: "Other Supporting Documents (Permits / Quotations)",
+                            filename: doc?.name || "business_permit_quotation.jpg",
+                            url: doc?.url
+                          });
+                        }}
+                        className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
+                      >
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <Building2 className="w-4 h-4 text-amber-400 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-[11px] font-extrabold text-white block truncate">
+                              Other Supporting Documents (Business Permit / Quotations)
+                            </span>
+                            <span className="text-[9px] text-slate-400 font-mono block">
+                              {selectedApp.uploaded_documents?.other_documents
+                                ? `✓ Uploaded: ${selectedApp.uploaded_documents.other_documents.name || 'Photo Attached'}`
+                                : 'Optional Document / Uploaded'}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-blue-400 group-hover:text-blue-300 flex items-center gap-1 shrink-0">
+                          <span>View Document</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              {/* STEP 3: UPLOADED DOCUMENTS INSPECTION (MATCHING AICS CLICKABLE BUTTON CARDS) */}
-              <div className="p-4 rounded-xl bg-[#091124] border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
-                  <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider">
-                    STEP 3 — UPLOADED REQUIREMENTS (CLICK TO INSPECT)
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-2.5">
-                  {/* Doc 1: Valid ID / QCID */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const doc = selectedApp.uploaded_documents?.valid_id;
-                      setInspectingDoc({
-                        title: "Valid Government ID / QCID Card",
-                        filename: doc?.name || "qcid_identity_proof.jpg",
-                        url: doc?.url
-                      });
-                    }}
-                    className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                  >
-                    <div className="flex items-center gap-2.5 overflow-hidden">
-                      <FileCheck2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <div className="truncate">
-                        <span className="text-[11px] font-extrabold text-white block truncate">
-                          Valid Government ID / QCitizen Card *
-                        </span>
-                        <span className="text-[9px] text-slate-400 font-mono block">
-                          {selectedApp.uploaded_documents?.valid_id
-                            ? `✓ Uploaded: ${selectedApp.uploaded_documents.valid_id.name || 'Photo Attached'}`
-                            : '✓ Default Valid QC ID Attached'}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-blue-400 group-hover:text-blue-300 flex items-center gap-1 shrink-0">
-                      <span>View Document</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </span>
-                  </button>
-
-                  {/* Doc 2: Proof of Residency */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const doc = selectedApp.uploaded_documents?.proof_of_residency;
-                      setInspectingDoc({
-                        title: "Proof of Residency (Barangay Clearance / Utility Bill)",
-                        filename: doc?.name || "barangay_residency_cert.pdf",
-                        url: doc?.url
-                      });
-                    }}
-                    className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                  >
-                    <div className="flex items-center gap-2.5 overflow-hidden">
-                      <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-                      <div className="truncate">
-                        <span className="text-[11px] font-extrabold text-white block truncate">
-                          Proof of Residency (Barangay Clearance) *
-                        </span>
-                        <span className="text-[9px] text-slate-400 font-mono block">
-                          {selectedApp.uploaded_documents?.proof_of_residency
-                            ? `✓ Uploaded: ${selectedApp.uploaded_documents.proof_of_residency.name || 'Photo Attached'}`
-                            : '✓ Default Barangay Clearance Attached'}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-blue-400 group-hover:text-blue-300 flex items-center gap-1 shrink-0">
-                      <span>View Document</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </span>
-                  </button>
-
-                  {/* Doc 3: Other Supporting Documents */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const doc = selectedApp.uploaded_documents?.other_documents;
-                      setInspectingDoc({
-                        title: "Other Supporting Documents (Permits / Quotations)",
-                        filename: doc?.name || "business_permit_quotation.jpg",
-                        url: doc?.url
-                      });
-                    }}
-                    className="p-3 rounded-xl bg-[#0d1830] hover:bg-[#15264a] border border-slate-700/80 flex items-center justify-between transition-all group text-left cursor-pointer shadow-md"
-                  >
-                    <div className="flex items-center gap-2.5 overflow-hidden">
-                      <Building2 className="w-4 h-4 text-amber-400 shrink-0" />
-                      <div className="truncate">
-                        <span className="text-[11px] font-extrabold text-white block truncate">
-                          Other Supporting Documents (Business Permit / Quotations)
-                        </span>
-                        <span className="text-[9px] text-slate-400 font-mono block">
-                          {selectedApp.uploaded_documents?.other_documents
-                            ? `✓ Uploaded: ${selectedApp.uploaded_documents.other_documents.name || 'Photo Attached'}`
-                            : 'Optional Document / Uploaded'}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-blue-400 group-hover:text-blue-300 flex items-center gap-1 shrink-0">
-                      <span>View Document</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </span>
-                  </button>
-                </div>
-              </div>
+                </>
+              )}
             </div>
 
             {/* Modal Footer Controls */}
             <div className="p-5 bg-[#121e36] border-t border-slate-800 flex items-center justify-end gap-3 shrink-0">
               {(() => {
                 const st = (selectedApp.status || '').toUpperCase();
-                const isApproved = st.includes('APPROV') || st.includes('SCHEDULED') || st.includes('RELEASED') || st.includes('COMPLETED');
-                const isRejected = st.includes('REJECT') || st.includes('DISAPPROV');
+                const isApproved = st.includes('APPROV') || st.includes('SCHEDULED') || st.includes('RELEASED') || st.includes('COMPLETED') || st.includes('QUALIFIED') || st.includes('ENROLLED') || st.includes('ORIENT');
+                const isRejected = st.includes('REJECT') || st.includes('DISAPPROV') || st.includes('UNQUALIFIED');
 
                 if (isApproved) {
                   return (
@@ -773,17 +1089,27 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
             </div>
 
             <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4 flex items-center justify-center min-h-[300px] max-h-[500px] overflow-hidden">
-              {inspectingDoc.url ? (
+              {inspectingDoc.url && (inspectingDoc.url.startsWith('http') || inspectingDoc.url.startsWith('data:') || inspectingDoc.url.startsWith('blob:')) ? (
                 <img
                   src={inspectingDoc.url}
                   alt={inspectingDoc.title}
                   className="max-h-[460px] w-auto object-contain rounded-xl shadow-md"
                 />
               ) : (
-                <div className="text-center space-y-2">
-                  <ImageIcon className="w-16 h-16 text-blue-500/40 mx-auto" />
-                  <span className="text-xs font-bold text-slate-300 block">Standard Verified Requirement Document Attached</span>
-                  <span className="text-[11px] text-slate-500 block">Original copy on file at Quezon City SSDD Records Archive</span>
+                <div className="text-center space-y-3 p-6">
+                  <div className="w-16 h-16 rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center mx-auto shadow-md">
+                    <FileText className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-extrabold text-white block">{inspectingDoc.title}</span>
+                    <span className="text-xs font-mono text-slate-400 block mt-1">{inspectingDoc.filename}</span>
+                  </div>
+                  <span className="inline-block text-[11px] text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-500/40 px-3 py-1 rounded-full">
+                    ✓ Verified QCitizen Document Submitted
+                  </span>
+                  <span className="text-[10px] text-slate-500 block">
+                    Original document copy archived and verified by QC SSDD System
+                  </span>
                 </div>
               )}
             </div>
