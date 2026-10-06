@@ -274,12 +274,31 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
     return s.includes('APPROVED BY OSCA') || s.includes('READY FOR PAYOUT') || s.includes('PAYOUT') || s.includes('RELEASED') || s.includes('COMPLETED') || s.includes('QUALIFIED') || s.includes('ENROLLED') || s === 'APPROVED';
   };
 
+  const isAppRejected = (a: any) => {
+    const st = (a.status || '').toUpperCase();
+    const apptSt = (a.appointmentDetails?.status || '').toUpperCase();
+    return st.includes('REJECT') || st.includes('DISQUALIF') || st.includes('DISAPPROV') || apptSt.includes('REJECT');
+  };
+
   // Metrics Counters
   const totalCount = combinedList.length;
-  const pendingSchedCount = combinedList.filter((a) => !a.appointmentDetails || a.appointmentDetails.status === 'Pending Schedule').length;
-  const scheduledCount = combinedList.filter((a) => a.appointmentDetails?.status === 'Interview Scheduled' && !isAppApproved(a.status)).length;
   const approvedCount = combinedList.filter((a) => isAppApproved(a.status) || isAppApproved(a.appointmentDetails?.status)).length;
-  const rejectedCount = combinedList.filter((a) => (a.status as string) === 'Rejected' || (a.status as string) === 'Disqualified' || a.appointmentDetails?.status === 'Rejected').length;
+  const rejectedCount = combinedList.filter((a) => isAppRejected(a)).length;
+
+  const scheduledCount = combinedList.filter((a) => {
+    if (isAppApproved(a.status) || isAppApproved(a.appointmentDetails?.status) || isAppRejected(a)) return false;
+    const apptStatus = a.appointmentDetails?.status;
+    const mainStatus = (a.status || '').toUpperCase();
+    return apptStatus === 'Interview Scheduled' || apptStatus === 'Orientation Scheduled' || apptStatus === 'TRAINING SCHEDULED / ORIENTATION APPOINTED' || mainStatus.includes('SCHEDULED');
+  }).length;
+
+  const pendingSchedCount = combinedList.filter((a) => {
+    if (isAppApproved(a.status) || isAppApproved(a.appointmentDetails?.status) || isAppRejected(a)) return false;
+    const apptStatus = a.appointmentDetails?.status;
+    const mainStatus = (a.status || '').toUpperCase();
+    if (mainStatus.includes('SCHEDULED') || apptStatus === 'Interview Scheduled' || apptStatus === 'Orientation Scheduled') return false;
+    return !a.appointmentDetails || apptStatus === 'Pending Schedule';
+  }).length;
 
   // Filtered List
   const filteredList = useMemo(() => {
@@ -300,9 +319,14 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
       // Status Filter
       if (statusFilter !== 'All Statuses') {
         const st = statusFilter.toLowerCase();
-        if (st.includes('pending') && !(app.status === 'Under Review' || app.status === 'Pending Documents')) return false;
-        if (st.includes('scheduled') && (!app.appointmentDetails || isAppApproved(app.status))) return false;
-        if (st.includes('approved') && !(isAppApproved(app.status) || isAppApproved(app.appointmentDetails?.status))) return false;
+        const isApproved = isAppApproved(app.status) || isAppApproved(app.appointmentDetails?.status);
+        const isRejected = isAppRejected(app);
+        const isScheduled = !isApproved && !isRejected && (app.appointmentDetails?.status === 'Interview Scheduled' || app.appointmentDetails?.status === 'Orientation Scheduled' || (app.status || '').toUpperCase().includes('SCHEDULED'));
+        const isPending = !isApproved && !isRejected && !isScheduled;
+
+        if (st.includes('pending') && !isPending) return false;
+        if (st.includes('scheduled') && !isScheduled) return false;
+        if (st.includes('approved') && !isApproved) return false;
       }
 
       // Search Query
