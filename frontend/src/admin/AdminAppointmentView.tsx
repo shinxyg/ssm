@@ -29,7 +29,7 @@ interface AppointmentEntry {
   appointmentTime: string;
   venue: string;
   purpose: string;
-  status: 'Pending Schedule' | 'Interview Scheduled' | 'Approved' | 'Completed' | 'Rejected' | 'Referred';
+  status: string;
   socialWorkerNotes?: string;
   serviceName?: string;
 }
