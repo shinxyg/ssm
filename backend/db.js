@@ -515,6 +515,16 @@ export const initDB = async () => {
         is_deleted BOOLEAN DEFAULT FALSE,
         deleted_at TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS beneficiary_verifications (
+        citizen_key VARCHAR(255) PRIMARY KEY,
+        status VARCHAR(50) DEFAULT 'Verified',
+        id_type VARCHAR(100),
+        notes TEXT,
+        verified_by VARCHAR(100) DEFAULT 'System Admin',
+        verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     // Seed default admin and user accounts if not present

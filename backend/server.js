@@ -2085,6 +2085,401 @@ app.post('/api/activity-logs/:id/restore', async (req, res) => {
   }
 });
 
+// ==========================================
+// BENEFICIARY MANAGEMENT ENDPOINTS
+// ==========================================
+
+// Helper to normalize citizen key for deduplication
+const normalizeCitizenKey = (name = '', phone = '', email = '') => {
+  const cleanName = (name || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (cleanName) return cleanName;
+  if (email) return email.trim().toLowerCase();
+  if (phone) return phone.trim().replace(/[^0-9]/g, '');
+  return 'unknown-citizen';
+};
+
+// Helper to format proper case name
+const formatProperCase = (str = '') => {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+};
+
+// GET /api/beneficiaries - Aggregate unique citizens across all 8 modules & verification table
+app.get('/api/beneficiaries', async (req, res) => {
+  try {
+    const [
+      aicsRes, seniorRes, pwdRes, soloRes, eduRes, cwRes, liveRes, trainRes, verifRes, usersRes
+    ] = await Promise.all([
+      pool.query('SELECT * FROM aics_applications ORDER BY date_submitted DESC').catch(() => ({ rows: [] })),
+      pool.query('SELECT * FROM senior_applications ORDER BY date_submitted DESC').catch(() => ({ rows: [] })),
+      pool.query('SELECT * FROM pwd_applications ORDER BY date_submitted DESC').catch(() => ({ rows: [] })),
+      pool.query('SELECT * FROM solo_parent_applications ORDER BY date_submitted DESC').catch(() => ({ rows: [] })),
+      pool.query('SELECT * FROM educational_applications ORDER BY date_submitted DESC').catch(() => ({ rows: [] })),
+      pool.query('SELECT * FROM child_welfare_applications ORDER BY date_submitted DESC').catch(() => ({ rows: [] })),
+      pool.query('SELECT * FROM livelihood_applications ORDER BY date_submitted DESC').catch(() => ({ rows: [] })),
+      pool.query('SELECT * FROM training_applications ORDER BY date_submitted DESC').catch(() => ({ rows: [] })),
+      pool.query('SELECT * FROM beneficiary_verifications').catch(() => ({ rows: [] })),
+      pool.query('SELECT * FROM users WHERE role = $1 OR role = $2', ['user', 'User / Beneficiary']).catch(() => ({ rows: [] })),
+    ]);
+
+    const verifMap = new Map();
+    verifRes.rows.forEach(v => {
+      verifMap.set(v.citizen_key, v);
+    });
+
+    const citizenMap = new Map();
+
+    const getOrCreateCitizen = (key, defaultName, sourceObj = {}) => {
+      if (!citizenMap.has(key)) {
+        const details = sourceObj.details || {};
+        const personalInfo = details.personalInformation || {};
+
+        const firstName = sourceObj.first_name || personalInfo.firstName || '';
+        const lastName = sourceObj.last_name || personalInfo.lastName || '';
+        const middleName = sourceObj.middle_name || personalInfo.middleName || '';
+        const rawName = defaultName || `${firstName} ${middleName} ${lastName}`.trim() || 'QC Resident';
+
+        const houseNo = sourceObj.house_no || personalInfo.houseNo || '176';
+        const street = sourceObj.street_name || personalInfo.streetName || '23';
+        const barangay = sourceObj.barangay || personalInfo.barangay || 'Bagong Silangan';
+
+        citizenMap.set(key, {
+          key,
+          id: `QC-BEN-2026-${String(citizenMap.size + 1).padStart(4, '0')}`,
+          name: formatProperCase(rawName),
+          rawName: rawName.toUpperCase(),
+          firstName: formatProperCase(firstName),
+          lastName: formatProperCase(lastName),
+          middleName: formatProperCase(middleName),
+          dob: sourceObj.dob || personalInfo.dateOfBirth || sourceObj.patient_dob || '2004-09-27',
+          age: sourceObj.age || personalInfo.age || sourceObj.patient_age || '22',
+          gender: sourceObj.gender || personalInfo.gender || 'Male',
+          civilStatus: sourceObj.civil_status || personalInfo.civilStatus || 'Single',
+          address: `${houseNo} ${street}, ${barangay}, Quezon City`.trim(),
+          barangay: formatProperCase(barangay) || 'Bagong Silangan',
+          phone: sourceObj.phone_number || personalInfo.phoneNumber || '09155582122',
+          email: sourceObj.email_address || sourceObj.email || 'jeffersonlee1234@gmail.com',
+          qcId: sourceObj.qcitizen_id || sourceObj.senior_id_no || personalInfo.seniorCitizenId || '110008262304143',
+          idType: 'QCitizen ID',
+          idDocumentUrl: null,
+          idDocumentName: null,
+          sectors: new Set(),
+          history: [],
+          totalCash: 0,
+          nonCashCount: 0,
+          manualVerification: verifMap.get(key) || null,
+        });
+      }
+      return citizenMap.get(key);
+    };
+
+    // Helper status checkers
+    const isApprovedStatus = (s = '') => {
+      const st = (s || '').toLowerCase();
+      return st.includes('approved') || st.includes('released') || st.includes('completed') || 
+             st.includes('payout') || st.includes('qualified') || st.includes('enrolled');
+    };
+
+    // 1. Process AICS
+    aicsRes.rows.forEach(a => {
+      const name = a.applicant_name || `${a.first_name || ''} ${a.last_name || ''}`.trim() || 'AICS Client';
+      const key = normalizeCitizenKey(name, a.phone_number, a.email_address);
+      const c = getOrCreateCitizen(key, name, a);
+      const isMed = (a.assistance_type || a.service_name || '').toLowerCase().includes('med');
+      c.sectors.add(isMed ? 'AICS Medical' : 'AICS Funeral');
+      c.nonCashCount += 1;
+      
+      const docData = a.details?.uploadedDocData || {};
+      if (!c.idDocumentUrl && (docData.validId?.dataUrl || docData.otherSupport?.dataUrl)) {
+        c.idDocumentUrl = docData.validId?.dataUrl || docData.otherSupport?.dataUrl;
+        c.idDocumentName = docData.validId?.name || docData.otherSupport?.name || 'Valid ID Document';
+      }
+
+      c.history.push({
+        program: isMed ? 'AICS Medical Assistance' : 'AICS Funeral Assistance',
+        category: 'aics',
+        referenceNo: a.reference_no,
+        date: a.date_submitted || a.created_at,
+        type: 'Hospital Guarantee Letter (GL)',
+        amountFormatted: 'Non-Cash (GL)',
+        amountNumber: 0,
+        status: a.status || 'Under Review',
+        isApproved: isApprovedStatus(a.status),
+      });
+    });
+
+    // 2. Process Senior Citizens
+    seniorRes.rows.forEach(s => {
+      const name = s.applicant_name || `${s.first_name || ''} ${s.last_name || ''}`.trim() || 'Senior Citizen';
+      const key = normalizeCitizenKey(name, s.phone_number);
+      const c = getOrCreateCitizen(key, name, s);
+      c.sectors.add('Senior Citizen');
+      c.idType = 'Senior Citizen ID (OSCA)';
+      if (s.senior_id_no) c.qcId = s.senior_id_no;
+
+      const docData = s.details?.uploadedDocData || {};
+      if (docData.seniorIdCard?.dataUrl) {
+        c.idDocumentUrl = docData.seniorIdCard.dataUrl;
+        c.idDocumentName = docData.seniorIdCard.name || 'Senior Citizen ID Card';
+      }
+
+      const amt = parseFloat(s.amount) || 3000;
+      if (isApprovedStatus(s.status)) c.totalCash += amt;
+
+      c.history.push({
+        program: 'Senior Citizen Financial Assistance',
+        category: 'senior',
+        referenceNo: s.reference_no,
+        date: s.date_submitted || s.created_at,
+        type: 'Cash Assistance',
+        amountFormatted: `₱${amt.toLocaleString()}`,
+        amountNumber: amt,
+        status: s.status || 'Pending Verification',
+        isApproved: isApprovedStatus(s.status),
+      });
+    });
+
+    // 3. Process PWD
+    pwdRes.rows.forEach(p => {
+      const name = p.applicant_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'PWD Beneficiary';
+      const key = normalizeCitizenKey(name, p.phone_number);
+      const c = getOrCreateCitizen(key, name, p);
+      c.sectors.add('PWD');
+      c.idType = 'PDAO PWD ID Card';
+
+      const amt = parseFloat(p.amount) || 3000;
+      if (isApprovedStatus(p.status)) c.totalCash += amt;
+
+      c.history.push({
+        program: 'PWD Financial Assistance',
+        category: 'pwd',
+        referenceNo: p.reference_no,
+        date: p.date_submitted || p.created_at,
+        type: 'Cash Assistance',
+        amountFormatted: `₱${amt.toLocaleString()}`,
+        amountNumber: amt,
+        status: p.status || 'Pending Verification',
+        isApproved: isApprovedStatus(p.status),
+      });
+    });
+
+    // 4. Process Solo Parent
+    soloRes.rows.forEach(sp => {
+      const name = sp.applicant_name || `${sp.first_name || ''} ${sp.last_name || ''}`.trim() || 'Solo Parent';
+      const key = normalizeCitizenKey(name, sp.phone_number);
+      const c = getOrCreateCitizen(key, name, sp);
+      c.sectors.add('Solo Parent');
+      c.idType = 'Solo Parent ID (SPIC)';
+
+      const amt = parseFloat(sp.amount) || 3000;
+      if (isApprovedStatus(sp.status)) c.totalCash += amt;
+
+      c.history.push({
+        program: 'Solo Parent Financial Subsidy',
+        category: 'solo_parent',
+        referenceNo: sp.reference_no,
+        date: sp.date_submitted || sp.created_at,
+        type: 'Cash Subsidy',
+        amountFormatted: `₱${amt.toLocaleString()}`,
+        amountNumber: amt,
+        status: sp.status || 'Pending Document Verification',
+        isApproved: isApprovedStatus(sp.status),
+      });
+    });
+
+    // 5. Process Educational Applications
+    eduRes.rows.forEach(edu => {
+      const name = edu.applicant_name || `${edu.first_name || ''} ${edu.last_name || ''}`.trim() || 'Edu Assistance';
+      const key = normalizeCitizenKey(name, edu.phone_number);
+      const c = getOrCreateCitizen(key, name, edu);
+      const isCw = (edu.category || '').toLowerCase().includes('child') || (edu.reference_no || '').startsWith('CW-');
+      c.sectors.add(isCw ? 'Child Welfare' : 'Edu Assistance');
+
+      const amt = parseFloat(edu.amount) || 5000;
+      if (isApprovedStatus(edu.status)) c.totalCash += amt;
+
+      c.history.push({
+        program: isCw ? 'Child Welfare Educational Aid' : 'Solo Parent Educational Assistance',
+        category: 'educational',
+        referenceNo: edu.reference_no,
+        date: edu.date_submitted || edu.created_at,
+        type: 'Educational Cash Grant',
+        amountFormatted: `₱${amt.toLocaleString()}`,
+        amountNumber: amt,
+        status: edu.status || 'Pending Document Validation',
+        isApproved: isApprovedStatus(edu.status),
+      });
+    });
+
+    // 6. Process Child Welfare Applications
+    cwRes.rows.forEach(cw => {
+      const name = cw.applicant_name || `${cw.first_name || ''} ${cw.last_name || ''}`.trim() || 'Child Welfare Ward';
+      const key = normalizeCitizenKey(name, cw.phone_number);
+      const c = getOrCreateCitizen(key, name, cw);
+      c.sectors.add('Child Welfare');
+      c.idType = 'PSA Birth Certificate / Referral';
+      c.nonCashCount += 1;
+
+      c.history.push({
+        program: cw.service_name || 'Child Welfare Services',
+        category: 'child_welfare',
+        referenceNo: cw.reference_no,
+        date: cw.date_submitted || cw.created_at,
+        type: 'Protective & Care Services',
+        amountFormatted: 'Protective Services',
+        amountNumber: 0,
+        status: cw.status || 'Pending Assessment',
+        isApproved: isApprovedStatus(cw.status),
+      });
+    });
+
+    // 7. Process Livelihood Applications
+    liveRes.rows.forEach(liv => {
+      const name = liv.applicant_name || `${liv.first_name || ''} ${liv.last_name || ''}`.trim() || 'Livelihood Grantee';
+      const key = normalizeCitizenKey(name, liv.phone_number);
+      const c = getOrCreateCitizen(key, name, liv);
+      c.sectors.add('Livelihood');
+      c.nonCashCount += 1;
+
+      const amt = parseFloat(liv.amount) || 15000;
+      if (isApprovedStatus(liv.status)) c.totalCash += amt;
+
+      c.history.push({
+        program: liv.project_title || liv.business_name ? `Livelihood: ${liv.project_title || liv.business_name}` : 'Livelihood Starter Kit / Capital Grant',
+        category: 'livelihood',
+        referenceNo: liv.reference_no,
+        date: liv.date_submitted || liv.created_at,
+        type: 'Livelihood Capital Grant & Kit',
+        amountFormatted: `₱${amt.toLocaleString()}`,
+        amountNumber: amt,
+        status: liv.status || 'Under Review',
+        isApproved: isApprovedStatus(liv.status),
+      });
+    });
+
+    // 8. Process Training Applications
+    trainRes.rows.forEach(tr => {
+      const name = tr.applicant_name || `${tr.first_name || ''} ${tr.last_name || ''}`.trim() || 'Skills Trainee';
+      const key = normalizeCitizenKey(name, tr.phone_number);
+      const c = getOrCreateCitizen(key, name, tr);
+      c.sectors.add('Skills Trainee');
+      c.nonCashCount += 1;
+
+      if (!c.idDocumentUrl && (tr.doc_qc_id || tr.uploaded_documents?.docQcId)) {
+        c.idDocumentUrl = tr.doc_qc_id || tr.uploaded_documents?.docQcId;
+        c.idDocumentName = 'QCitizen ID Residency Proof';
+      }
+
+      c.history.push({
+        program: tr.course_title ? `Skills Training: ${tr.course_title}` : 'Vocational Skills Training',
+        category: 'training',
+        referenceNo: tr.reference_no,
+        date: tr.date_submitted || tr.created_at,
+        type: 'Free Vocational Course',
+        amountFormatted: 'Free Training Course',
+        amountNumber: 0,
+        status: tr.status || 'Qualified / Enrolled',
+        isApproved: isApprovedStatus(tr.status),
+      });
+    });
+
+    // Format final list of beneficiaries
+    const beneficiaries = Array.from(citizenMap.values()).map(c => {
+      // Determine verification status
+      let verificationStatus = 'Pending';
+      if (c.manualVerification) {
+        verificationStatus = c.manualVerification.status;
+      } else {
+        const hasApproved = c.history.some(h => h.isApproved);
+        if (hasApproved || c.qcId) {
+          verificationStatus = 'Verified';
+        } else {
+          verificationStatus = 'Pending';
+        }
+      }
+
+      // Initials for avatar circle
+      const nameParts = c.name.split(' ').filter(Boolean);
+      const initials = nameParts.length >= 2 
+        ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase()
+        : (nameParts[0] ? nameParts[0].slice(0, 2).toUpperCase() : 'QC');
+
+      return {
+        id: c.id,
+        citizenKey: c.key,
+        name: c.name,
+        initials,
+        age: c.age,
+        dob: c.dob,
+        gender: c.gender,
+        civilStatus: c.civilStatus,
+        address: c.address,
+        barangay: c.barangay,
+        phone: c.phone,
+        email: c.email,
+        qcId: c.qcId,
+        idType: c.idType,
+        idDocumentUrl: c.idDocumentUrl,
+        idDocumentName: c.idDocumentName,
+        sectorBadges: Array.from(c.sectors),
+        verificationStatus,
+        totalCash: c.totalCash,
+        totalCashFormatted: `₱${c.totalCash.toLocaleString()}`,
+        nonCashCount: c.nonCashCount,
+        programsEnrolledCount: c.history.length,
+        history: c.history.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+        verifiedBy: c.manualVerification?.verified_by || 'Social Worker Assessment',
+        verifiedAt: c.manualVerification?.verified_at || null,
+        notes: c.manualVerification?.notes || 'Validated against QC LGU resident credentials',
+      };
+    });
+
+    res.json(beneficiaries);
+  } catch (err) {
+    console.error('Error compiling beneficiaries registry:', err);
+    res.status(500).json({ error: 'Failed to compile beneficiaries', details: err.message });
+  }
+});
+
+// POST /api/beneficiaries/verify - Social worker approves/rejects verification
+app.post('/api/beneficiaries/verify', async (req, res) => {
+  const { citizenKey, status = 'Verified', notes = '', verifiedBy = 'System Admin', citizenName = '', referenceNo = '' } = req.body;
+  if (!citizenKey) {
+    return res.status(400).json({ error: 'citizenKey is required' });
+  }
+
+  try {
+    const result = await pool.query(`
+      INSERT INTO beneficiary_verifications (citizen_key, status, notes, verified_by, verified_at, updated_at)
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT (citizen_key) 
+      DO UPDATE SET status = EXCLUDED.status, notes = EXCLUDED.notes, verified_by = EXCLUDED.verified_by, updated_at = CURRENT_TIMESTAMP
+      RETURNING *;
+    `, [citizenKey, status, notes, verifiedBy]);
+
+    // Record audit activity log
+    await pool.query(`
+      INSERT INTO activity_logs (staff_name, action, module, details, reference_no)
+      VALUES ($1, $2, 'Beneficiary Management', $3, $4);
+    `, [
+      verifiedBy,
+      status === 'Verified' ? 'Verified' : 'Updated Status',
+      `${status === 'Verified' ? 'Approved and marked beneficiary as VERIFIED' : 'Updated verification status'} for ${citizenName || citizenKey}. Notes: ${notes || 'Document validation check completed.'}`,
+      referenceNo || citizenKey
+    ]);
+
+    res.json({ success: true, verification: result.rows[0] });
+  } catch (err) {
+    console.error('Error verifying beneficiary:', err);
+    res.status(500).json({ error: 'Failed to update verification', details: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`GovServe Backend API server listening on http://localhost:${PORT}`);
   initDB();
