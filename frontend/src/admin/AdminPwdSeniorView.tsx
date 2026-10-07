@@ -169,85 +169,91 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
   return (
     <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-white">
+        <h1 className={`text-2xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
           PWD & Senior Citizens Registry
         </h1>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">TOTAL APPLICATIONS</span>
-          <div className="text-3xl font-extrabold text-white tracking-tight mt-2">{totalCount}</div>
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
+          <span className={`text-[11px] font-bold tracking-wider uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>TOTAL APPLICATIONS</span>
+          <div className={`text-3xl font-extrabold tracking-tight mt-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{totalCount}</div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
           <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">PENDING REVIEW</span>
           <div className="text-3xl font-extrabold text-amber-400 tracking-tight mt-2">{pendingCount}</div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
           <span className="text-[11px] font-bold tracking-wider text-emerald-400 uppercase">APPROVED BY ADMIN</span>
           <div className="text-3xl font-extrabold text-emerald-400 tracking-tight mt-2">{approvedCount}</div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
           <span className="text-[11px] font-bold tracking-wider text-rose-400 uppercase">REJECTED</span>
           <div className="text-3xl font-extrabold text-rose-400 tracking-tight mt-2">{rejectedCount}</div>
         </div>
       </div>
 
       {/* Filter & Search Toolbar */}
-      <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 space-y-4 shadow-xl">
+      <div className={`border rounded-2xl p-5 space-y-4 shadow-xl ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
         <div className="relative w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
           <input
             type="text"
             placeholder="Search by name or reference number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#0b1220] border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            className={`w-full border rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all ${
+              darkMode ? 'bg-[#0b1220] border-slate-700/80 text-slate-200 placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+            }`}
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-6 pt-1 text-xs">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">CATEGORY</span>
-            <button type="button" onClick={() => setCategoryFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${categoryFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>ALL CATEGORIES</button>
-            <button type="button" onClick={() => setCategoryFilter('PWD')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${categoryFilter === 'PWD' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>PWD</button>
-            <button type="button" onClick={() => setCategoryFilter('SENIOR')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${categoryFilter === 'SENIOR' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>SENIOR CITIZEN</button>
+            <span className={`text-[10px] font-extrabold tracking-wider uppercase mr-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CATEGORY</span>
+            <button type="button" onClick={() => setCategoryFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${categoryFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'}`}>ALL CATEGORIES</button>
+            <button type="button" onClick={() => setCategoryFilter('PWD')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${categoryFilter === 'PWD' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'}`}>PWD</button>
+            <button type="button" onClick={() => setCategoryFilter('SENIOR')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${categoryFilter === 'SENIOR' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'}`}>SENIOR CITIZEN</button>
           </div>
 
-          <div className="flex items-center gap-2 border-l border-slate-800/80 pl-6">
-            <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">STATUS</span>
-            <button type="button" onClick={() => setStatusFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>ALL STATUSES</button>
-            <button type="button" onClick={() => setStatusFilter('PENDING')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'PENDING' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>PENDING</button>
-            <button type="button" onClick={() => setStatusFilter('APPROVED')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'APPROVED' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>APPROVED</button>
-            <button type="button" onClick={() => setStatusFilter('REJECTED')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'REJECTED' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'}`}>REJECTED</button>
+          <div className={`flex items-center gap-2 border-l pl-6 ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
+            <span className={`text-[10px] font-extrabold tracking-wider uppercase mr-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>STATUS</span>
+            <button type="button" onClick={() => setStatusFilter('ALL')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'ALL' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'}`}>ALL STATUSES</button>
+            <button type="button" onClick={() => setStatusFilter('PENDING')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'PENDING' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'}`}>PENDING</button>
+            <button type="button" onClick={() => setStatusFilter('APPROVED')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'APPROVED' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'}`}>APPROVED</button>
+            <button type="button" onClick={() => setStatusFilter('REJECTED')} className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${statusFilter === 'REJECTED' ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'}`}>REJECTED</button>
           </div>
         </div>
       </div>
 
       {/* Applications Data Table */}
       <div className="space-y-3">
-        <h3 className="text-sm font-bold text-white tracking-wide">
-          Applications <span className="text-slate-400 font-mono text-xs">({filteredApps.length})</span>
+        <h3 className={`text-sm font-bold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+          Applications <span className={`font-mono text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>({filteredApps.length})</span>
         </h3>
 
         {filteredApps.length === 0 ? (
-          <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-16 text-center shadow-xl flex flex-col items-center justify-center">
-            <div className="p-3.5 rounded-2xl bg-[#121c2e] border border-slate-800 text-slate-400 mb-3">
+          <div className={`border rounded-2xl p-16 text-center shadow-xl flex flex-col items-center justify-center ${
+            darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200'
+          }`}>
+            <div className={`p-3.5 rounded-2xl mb-3 border ${darkMode ? 'bg-[#121c2e] border-slate-800 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'}`}>
               <FileText className="w-8 h-8 stroke-[1.5]" />
             </div>
-            <h4 className="text-base font-extrabold text-white">No applications found</h4>
-            <p className="text-xs text-slate-400 mt-1">Try submitting a Senior Citizen form or changing filters.</p>
+            <h4 className={`text-base font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>No applications found</h4>
+            <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Try submitting a Senior Citizen form or changing filters.</p>
           </div>
         ) : (
-          <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl overflow-hidden shadow-xl">
+          <div className={`border rounded-2xl overflow-hidden shadow-xl ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200'}`}>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider bg-[#0b1220]">
+                  <tr className={`border-b text-[10px] font-extrabold uppercase tracking-wider ${
+                    darkMode ? 'border-slate-800 bg-[#0b1220] text-slate-400' : 'border-slate-200 bg-slate-100 text-slate-600'
+                  }`}>
                     <th className="py-3.5 px-4">Ref No.</th>
                     <th className="py-3.5 px-4">Applicant Name</th>
                     <th className="py-3.5 px-4">Service / Category</th>
@@ -265,12 +271,14 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                       <tr 
                         key={app.referenceNo} 
                         onClick={() => setSelectedApp(app)}
-                        className="hover:bg-[#142036] transition-colors group cursor-pointer"
+                        className={`transition-colors group cursor-pointer ${
+                          darkMode ? 'hover:bg-[#142036]' : 'hover:bg-slate-50'
+                        }`}
                       >
                         <td className="py-3.5 px-4 font-mono font-bold text-blue-400">{app.referenceNo}</td>
-                        <td className="py-3.5 px-4 font-bold text-white">{app.applicantName}</td>
-                        <td className="py-3.5 px-4 text-slate-300 font-semibold">{app.serviceName}</td>
-                        <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">{app.dateSubmitted}</td>
+                        <td className={`py-3.5 px-4 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{app.applicantName}</td>
+                        <td className={`py-3.5 px-4 font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{app.serviceName}</td>
+                        <td className={`py-3.5 px-4 font-mono text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{app.dateSubmitted}</td>
                         <td className="py-3.5 px-4">
                           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold border ${
                             isApproved

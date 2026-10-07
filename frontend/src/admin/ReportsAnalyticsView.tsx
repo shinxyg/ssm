@@ -15,6 +15,7 @@ interface ProgramStats {
   bgColor: string;
   borderColor: string;
   dotColor: string;
+  barColor: string;
   pending: number;
   approved: number;
   rejected: number;
@@ -75,125 +76,106 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
     };
 
     fetchApps();
-    const interval = setInterval(fetchApps, 4000);
-    return () => clearInterval(interval);
   }, []);
 
-  // Merge DB records with prop applications
-  const combinedApps = useMemo(() => {
-    const list: any[] = [];
-    const seen = new Set<string>();
+  const allCombinedApps = useMemo(() => {
+    const merged = [...applications];
 
-    // 1. Senior DB records
-    dbSeniorApps.forEach((item) => {
-      seen.add(item.reference_no);
-      list.push({
-        referenceNo: item.reference_no,
-        applicantName: item.applicant_name,
-        serviceName: item.service_name || 'Senior Citizen Financial Assistance',
-        category: item.category || 'Senior Assistance',
-        status: item.status || 'Pending Validation',
-        amountOrType: '₱3,000.00 Financial Assistance',
-        dateSubmitted: item.date_submitted
-      });
-    });
-
-    // 2. AICS DB records
-    dbAicsApps.forEach((item) => {
-      if (!seen.has(item.reference_no)) {
-        seen.add(item.reference_no);
-        list.push({
-          referenceNo: item.reference_no,
-          applicantName: item.applicant_name,
-          serviceName: item.service_name || 'AICS Financial Assistance',
-          category: item.category || 'AICS',
-          status: item.status || 'Pending Validation',
-          amountOrType: item.assistance_type || '₱5,000.00 Financial Subsidy',
-          dateSubmitted: item.date_submitted
+    dbSeniorApps.forEach(s => {
+      const ref = s.reference_no || s.application_no || `SENIOR-${s.id}`;
+      if (!merged.some(m => m.referenceNo === ref)) {
+        merged.push({
+          id: `db-senior-${s.id}`,
+          referenceNo: ref,
+          applicantName: `${s.first_name || ''} ${s.last_name || ''}`.trim() || 'Senior Citizen',
+          serviceName: 'Senior Citizen Financial Assistance',
+          category: 'pwd_senior',
+          status: s.status || 'Pending Verification',
+          benefitAmount: '₱3,000 / semi-annual',
+          amountNumber: 3000,
+          dateSubmitted: s.created_at ? new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
         });
       }
     });
 
-    // 3. Solo Parent DB records
-    dbSoloApps.forEach((item) => {
-      if (!seen.has(item.reference_no)) {
-        seen.add(item.reference_no);
-        list.push({
-          referenceNo: item.reference_no,
-          applicantName: item.applicant_name,
-          serviceName: item.service_name || 'Solo Parent Financial Subsidy Program',
-          category: item.category || 'soloparent',
-          status: item.status || 'Pending Document Validation',
-          amountOrType: '₱3,000.00 Solo Parent Subsidy',
-          dateSubmitted: item.date_submitted
+    dbAicsApps.forEach(a => {
+      const ref = a.reference_no || `QC-AICS-2026-${a.id}`;
+      if (!merged.some(m => m.referenceNo === ref)) {
+        merged.push({
+          id: `db-aics-${a.id}`,
+          referenceNo: ref,
+          applicantName: `${a.first_name || ''} ${a.last_name || ''}`.trim() || 'AICS Beneficiary',
+          serviceName: `AICS ${a.assistance_type || 'Assistance'}`,
+          category: 'aics',
+          status: a.status || 'Pending Admin Review',
+          benefitAmount: a.benefit_amount || '₱5,000',
+          amountNumber: 5000,
+          dateSubmitted: a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
         });
       }
     });
 
-    // 4. Prop records (include only non-AICS, non-Senior, non-Solo records from props to prevent mock double counting)
-    applications.forEach((app) => {
-      const isSeniorOrPwd = app.category?.toLowerCase().includes('senior') || app.serviceName?.toLowerCase().includes('senior') || app.category?.toLowerCase().includes('pwd') || app.serviceName?.toLowerCase().includes('pwd');
-      const isAics = app.category?.toLowerCase().includes('aics') || app.serviceName?.toLowerCase().includes('aics') || app.category?.toLowerCase().includes('medical') || app.serviceName?.toLowerCase().includes('medical') || app.category?.toLowerCase().includes('funeral') || app.serviceName?.toLowerCase().includes('funeral');
-      const isSolo = app.category?.toLowerCase().includes('solo') || app.serviceName?.toLowerCase().includes('solo') || app.referenceNo?.startsWith('SP-');
-
-      if (!isSeniorOrPwd && !isAics && !isSolo && app.referenceNo && !seen.has(app.referenceNo)) {
-        seen.add(app.referenceNo);
-        list.push(app);
+    dbSoloApps.forEach(sp => {
+      const ref = sp.reference_no || `SP-${sp.id}`;
+      if (!merged.some(m => m.referenceNo === ref)) {
+        merged.push({
+          id: `db-solo-${sp.id}`,
+          referenceNo: ref,
+          applicantName: `${sp.first_name || ''} ${sp.last_name || ''}`.trim() || 'Solo Parent',
+          serviceName: 'Solo Parent Cash Subsidy',
+          category: 'solo_child',
+          status: sp.status || 'Pending Document Verification',
+          benefitAmount: '₱1,000 / month',
+          amountNumber: 1000,
+          dateSubmitted: sp.created_at ? new Date(sp.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
+        });
       }
     });
 
-    return list;
-  }, [dbSeniorApps, dbAicsApps, dbSoloApps, applications]);
+    return merged;
+  }, [applications, dbSeniorApps, dbAicsApps, dbSoloApps]);
 
-  const totalApplications = combinedApps.length;
+  const totalApplications = allCombinedApps.length;
 
-  const isApprovedStatus = (st: string) => {
-    const s = (st || '').toLowerCase();
-    return s.includes('approved') || s.includes('scheduled') || s.includes('payout') || s.includes('ready') || s.includes('completed') || s.includes('released');
+  const isPendingStatus = (s?: string) => {
+    if (!s) return true;
+    const st = s.toLowerCase();
+    return st.includes('pending') || st.includes('review') || st.includes('submitted') || st.includes('evaluation');
   };
 
-  const isRejectedStatus = (st: string) => {
-    const s = (st || '').toLowerCase();
-    return s.includes('reject') || s.includes('disqualified');
+  const isApprovedStatus = (s?: string) => {
+    if (!s) return false;
+    const st = s.toLowerCase();
+    return st.includes('approved') || st.includes('released') || st.includes('completed') || st.includes('payout');
   };
 
-  const isPendingStatus = (st: string) => {
-    const s = (st || '').toLowerCase();
-    return s.includes('pending') || s.includes('review') || s.includes('validation') || s.includes('submitted');
+  const isRejectedStatus = (s?: string) => {
+    if (!s) return false;
+    const st = s.toLowerCase();
+    return st.includes('reject') || st.includes('declined') || st.includes('disqualified');
   };
 
-  const approvedCount = combinedApps.filter(a => isApprovedStatus(a.status)).length;
-  const rejectedCount = combinedApps.filter(a => isRejectedStatus(a.status)).length;
-  const pendingReviewCount = combinedApps.filter(a => isPendingStatus(a.status)).length;
+  const pendingReviewCount = allCombinedApps.filter(a => isPendingStatus(a.status)).length;
+  const approvedCount = allCombinedApps.filter(a => isApprovedStatus(a.status)).length;
+  const rejectedCount = allCombinedApps.filter(a => isRejectedStatus(a.status)).length;
   const decidedCount = approvedCount + rejectedCount;
-  const approvalRate = decidedCount > 0 ? Math.round((approvedCount / decidedCount) * 100) : 0;
-  
-  // Calculate total disbursed from approved/payout applications
-  const totalDisbursed = combinedApps
+  const approvalRate = decidedCount > 0 ? Math.round((approvedCount / decidedCount) * 100) : 100;
+
+  const totalDisbursed = allCombinedApps
     .filter(a => isApprovedStatus(a.status))
     .reduce((sum, a) => {
-      const match = a.amountOrType?.match(/\d[\d,]*/);
-      return sum + (match ? parseInt(match[0].replace(/,/g, ''), 10) : 3000);
+      if (a.amountNumber) return sum + a.amountNumber;
+      if (a.category === 'livelihood') return sum + 15000;
+      if (a.category === 'pwd_senior') return sum + 3000;
+      return sum + 5000;
     }, 0);
 
-  // Group by program with flexible category and status matching
-  const getProgStats = (type: 'aics' | 'pwd_senior' | 'solo_child' | 'livelihood') => {
-    const progApps = combinedApps.filter(a => {
-      const cat = (a.category || '').toLowerCase();
-      const serv = (a.serviceName || '').toLowerCase();
-
-      if (type === 'aics') {
-        return cat.includes('aics') || cat.includes('medical') || cat.includes('funeral') || serv.includes('aics') || serv.includes('medical') || serv.includes('funeral');
-      }
-      if (type === 'pwd_senior') {
-        return cat.includes('pwd') || cat.includes('senior') || serv.includes('pwd') || serv.includes('senior');
-      }
-      if (type === 'solo_child') {
-        return cat.includes('solo') || cat.includes('child') || serv.includes('solo') || serv.includes('child');
-      }
-      if (type === 'livelihood') {
-        return cat.includes('livelihood') || cat.includes('training') || serv.includes('livelihood') || serv.includes('training');
-      }
+  const getProgStats = (catKey: string) => {
+    const progApps = allCombinedApps.filter(a => {
+      if (catKey === 'aics') return a.category === 'aics' || (a.referenceNo && a.referenceNo.includes('AICS'));
+      if (catKey === 'pwd_senior') return a.category === 'pwd_senior' || (a.referenceNo && a.referenceNo.includes('SENIOR'));
+      if (catKey === 'solo_child') return a.category === 'solo_child' || (a.referenceNo && a.referenceNo.includes('SP'));
+      if (catKey === 'livelihood') return a.category === 'livelihood' || (a.referenceNo && a.referenceNo.includes('LVH'));
       return false;
     });
 
@@ -219,6 +201,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       bgColor: 'bg-blue-500/10 hover:bg-blue-500/20',
       borderColor: 'border-blue-500/30',
       dotColor: '#3b82f6',
+      barColor: 'bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.5)]',
       ...aicsStats
     },
     {
@@ -228,6 +211,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       bgColor: 'bg-purple-500/10 hover:bg-purple-500/20',
       borderColor: 'border-purple-500/30',
       dotColor: '#a855f7',
+      barColor: 'bg-purple-500 shadow-[0_0_12px_rgba(168,85,247,0.5)]',
       ...pwdSeniorStats
     },
     {
@@ -237,6 +221,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       bgColor: 'bg-pink-500/10 hover:bg-pink-500/20',
       borderColor: 'border-pink-500/30',
       dotColor: '#f43f5e',
+      barColor: 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.5)]',
       ...soloChildStats
     },
     {
@@ -246,6 +231,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       bgColor: 'bg-emerald-500/10 hover:bg-emerald-500/20',
       borderColor: 'border-emerald-500/30',
       dotColor: '#10b981',
+      barColor: 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]',
       ...livelihoodStats
     },
   ];
@@ -301,11 +287,21 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
     document.body.removeChild(link);
   };
 
+  const cardClass = darkMode 
+    ? 'bg-[#0e1726] border-slate-800/90 text-white' 
+    : 'bg-white border-slate-200/90 text-slate-900 shadow-sm';
+
+  const selectClass = darkMode 
+    ? 'bg-[#0f172a] hover:bg-[#16223b] text-slate-200 border-slate-700/80' 
+    : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-300';
+
+  const subTextClass = darkMode ? 'text-slate-400' : 'text-slate-500';
+
   return (
     <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] animate-in fade-in slide-in-from-bottom-3 duration-500 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
+          <h1 className={`text-2xl font-extrabold tracking-tight flex items-center gap-2.5 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
             Reports & Analytics
           </h1>
         </div>
@@ -315,14 +311,14 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="appearance-none bg-[#0f172a] hover:bg-[#16223b] text-slate-200 border border-slate-700/80 rounded-xl px-4 py-2 pr-9 text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer transition-colors"
+              className={`appearance-none rounded-xl px-4 py-2 pr-9 text-xs font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer transition-colors border ${selectClass}`}
             >
               <option value="Last 6 Months">Last 6 Months</option>
               <option value="Last 30 Days">Last 30 Days</option>
               <option value="This Year">This Year</option>
               <option value="All Time">All Time</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className={`w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${subTextClass}`} />
           </div>
 
           <button
@@ -337,31 +333,31 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-slate-700 transition-all">
+        <div className={`${cardClass} border rounded-2xl p-5 relative overflow-hidden group hover:border-slate-700 transition-all`}>
           <div className="flex items-start justify-between">
-            <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            <span className={`text-[11px] font-bold tracking-wider uppercase ${subTextClass}`}>
               TOTAL APPLICATIONS
             </span>
-            <div className="p-2 rounded-xl bg-slate-800/80 text-slate-300">
+            <div className={`p-2 rounded-xl ${darkMode ? 'bg-slate-800/80 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
               <FileText className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-3xl font-extrabold text-white tracking-tight">
+            <div className={`text-3xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
               {totalApplications}
             </div>
-            <div className="text-xs font-medium text-slate-400 mt-1">
+            <div className={`text-xs font-medium mt-1 ${subTextClass}`}>
               across all programs
             </div>
           </div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-slate-700 transition-all">
+        <div className={`${cardClass} border rounded-2xl p-5 relative overflow-hidden group hover:border-slate-700 transition-all`}>
           <div className="flex items-start justify-between">
-            <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            <span className={`text-[11px] font-bold tracking-wider uppercase ${subTextClass}`}>
               APPROVAL RATE
             </span>
-            <div className="p-2 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400">
+            <div className={`p-2 rounded-full ${darkMode ? 'bg-emerald-950/60 border border-emerald-500/30 text-emerald-400' : 'bg-emerald-100 border border-emerald-200 text-emerald-600'}`}>
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
@@ -369,18 +365,18 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
             <div className="text-3xl font-extrabold text-[#00d285] tracking-tight">
               {approvalRate}%
             </div>
-            <div className="text-xs font-medium text-slate-400 mt-1">
+            <div className={`text-xs font-medium mt-1 ${subTextClass}`}>
               {approvedCount} approved of {decidedCount} decided
             </div>
           </div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-slate-700 transition-all">
+        <div className={`${cardClass} border rounded-2xl p-5 relative overflow-hidden group hover:border-slate-700 transition-all`}>
           <div className="flex items-start justify-between">
-            <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            <span className={`text-[11px] font-bold tracking-wider uppercase ${subTextClass}`}>
               PENDING REVIEW
             </span>
-            <div className="p-2 rounded-full bg-amber-950/60 border border-amber-500/30 text-amber-400">
+            <div className={`p-2 rounded-full ${darkMode ? 'bg-amber-950/60 border border-amber-500/30 text-amber-400' : 'bg-amber-100 border border-amber-200 text-amber-600'}`}>
               <Clock className="w-4 h-4" />
             </div>
           </div>
@@ -388,34 +384,34 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
             <div className="text-3xl font-extrabold text-orange-500 tracking-tight">
               {pendingReviewCount}
             </div>
-            <div className="text-xs font-medium text-slate-400 mt-1">
+            <div className={`text-xs font-medium mt-1 ${subTextClass}`}>
               awaiting decision
             </div>
           </div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg relative overflow-hidden group hover:border-slate-700 transition-all">
+        <div className={`${cardClass} border rounded-2xl p-5 relative overflow-hidden group hover:border-slate-700 transition-all`}>
           <div className="flex items-start justify-between">
-            <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            <span className={`text-[11px] font-bold tracking-wider uppercase ${subTextClass}`}>
               TOTAL DISBURSED
             </span>
-            <div className="p-2 rounded-full bg-blue-950/60 border border-blue-500/30 text-blue-400">
+            <div className={`p-2 rounded-full ${darkMode ? 'bg-blue-950/60 border border-blue-500/30 text-blue-400' : 'bg-blue-100 border border-blue-200 text-blue-600'}`}>
               <Wallet className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-3xl font-extrabold text-white tracking-tight">
+            <div className={`text-3xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
               ₱{totalDisbursed.toLocaleString()}
             </div>
-            <div className="text-xs font-medium text-slate-400 mt-1">
+            <div className={`text-xs font-medium mt-1 ${subTextClass}`}>
               this period
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-6 shadow-xl">
-        <h2 className="text-sm font-bold text-white mb-6 tracking-wide">
+      <div className={`${cardClass} border rounded-2xl p-6`}>
+        <h2 className={`text-sm font-bold mb-6 tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
           Applications by program
         </h2>
 
@@ -423,7 +419,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
           <div className="lg:col-span-4 flex flex-col items-center justify-center relative py-2">
             <div className="relative w-48 h-48 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="38" fill="transparent" stroke="#1e293b" strokeWidth="11" />
+                <circle cx="50" cy="50" r="38" fill="transparent" stroke={darkMode ? "#1e293b" : "#e2e8f0"} strokeWidth="11" />
                 {totalApplications > 0 && (
                   <>
                     <circle cx="50" cy="50" r="38" fill="transparent" stroke="#3b82f6" strokeWidth="11" strokeDasharray="238.76" strokeDashoffset={238.76 - (238.76 * (aicsStats.total / totalApplications))} className="transition-all duration-1000 ease-out" />
@@ -434,8 +430,8 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                 )}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                <span className="text-2xl font-black text-white leading-none">{totalApplications}</span>
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">
+                <span className={`text-2xl font-black leading-none ${darkMode ? 'text-white' : 'text-slate-900'}`}>{totalApplications}</span>
+                <span className={`text-[10px] font-semibold uppercase tracking-wider mt-1 ${subTextClass}`}>
                   Total Application{totalApplications !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -451,19 +447,19 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: prog.dotColor }}></span>
                       {prog.name}
                     </span>
-                    <span className="text-slate-400 text-[11px] font-medium hidden sm:inline">
-                      {prog.pending} pending &nbsp; {prog.approved} approved &nbsp; {prog.rejected} rejected
+                    <span className={`text-[11px] font-medium hidden sm:inline ${subTextClass}`}>
+                      {prog.approved} approved
                     </span>
                   </div>
-                  <div className="text-[11px] font-medium text-slate-400">
+                  <div className={`text-[11px] font-medium ${subTextClass}`}>
                     {prog.total} total · {prog.sharePercent}% share · {prog.approvalPercent}% approval
                   </div>
                 </div>
 
-                <div className="w-full bg-[#162032] rounded-full h-2 overflow-hidden border border-slate-800/60">
+                <div className={`w-full rounded-full h-2 overflow-hidden border ${darkMode ? 'bg-[#162032] border-slate-800/60' : 'bg-slate-100 border-slate-200'}`}>
                   <div
                     className={`h-full rounded-full transition-all duration-700 ${
-                      prog.sharePercent > 0 ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' : 'bg-slate-700/30'
+                      prog.sharePercent > 0 ? prog.barColor : (darkMode ? 'bg-slate-700/30' : 'bg-slate-300')
                     }`}
                     style={{ width: `${prog.sharePercent > 0 ? prog.sharePercent : 0}%` }}
                   ></div>
@@ -475,9 +471,9 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+        <div className={`${cardClass} border rounded-2xl p-6 flex flex-col justify-between`}>
           <div>
-            <h2 className="text-sm font-bold text-white mb-6 tracking-wide">
+            <h2 className={`text-sm font-bold mb-6 tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
               Disbursement by funding source
             </h2>
             <div className="space-y-5 my-4">
@@ -492,13 +488,13 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                     onMouseLeave={() => setHoveredBar(null)}
                   >
                     <div className="flex justify-between text-xs font-medium">
-                      <span className="text-slate-300 text-[11px] font-semibold">{source.name}</span>
-                      <span className="text-slate-400 font-mono text-[11px]">
+                      <span className={`text-[11px] font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{source.name}</span>
+                      <span className={`font-mono text-[11px] ${subTextClass}`}>
                         {source.amount > 0 ? `₱${source.amount.toLocaleString()}` : ''}
                       </span>
                     </div>
 
-                    <div className="w-full bg-[#162032] rounded-full h-3 overflow-hidden relative border border-slate-800/60">
+                    <div className={`w-full rounded-full h-3 overflow-hidden relative border ${darkMode ? 'bg-[#162032] border-slate-800/60' : 'bg-slate-100 border-slate-200'}`}>
                       <div
                         className={`h-full rounded-full transition-all duration-700 ${source.color} ${
                           hoveredBar === source.name ? 'brightness-125' : ''
@@ -510,7 +506,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                 );
               })}
             </div>
-            <div className="border-t border-slate-800/80 pt-2 flex justify-between text-[10px] font-mono text-slate-500">
+            <div className={`border-t pt-2 flex justify-between text-[10px] font-mono ${darkMode ? 'border-slate-800/80 text-slate-500' : 'border-slate-200 text-slate-400'}`}>
               <span>₱0k</span>
               <span>₱1k</span>
               <span>₱2k</span>
@@ -518,26 +514,26 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
               <span>₱3k</span>
             </div>
           </div>
-          <div className="border-t border-slate-800/80 pt-4 mt-6 flex justify-between items-center text-xs">
-            <span className="font-bold text-slate-300">Total</span>
-            <span className="font-extrabold text-white text-sm tracking-tight font-mono">
+          <div className={`border-t pt-4 mt-6 flex justify-between items-center text-xs ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
+            <span className={`font-bold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Total</span>
+            <span className={`font-extrabold text-sm tracking-tight font-mono ${darkMode ? 'text-white' : 'text-slate-900'}`}>
               ₱{totalDisbursed.toLocaleString()}
             </span>
           </div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+        <div className={`${cardClass} border rounded-2xl p-6 flex flex-col justify-between`}>
           <div>
-            <h2 className="text-sm font-bold text-white mb-6 tracking-wide">
+            <h2 className={`text-sm font-bold mb-6 tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
               Monthly application volume
             </h2>
             <div className="relative h-48 w-full pt-4 pb-6">
-              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none text-[10px] text-slate-600 font-mono">
-                <div className="border-b border-slate-800/60 pb-1 flex justify-between"><span>4</span><span>₱0.0M</span></div>
-                <div className="border-b border-slate-800/60 pb-1 flex justify-between"><span>3</span><span>₱0.0M</span></div>
-                <div className="border-b border-slate-800/60 pb-1 flex justify-between"><span>2</span><span>₱0.0M</span></div>
-                <div className="border-b border-slate-800/60 pb-1 flex justify-between"><span>1</span><span>₱0.0M</span></div>
-                <div className="border-b border-slate-800/60 pb-1 flex justify-between"><span>0</span><span>₱0.0M</span></div>
+              <div className={`absolute inset-0 flex flex-col justify-between pointer-events-none text-[10px] font-mono ${darkMode ? 'text-slate-600' : 'text-slate-400'}`}>
+                <div className={`border-b pb-1 flex justify-between ${darkMode ? 'border-slate-800/60' : 'border-slate-200'}`}><span>4</span><span>₱0.0M</span></div>
+                <div className={`border-b pb-1 flex justify-between ${darkMode ? 'border-slate-800/60' : 'border-slate-200'}`}><span>3</span><span>₱0.0M</span></div>
+                <div className={`border-b pb-1 flex justify-between ${darkMode ? 'border-slate-800/60' : 'border-slate-200'}`}><span>2</span><span>₱0.0M</span></div>
+                <div className={`border-b pb-1 flex justify-between ${darkMode ? 'border-slate-800/60' : 'border-slate-200'}`}><span>1</span><span>₱0.0M</span></div>
+                <div className={`border-b pb-1 flex justify-between ${darkMode ? 'border-slate-800/60' : 'border-slate-200'}`}><span>0</span><span>₱0.0M</span></div>
               </div>
 
               <div className="relative h-full w-full px-6 flex items-end justify-between">
@@ -560,7 +556,9 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                     onMouseLeave={() => setHoveredPoint(null)}
                   >
                     {hoveredPoint === idx && (
-                      <div className="absolute -top-10 bg-slate-900 border border-slate-700 text-white text-[10px] py-1 px-2 rounded shadow-xl whitespace-nowrap z-30">
+                      <div className={`absolute -top-10 text-[10px] py-1 px-2 rounded shadow-xl whitespace-nowrap z-30 border ${
+                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      }`}>
                         {item.month}: {item.applications} Apps · ₱{item.disbursed.toLocaleString()}
                       </div>
                     )}
@@ -571,12 +569,14 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                       ></div>
                     )}
                     <div
-                      className={`w-2.5 h-2.5 rounded-full border-2 border-[#0e1726] transition-transform ${
+                      className={`w-2.5 h-2.5 rounded-full border-2 transition-transform ${
+                        darkMode ? 'border-[#0e1726]' : 'border-white'
+                      } ${
                         idx === 5 && totalApplications > 0 ? 'bg-blue-400 scale-125 shadow-[0_0_10px_#3b82f6]' : 'bg-blue-500'
                       }`}
                       style={{ marginBottom: (idx === 5 && totalApplications > 0) ? '135px' : '12px' }}
                     ></div>
-                    <span className="absolute -bottom-5 text-[11px] font-medium text-slate-400">
+                    <span className={`absolute -bottom-5 text-[11px] font-medium ${subTextClass}`}>
                       {item.month}
                     </span>
                   </div>
@@ -585,19 +585,19 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
             </div>
 
             <div className="flex items-center justify-center gap-6 mt-6 pt-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+              <div className={`flex items-center gap-2 text-xs font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                 <span className="w-3 h-3 bg-blue-500/50 border border-blue-400 rounded-sm"></span>
                 <span>Applications</span>
               </div>
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+              <div className={`flex items-center gap-2 text-xs font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                 <span className="w-4 h-0.5 bg-blue-500 rounded-full"></span>
                 <span>Disbursed</span>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-slate-800/80 pt-3 mt-4 text-[11px] text-slate-400 font-medium">
-            Latest month (Sep): <strong className="text-slate-200">{monthlyVolume[5].applications} applications</strong> · <strong className="text-slate-200">₱{monthlyVolume[5].disbursed.toLocaleString()} disbursed</strong>
+          <div className={`border-t pt-3 mt-4 text-[11px] font-medium ${darkMode ? 'border-slate-800/80 text-slate-400' : 'border-slate-200 text-slate-600'}`}>
+            Latest month (Sep): <strong className={darkMode ? 'text-slate-200' : 'text-slate-900'}>{monthlyVolume[5].applications} applications</strong> · <strong className={darkMode ? 'text-slate-200' : 'text-slate-900'}>₱{monthlyVolume[5].disbursed.toLocaleString()} disbursed</strong>
           </div>
         </div>
       </div>

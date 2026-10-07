@@ -262,57 +262,59 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
     <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
       {/* Title */}
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-white">
+        <h1 className={`text-2xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
           Solo Parent & Child Welfare Services
         </h1>
       </div>
 
       {/* Metric Cards Row matching AICS exact design */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">TOTAL APPLICATIONS</span>
-          <div className="text-3xl font-extrabold text-white tracking-tight mt-2">{applications.length}</div>
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
+          <span className={`text-[11px] font-bold tracking-wider uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>TOTAL APPLICATIONS</span>
+          <div className={`text-3xl font-extrabold tracking-tight mt-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applications.length}</div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
           <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">PENDING REVIEW</span>
           <div className="text-3xl font-extrabold text-amber-400 tracking-tight mt-2">{pendingCount}</div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
           <span className="text-[11px] font-bold tracking-wider text-emerald-400 uppercase">APPROVED</span>
           <div className="text-3xl font-extrabold text-emerald-400 tracking-tight mt-2">{approvedCount}</div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
           <span className="text-[11px] font-bold tracking-wider text-rose-400 uppercase">REJECTED</span>
           <div className="text-3xl font-extrabold text-rose-400 tracking-tight mt-2">{rejectedCount}</div>
         </div>
       </div>
 
       {/* Filter and Search Bar matching AICS exact design */}
-      <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 space-y-4 shadow-xl">
+      <div className={`border rounded-2xl p-5 space-y-4 shadow-xl ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
         <div className="relative w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
           <input
             type="text"
             placeholder="Search by name or reference number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#0b1220] border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            className={`w-full border rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all ${
+              darkMode ? 'bg-[#0b1220] border-slate-700/80 text-slate-200 placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+            }`}
           />
         </div>
 
         <div className="flex flex-row items-center gap-4 flex-nowrap overflow-x-auto pt-1 text-xs">
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">CATEGORY</span>
+            <span className={`text-[10px] font-extrabold tracking-wider uppercase mr-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CATEGORY</span>
             <button
               type="button"
               onClick={() => setCategoryFilter('ALL')}
-              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
+              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${
                 categoryFilter === 'ALL'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-300 hover:bg-slate-50 shadow-sm'
               }`}
             >
               ALL CATEGORIES
@@ -320,10 +322,10 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             <button
               type="button"
               onClick={() => setCategoryFilter('SUBSIDY')}
-              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
+              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${
                 categoryFilter === 'SUBSIDY'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-300 hover:bg-slate-50 shadow-sm'
               }`}
             >
               SOLO PARENT SUBSIDY
@@ -331,25 +333,25 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             <button
               type="button"
               onClick={() => setCategoryFilter('EDUCATIONAL')}
-              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
+              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${
                 categoryFilter === 'EDUCATIONAL'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-300 hover:bg-slate-50 shadow-sm'
               }`}
             >
               EDUCATIONAL GRANT
             </button>
           </div>
 
-          <div className="flex items-center gap-2 border-l border-slate-800/80 pl-4 flex-shrink-0">
-            <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">STATUS</span>
+          <div className={`flex items-center gap-2 border-l pl-4 flex-shrink-0 ${darkMode ? 'border-slate-800/80' : 'border-slate-300'}`}>
+            <span className={`text-[10px] font-extrabold tracking-wider uppercase mr-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>STATUS</span>
             <button
               type="button"
               onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
+              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${
                 statusFilter === 'all'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-300 hover:bg-slate-50 shadow-sm'
               }`}
             >
               ALL STATUSES
@@ -357,10 +359,10 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             <button
               type="button"
               onClick={() => setStatusFilter('pending')}
-              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
+              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${
                 statusFilter === 'pending'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-300 hover:bg-slate-50 shadow-sm'
               }`}
             >
               PENDING
@@ -368,10 +370,10 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             <button
               type="button"
               onClick={() => setStatusFilter('approved')}
-              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
+              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${
                 statusFilter === 'approved'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-300 hover:bg-slate-50 shadow-sm'
               }`}
             >
               APPROVED
@@ -379,10 +381,10 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             <button
               type="button"
               onClick={() => setStatusFilter('rejected')}
-              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
+              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${
                 statusFilter === 'rejected'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-300 hover:bg-slate-50 shadow-sm'
               }`}
             >
               REJECTED
@@ -391,18 +393,20 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
         </div>
       </div>
 
-      {/* Main Table View matching AICS exact design in screenshot 3 */}
+      {/* Main Table View matching AICS exact design */}
       <div className="space-y-3">
-        <h3 className="text-sm font-bold text-white tracking-wide">
+        <h3 className={`text-sm font-bold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
           Applications ({filteredApps.length})
         </h3>
 
         {filteredApps.length > 0 ? (
-          <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl overflow-hidden shadow-xl">
+          <div className={`border rounded-2xl overflow-hidden shadow-xl ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90 shadow-sm'}`}>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800/80 bg-[#121c2e] text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  <tr className={`border-b text-[11px] font-extrabold uppercase tracking-wider ${
+                    darkMode ? 'border-slate-800/80 bg-[#121c2e] text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-700'
+                  }`}>
                     <th className="py-4 px-6">REFERENCE NO.</th>
                     <th className="py-4 px-6">APPLICANT NAME</th>
                     <th className="py-4 px-6">ASSISTANCE TYPE</th>
@@ -410,7 +414,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                     <th className="py-4 px-6">CURRENT STATUS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs font-medium">
+                <tbody className={`divide-y text-xs font-medium ${darkMode ? 'divide-slate-800/60' : 'divide-slate-200'}`}>
                   {filteredApps.map((app, idx) => {
                     const st = app.status;
                     const isApproved = st === 'APPROVED BY ADMIN' || st === 'APPROVED' || st === 'Approved' || st === 'Ready for Payout' || st === 'PAYOUT SCHEDULED';
@@ -421,18 +425,18 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                       <tr 
                         key={app.reference_no ? `${app.reference_no}-${idx}` : `app-${app.id}-${idx}`} 
                         onClick={() => setSelectedApp(app)}
-                        className="hover:bg-[#142036] transition-colors cursor-pointer"
+                        className={`transition-colors cursor-pointer ${darkMode ? 'hover:bg-[#142036]' : 'hover:bg-slate-50'}`}
                       >
                         <td className="py-4 px-6 font-mono font-bold text-blue-400">
                           {app.reference_no}
                         </td>
-                        <td className="py-4 px-6 font-bold text-white uppercase">
+                        <td className={`py-4 px-6 font-bold uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                           {app.applicant_name || `${app.first_name || 'JEFFERSON'} ${app.last_name || 'LEE'}`}
                         </td>
-                        <td className="py-4 px-6 text-slate-300">
+                        <td className={`py-4 px-6 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                           Solo Parent Financial Subsidy Program
                         </td>
-                        <td className="py-4 px-6 text-slate-400 font-mono text-[11px]">
+                        <td className={`py-4 px-6 font-mono text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                           {app.date_submitted ? `${new Date(app.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date(app.date_submitted).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}` : 'Oct 5, 2026 • 10:57 AM'}
                         </td>
                         <td className="py-4 px-6 whitespace-nowrap">
@@ -459,12 +463,14 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             </div>
           </div>
         ) : (
-          <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-16 text-center shadow-xl flex flex-col items-center justify-center">
-            <div className="p-3.5 rounded-2xl bg-[#121c2e] border border-slate-800 text-slate-400 mb-3">
+          <div className={`border rounded-2xl p-16 text-center shadow-xl flex flex-col items-center justify-center ${
+            darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90 shadow-sm'
+          }`}>
+            <div className={`p-3.5 rounded-2xl mb-3 border ${darkMode ? 'bg-[#121c2e] border-slate-800 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'}`}>
               <FileText className="w-8 h-8 stroke-[1.5]" />
             </div>
-            <h4 className="text-base font-extrabold text-white">No applications found</h4>
-            <p className="text-xs text-slate-400 mt-1">Try a different search term or filter.</p>
+            <h4 className={`text-base font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>No applications found</h4>
+            <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Try a different search term or filter.</p>
           </div>
         )}
       </div>

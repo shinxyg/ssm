@@ -114,55 +114,57 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
   return (
     <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-white">
+        <h1 className={`text-2xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
           AICS Assistance Services
         </h1>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">TOTAL APPLICATIONS</span>
-          <div className="text-3xl font-extrabold text-white tracking-tight mt-2">{aicsApps.length}</div>
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
+          <span className={`text-[11px] font-bold tracking-wider uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>TOTAL APPLICATIONS</span>
+          <div className={`text-3xl font-extrabold tracking-tight mt-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{aicsApps.length}</div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
           <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">PENDING REVIEW</span>
           <div className="text-3xl font-extrabold text-amber-400 tracking-tight mt-2">{pendingCount}</div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
           <span className="text-[11px] font-bold tracking-wider text-emerald-400 uppercase">APPROVED</span>
           <div className="text-3xl font-extrabold text-emerald-400 tracking-tight mt-2">{approvedCount}</div>
         </div>
 
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
+        <div className={`border rounded-2xl p-5 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
           <span className="text-[11px] font-bold tracking-wider text-rose-400 uppercase">REJECTED</span>
           <div className="text-3xl font-extrabold text-rose-400 tracking-tight mt-2">{rejectedCount}</div>
         </div>
       </div>
 
-      <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 space-y-4 shadow-xl">
+      <div className={`border rounded-2xl p-5 space-y-4 shadow-xl ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
         <div className="relative w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
           <input
             type="text"
             placeholder="Search by name or reference number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#0b1220] border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            className={`w-full border rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all ${
+              darkMode ? 'bg-[#0b1220] border-slate-700/80 text-slate-200 placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+            }`}
           />
         </div>
 
         <div className="flex flex-row items-center gap-4 flex-nowrap overflow-x-auto pt-1 text-xs">
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">CATEGORY</span>
+            <span className={`text-[10px] font-extrabold tracking-wider uppercase mr-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CATEGORY</span>
             <button
               type="button"
               onClick={() => setCategoryFilter('ALL')}
               className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
                 categoryFilter === 'ALL'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
               }`}
             >
               ALL CATEGORIES
@@ -173,7 +175,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
               className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
                 categoryFilter === 'MEDICAL_BILL'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
               }`}
             >
               MEDICAL BILL AID
@@ -184,7 +186,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
               className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
                 categoryFilter === 'MEDICINE'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
               }`}
             >
               MEDICINE AID
@@ -195,22 +197,22 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
               className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
                 categoryFilter === 'BURIAL'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
               }`}
             >
               BURIAL / FUNERAL
             </button>
           </div>
 
-          <div className="flex items-center gap-2 border-l border-slate-800/80 pl-4 flex-shrink-0">
-            <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">STATUS</span>
+          <div className={`flex items-center gap-2 border-l pl-4 flex-shrink-0 ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
+            <span className={`text-[10px] font-extrabold tracking-wider uppercase mr-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>STATUS</span>
             <button
               type="button"
               onClick={() => setStatusFilter('all')}
               className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
                 statusFilter === 'all'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
               }`}
             >
               ALL STATUSES
@@ -221,7 +223,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
               className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
                 statusFilter === 'pending'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
               }`}
             >
               PENDING
@@ -232,7 +234,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
               className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
                 statusFilter === 'approved'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
               }`}
             >
               APPROVED
@@ -243,7 +245,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
               className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs ${
                 statusFilter === 'rejected'
                   ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
-                  : 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
               }`}
             >
               REJECTED
@@ -253,16 +255,18 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-bold text-white tracking-wide">
-          Applications <span className="text-slate-400 font-mono text-xs">({filteredApps.length})</span>
+        <h3 className={`text-sm font-bold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+          Applications <span className={`font-mono text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>({filteredApps.length})</span>
         </h3>
 
         {filteredApps.length > 0 ? (
-          <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl overflow-hidden shadow-xl">
+          <div className={`border rounded-2xl overflow-hidden shadow-xl ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200'}`}>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800/80 bg-[#121c2e] text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  <tr className={`border-b text-[11px] font-extrabold uppercase tracking-wider ${
+                    darkMode ? 'border-slate-800/80 bg-[#121c2e] text-slate-400' : 'border-slate-200 bg-slate-100 text-slate-600'
+                  }`}>
                     <th className="py-4 px-6">REFERENCE NO.</th>
                     <th className="py-4 px-6">APPLICANT NAME</th>
                     <th className="py-4 px-6">ASSISTANCE TYPE</th>
@@ -270,17 +274,17 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
                     <th className="py-4 px-6">CURRENT STATUS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs font-medium">
+                <tbody className={`divide-y text-xs font-medium ${darkMode ? 'divide-slate-800/60' : 'divide-slate-200'}`}>
                   {filteredApps.map((app) => (
                     <tr 
                       key={app.referenceNo}
-                      className="hover:bg-[#142036] transition-colors group cursor-pointer"
+                      className={`transition-colors group cursor-pointer ${darkMode ? 'hover:bg-[#142036]' : 'hover:bg-slate-50'}`}
                       onClick={() => setSelectedApp(app)}
                     >
                       <td className="py-4 px-6 font-mono font-bold text-blue-400">{app.referenceNo}</td>
-                      <td className="py-4 px-6 font-bold text-white">{(app as any).applicantName || app.details?.applicantName || 'Applicant'}</td>
-                      <td className="py-4 px-6 text-slate-300 font-semibold">{app.serviceName}</td>
-                      <td className="py-4 px-6 text-slate-400 font-mono text-[11px]">{app.dateSubmitted}</td>
+                      <td className={`py-4 px-6 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{(app as any).applicantName || app.details?.applicantName || 'Applicant'}</td>
+                      <td className={`py-4 px-6 font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{app.serviceName}</td>
+                      <td className={`py-4 px-6 font-mono text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{app.dateSubmitted}</td>
                       <td className="py-4 px-6">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold border ${
                           app.status === 'Ready for Payout' || app.status === 'Approved' || app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed'
@@ -310,12 +314,14 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
             </div>
           </div>
         ) : (
-          <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-16 text-center shadow-xl flex flex-col items-center justify-center">
-            <div className="p-3.5 rounded-2xl bg-[#121c2e] border border-slate-800 text-slate-400 mb-3">
+          <div className={`border rounded-2xl p-16 text-center shadow-xl flex flex-col items-center justify-center ${
+            darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200'
+          }`}>
+            <div className={`p-3.5 rounded-2xl mb-3 border ${darkMode ? 'bg-[#121c2e] border-slate-800 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'}`}>
               <FileText className="w-8 h-8 stroke-[1.5]" />
             </div>
-            <h4 className="text-base font-extrabold text-white">No applications found</h4>
-            <p className="text-xs text-slate-400 mt-1">Try a different search term or filter.</p>
+            <h4 className={`text-base font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>No applications found</h4>
+            <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Try a different search term or filter.</p>
           </div>
         )}
       </div>

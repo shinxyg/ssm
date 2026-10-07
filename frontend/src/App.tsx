@@ -680,7 +680,9 @@ export default function App() {
           />
 
           {/* Admin Main Content Area */}
-          <main className="flex-1 p-6 overflow-y-auto bg-[#070e1b]">
+          <main className={`flex-1 p-6 overflow-y-auto transition-colors duration-200 ${
+            darkMode ? 'bg-[#070e1b] text-slate-100' : 'bg-slate-100 text-slate-900'
+          }`}>
             {adminTab === 'profile' ? (
               <UserProfileView darkMode={darkMode} userRole="admin" />
             ) : adminTab === 'reports' ? (

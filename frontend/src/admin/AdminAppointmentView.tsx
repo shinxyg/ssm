@@ -426,56 +426,60 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
   return (
     <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-white">
+        <h1 className={`text-2xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
           Appointments & Case Scheduling
         </h1>
       </div>
 
       {/* METRICS CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-4 shadow-lg">
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">TOTAL REQUESTS</span>
-          <div className="text-2xl font-extrabold text-white tracking-tight mt-1.5">{totalCount}</div>
+        <div className={`border rounded-2xl p-4 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
+          <span className={`text-[10px] font-bold tracking-wider uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>TOTAL REQUESTS</span>
+          <div className={`text-2xl font-extrabold tracking-tight mt-1.5 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{totalCount}</div>
         </div>
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-4 shadow-lg">
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">PENDING SCHEDULE</span>
+        <div className={`border rounded-2xl p-4 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
+          <span className={`text-[10px] font-bold tracking-wider uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PENDING SCHEDULE</span>
           <div className="text-2xl font-extrabold text-amber-400 tracking-tight mt-1.5">{pendingSchedCount}</div>
         </div>
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-4 shadow-lg">
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">SCHEDULED</span>
+        <div className={`border rounded-2xl p-4 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
+          <span className={`text-[10px] font-bold tracking-wider uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SCHEDULED</span>
           <div className="text-2xl font-extrabold text-blue-400 tracking-tight mt-1.5">{scheduledCount}</div>
         </div>
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-4 shadow-lg">
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">APPROVED / ISSUED</span>
+        <div className={`border rounded-2xl p-4 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
+          <span className={`text-[10px] font-bold tracking-wider uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>APPROVED / ISSUED</span>
           <div className="text-2xl font-extrabold text-emerald-400 tracking-tight mt-1.5">{approvedCount}</div>
         </div>
-        <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-4 shadow-lg">
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">REJECTED</span>
+        <div className={`border rounded-2xl p-4 shadow-lg ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
+          <span className={`text-[10px] font-bold tracking-wider uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>REJECTED</span>
           <div className="text-2xl font-extrabold text-rose-400 tracking-tight mt-1.5">{rejectedCount}</div>
         </div>
       </div>
 
       {/* FILTERS */}
-      <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 space-y-4 shadow-xl">
+      <div className={`border rounded-2xl p-5 space-y-4 shadow-xl ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'}`}>
         <div className="relative w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
           <input
             type="text"
             placeholder="Search by name or reference number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#0b1220] border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            className={`w-full border rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all ${
+              darkMode ? 'bg-[#0b1220] border-slate-700/80 text-slate-200 placeholder-slate-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+            }`}
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           <div>
-            <label className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase block mb-1.5">Module</label>
+            <label className={`text-[10px] font-extrabold tracking-wider uppercase block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Module</label>
             <div className="relative">
               <select
                 value={moduleFilter}
                 onChange={(e) => setModuleFilter(e.target.value)}
-                className="w-full appearance-none bg-[#0b1220] border border-slate-700/80 rounded-xl px-4 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer"
+                className={`w-full appearance-none border rounded-xl px-4 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer ${
+                  darkMode ? 'bg-[#0b1220] border-slate-700/80 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-800'
+                }`}
               >
                 <option value="All Modules">All Modules</option>
                 <option value="AICS">AICS (Medical / Funeral)</option>
@@ -484,24 +488,26 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                 <option value="Solo Parent">Solo Parent</option>
                 <option value="Livelihood Program">Livelihood Program</option>
               </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className={`w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
             </div>
           </div>
 
           <div>
-            <label className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase block mb-1.5">Status</label>
+            <label className={`text-[10px] font-extrabold tracking-wider uppercase block mb-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Status</label>
             <div className="relative">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full appearance-none bg-[#0b1220] border border-slate-700/80 rounded-xl px-4 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer"
+                className={`w-full appearance-none border rounded-xl px-4 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer ${
+                  darkMode ? 'bg-[#0b1220] border-slate-700/80 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-800'
+                }`}
               >
                 <option value="All Statuses">All Statuses</option>
                 <option value="Pending">Pending Schedule</option>
                 <option value="Scheduled">Scheduled</option>
                 <option value="Approved">Approved & GL Issued</option>
               </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className={`w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
             </div>
           </div>
         </div>
@@ -509,16 +515,18 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
 
       {/* APPOINTMENTS TABLE */}
       <div className="space-y-3">
-        <h3 className="text-sm font-bold text-white tracking-wide">
-          Appointments Registry <span className="text-slate-400 font-mono text-xs">({filteredList.length})</span>
+        <h3 className={`text-sm font-bold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+          Appointments Registry <span className={`font-mono text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>({filteredList.length})</span>
         </h3>
 
         {filteredList.length > 0 ? (
-          <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl overflow-hidden shadow-xl">
+          <div className={`border rounded-2xl overflow-hidden shadow-xl ${darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200'}`}>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800/80 bg-[#121c2e] text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  <tr className={`border-b text-[11px] font-extrabold uppercase tracking-wider ${
+                    darkMode ? 'border-slate-800/80 bg-[#121c2e] text-slate-400' : 'border-slate-200 bg-slate-100 text-slate-600'
+                  }`}>
                     <th className="py-4 px-6">REFERENCE NO.</th>
                     <th className="py-4 px-6">APPLICANT NAME</th>
                     <th className="py-4 px-6">MODULE / SERVICE</th>
@@ -527,7 +535,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                     <th className="py-4 px-6 text-right">ACTION</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs font-medium">
+                <tbody className={`divide-y text-xs font-medium ${darkMode ? 'divide-slate-800/60' : 'divide-slate-200'}`}>
                   {filteredList.map((app) => {
                     const name = (app as any).applicantName || app.details?.applicantName || 'Juan Dela Cruz';
                     const appt = app.appointmentDetails;
@@ -549,17 +557,19 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                     const isGLPrintable = (app.serviceName.toLowerCase().includes('medical bill') || app.serviceName.toLowerCase().includes('hospital') || app.assistanceType?.toLowerCase().includes('medical bill') || app.serviceName.toLowerCase().includes('funeral') || app.serviceName.toLowerCase().includes('burial') || app.referenceNo.includes('FUN')) && !app.serviceName.toLowerCase().includes('medicine') && !(app.assistanceType || '').toLowerCase().includes('medicine');
 
                     return (
-                      <tr key={app.referenceNo} className="hover:bg-[#142036] transition-colors">
+                      <tr key={app.referenceNo} className={`transition-colors ${
+                        darkMode ? 'hover:bg-[#142036]' : 'hover:bg-slate-50'
+                      }`}>
                         <td className="py-4 px-6 font-mono font-bold text-blue-400">{app.referenceNo}</td>
-                        <td className="py-4 px-6 font-bold text-white">{name}</td>
-                        <td className="py-4 px-6 text-slate-300">
+                        <td className={`py-4 px-6 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{name}</td>
+                        <td className={`py-4 px-6 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                           <span className="font-semibold">{app.serviceName}</span>
                         </td>
-                        <td className="py-4 px-6 text-slate-300 font-mono text-[11px]">
+                        <td className={`py-4 px-6 font-mono text-[11px] ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                           {isScheduled ? (
                             <div className="space-y-0.5">
-                              <div className="flex items-center gap-1 text-slate-200 font-bold">
-                                <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                              <div className={`flex items-center gap-1 font-bold ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>
+                                <Calendar className="w-3.5 h-3.5 text-blue-500" />
                                 <span>{schedDate}</span>
                               </div>
                               {schedTime && (
