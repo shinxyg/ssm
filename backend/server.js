@@ -1986,6 +1986,81 @@ app.patch('/api/users/:id/status', async (req, res) => {
   }
 });
 
+// GET /api/activity-logs - Fetch activity logs (supports ?deleted=true for trash view)
+app.get('/api/activity-logs', async (req, res) => {
+  const isDeleted = req.query.deleted === 'true';
+  try {
+    const result = await pool.query(
+      `SELECT id, timestamp, staff_name, action, module, details, reference_no, is_deleted, deleted_at
+       FROM activity_logs
+       WHERE is_deleted = $1
+       ORDER BY timestamp DESC;`,
+      [isDeleted]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching activity logs:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/activity-logs - Record a new activity log
+app.post('/api/activity-logs', async (req, res) => {
+  const { staff_name, action, module, details, reference_no } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO activity_logs (staff_name, action, module, details, reference_no)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *;`,
+      [staff_name || 'System Admin', action, module, details, reference_no || null]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error recording activity log:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/activity-logs/:id - Soft delete an activity log (move to recently deleted)
+app.delete('/api/activity-logs/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `UPDATE activity_logs 
+       SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP 
+       WHERE id = $1 RETURNING *;`,
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Log entry not found' });
+    }
+    res.json({ success: true, log: result.rows[0] });
+  } catch (err) {
+    console.error('Error soft-deleting activity log:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/activity-logs/:id/restore - Restore a soft-deleted activity log
+app.post('/api/activity-logs/:id/restore', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `UPDATE activity_logs 
+       SET is_deleted = FALSE, deleted_at = NULL 
+       WHERE id = $1 RETURNING *;`,
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Log entry not found' });
+    }
+    res.json({ success: true, log: result.rows[0] });
+  } catch (err) {
+    console.error('Error restoring activity log:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`GovServe Backend API server listening on http://localhost:${PORT}`);
   initDB();

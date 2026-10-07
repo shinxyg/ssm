@@ -503,6 +503,18 @@ export const initDB = async () => {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Active';
       ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id SERIAL PRIMARY KEY,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        staff_name VARCHAR(255) DEFAULT 'System Admin',
+        action VARCHAR(100) NOT NULL,
+        module VARCHAR(100) NOT NULL,
+        details TEXT,
+        reference_no VARCHAR(100),
+        is_deleted BOOLEAN DEFAULT FALSE,
+        deleted_at TIMESTAMP
+      );
     `);
 
     // Seed default admin and user accounts if not present
@@ -538,7 +550,22 @@ export const initDB = async () => {
       console.log('✅ Default Resident user seeded: jeffersonlee1234@gmail.com / User!2026');
     }
 
-    console.log('✅ Database tables for AICS, Appointments, PWD, Senior, Livelihood, Solo Parent, Financial Disbursements, Educational Assistance, Training Applications, and Users verified & ready!');
+    // Seed default activity logs if empty
+    const logsCheck = await client.query('SELECT COUNT(*) FROM activity_logs;');
+    if (parseInt(logsCheck.rows[0].count, 10) === 0) {
+      await client.query(`
+        INSERT INTO activity_logs (staff_name, action, module, details, reference_no, timestamp) VALUES
+        ('System Admin', 'Approved', 'AICS', 'Approved AICS Medical Assistance application for JEFFERSON FERNANDO LEE', 'QC-AICS-2026-MED-8492', NOW() - INTERVAL '2 hours'),
+        ('System Admin', 'Approved', 'Solo Parent', 'Validated document requirements and approved cash subsidy for JEFFERSON FERNANDO LEE', 'SP-SUBSIDY-2026-1049', NOW() - INTERVAL '4 hours'),
+        ('Social Worker Maria Santos', 'Created', 'Livelihood Program', 'Issued ₱15,000 Livelihood Capital Grant approval for LVH-2026-6536', 'LVH-2026-6536', NOW() - INTERVAL '6 hours'),
+        ('System Admin', 'Approved', 'Senior Citizen', 'Verified Senior Citizen Financial Assistance eligibility', 'SNR-2026-9021', NOW() - INTERVAL '1 day'),
+        ('System Admin', 'Rejected', 'AICS', 'Rejected incomplete medical certificate submission', 'QC-AICS-2026-MED-1022', NOW() - INTERVAL '1 day 3 hours'),
+        ('System Admin', 'Created', 'User Management', 'Seeded resident user account jeffersonlee1234@gmail.com', 'USR-2026-002', NOW() - INTERVAL '2 days');
+      `);
+      console.log('✅ Default Activity Logs seeded in PostgreSQL DB!');
+    }
+
+    console.log('✅ Database tables for AICS, Appointments, PWD, Senior, Livelihood, Solo Parent, Financial Disbursements, Educational Assistance, Training Applications, Users, and Activity Logs verified & ready!');
     client.release();
   } catch (err) {
     console.error('❌ Database Connection Warning/Notice:', err.message);
