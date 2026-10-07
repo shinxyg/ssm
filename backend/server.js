@@ -248,7 +248,11 @@ app.get('/api/aics/applications', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM aics_applications ORDER BY date_submitted DESC');
     const formatted = result.rows.map(row => ({
+      id: row.id,
+      reference_no: row.reference_no,
       referenceNo: row.reference_no,
+      created_at: row.created_at,
+      date_submitted: row.date_submitted,
       applicantName: row.applicant_name,
       serviceName: row.service_name,
       category: row.category,
@@ -756,6 +760,26 @@ app.put('/api/senior/applications/:id/status', async (req, res) => {
     });
 
     res.json(row);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET all PWD applications from PostgreSQL DB
+app.get('/api/pwd/applications', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM pwd_applications ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET all Child Welfare applications from PostgreSQL DB
+app.get('/api/child-welfare/applications', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM child_welfare_applications ORDER BY id DESC');
+    res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

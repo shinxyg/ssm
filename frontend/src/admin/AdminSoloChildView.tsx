@@ -28,6 +28,7 @@ import {
 interface SoloParentApplication {
   id: number;
   reference_no: string;
+  service_name?: string;
   applicant_name: string;
   first_name?: string;
   middle_name?: string;
@@ -98,6 +99,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
           .map((app: any) => ({
             id: app.id,
             reference_no: app.reference_no,
+            service_name: app.service_name || 'Solo Parent Educational Assistance Program',
             applicant_name: app.applicant_name,
             first_name: app.first_name,
             middle_name: app.middle_name,
@@ -434,7 +436,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                           {app.applicant_name || `${app.first_name || 'JEFFERSON'} ${app.last_name || 'LEE'}`}
                         </td>
                         <td className={`py-4 px-6 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                          Solo Parent Financial Subsidy Program
+                          {app.service_name || (app.reference_no?.includes('EDU') || (app.solo_parent_category || '').toLowerCase().includes('educational') ? 'Solo Parent Educational Assistance Program' : 'Solo Parent Financial Subsidy Program')}
                         </td>
                         <td className={`py-4 px-6 font-mono text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                           {app.date_submitted ? `${new Date(app.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date(app.date_submitted).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}` : 'Oct 5, 2026 • 10:57 AM'}
