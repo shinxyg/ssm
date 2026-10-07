@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
+import bcrypt from 'bcryptjs';
 import { pool, initDB } from './db.js';
 
 dotenv.config();
@@ -1839,7 +1840,69 @@ app.delete('/api/reset-data', async (req, res) => {
   }
 });
 
+// POST /api/login - Authenticate user or admin
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  }
+
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = $1;', [cleanEmail]);
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, message: 'Invalid email address or password' });
+    }
+
+    const user = result.rows[0];
+    let isMatch = false;
+
+    try {
+      isMatch = await bcrypt.compare(password, user.password);
+    } catch (err) {
+      isMatch = false;
+    }
+
+    if (!isMatch && password === user.password) {
+      isMatch = true;
+    }
+
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid email address or password' });
+    }
+
+    const { password: _, ...userData } = user;
+    res.json({ success: true, user: userData });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/user/profile - Fetch user profile by email
+app.get('/api/user/profile', async (req, res) => {
+  const { email } = req.query;
+  if (!email) {
+    return res.status(400).json({ error: 'Email parameter is required' });
+  }
+
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const result = await pool.query('SELECT id, email, role, first_name, middle_name, last_name, suffix, dob, blood_type, civil_status, sex, occupation, phone_number, house_no, street_name, barangay, city FROM users WHERE LOWER(email) = $1;', [cleanEmail]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User profile not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`GovServe Backend API server listening on http://localhost:${PORT}`);
   initDB();
 });
+

@@ -46,7 +46,7 @@ export const ServiceCatalog: React.FC<ServiceCatalogProps> = ({
   };
 
   return (
-    <div className="py-6">
+    <div id="service-catalog" className="py-6 scroll-mt-6">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h3 className={`text-lg font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>

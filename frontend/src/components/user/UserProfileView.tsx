@@ -65,6 +65,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
 
   const [workingInQC, setWorkingInQC] = useState<string>('Yes');
   const [occupation, setOccupation] = useState<string>('IT SUPPORT');
+  const [civilStatus, setCivilStatus] = useState<string>('Single');
   const [sex, setSex] = useState<string>('Male');
   const [mobileNumber, setMobileNumber] = useState<string>('09155582122');
 
@@ -98,20 +99,6 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
         {/* Header Title Section */}
         <div className={`p-6 border-b ${darkMode ? 'bg-[#0e1933] border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
           <div className="space-y-4">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <h2 className={`text-xl sm:text-2xl font-black tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                  {isSystemAdmin ? 'HI, SYSTEM ADMINISTRATOR!' : 'HI, JEFFERSON FERNANDO LEE!'}
-                </h2>
-                <span className="px-2.5 py-0.5 bg-blue-600/20 text-blue-400 border border-blue-500/40 text-[10px] font-extrabold uppercase rounded-full tracking-wider">
-                  {isSystemAdmin ? 'SUPER ADMIN ACCESS' : 'VERIFIED CITIZEN'}
-                </span>
-              </div>
-            </div>
-
-            <p className={`text-xs font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              Quezon City Social Services & Development Department (SSDD) • {isSystemAdmin ? 'ADMIN ID: QC-SSDD-001' : 'QCID: 9842-1049-4143'}
-            </p>
 
             {/* Profile Avatar Card */}
             <div className={`flex items-center justify-between p-4 rounded-2xl border ${
@@ -129,7 +116,11 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </h4>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-xs font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Status:</span>
-                    <span className="px-2.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-extrabold rounded-full">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-extrabold rounded-full">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
                       Active
                     </span>
                   </div>
@@ -189,8 +180,8 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-xl text-xs font-mono ${
+                  disabled
+                  className={`w-full px-4 py-3 border rounded-xl text-xs font-mono cursor-not-allowed opacity-90 ${
                     darkMode ? 'bg-[#0e1933] border-slate-700/80 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                   }`}
                 />
@@ -304,7 +295,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                   Deactivating your account is a permanent action. All your data will be removed and you will lose access to the portal.
                 </p>
-                <div className="flex flex-wrap gap-3 pt-2">
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => alert('Account deactivation link requested.')}
@@ -418,7 +409,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                     Deactivating your account is a permanent action. All your data will be removed and you will lose access to the portal.
                   </p>
-                  <div className="flex flex-wrap gap-3 pt-2">
+                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                     <button
                       type="button"
                       onClick={() => alert('Account deactivation requested.')}
@@ -457,20 +448,20 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                     <input
                       type="text"
                       value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      disabled
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
                   <div>
-                    <label className={`text-[11px] font-bold block mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Middle Name (Optional)</label>
+                    <label className={`text-[11px] font-bold block mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Middle Name</label>
                     <input
                       type="text"
                       value={middleName}
-                      onChange={(e) => setMiddleName(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      disabled
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
@@ -479,9 +470,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                     <input
                       type="text"
                       value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      disabled
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
@@ -490,10 +481,10 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                     <input
                       type="text"
                       value={suffix}
-                      onChange={(e) => setSuffix(e.target.value)}
+                      disabled
                       placeholder="e.g. JR"
-                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
@@ -506,51 +497,45 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
                     <label className={`text-[11px] font-bold block mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Month</label>
-                    <select
+                    <input
+                      type="text"
                       value={birthMonth}
-                      onChange={(e) => setBirthMonth(e.target.value)}
-                      className={`w-full px-3 py-2.5 border rounded-xl text-xs uppercase ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      disabled
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
-                    >
-                      {['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'].map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                   <div>
                     <label className={`text-[11px] font-bold block mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Day</label>
                     <input
                       type="text"
                       value={birthDay}
-                      onChange={(e) => setBirthDay(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      disabled
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
                   <div>
                     <label className={`text-[11px] font-bold block mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Year</label>
-                    <select
+                    <input
+                      type="text"
                       value={birthYear}
-                      onChange={(e) => setBirthYear(e.target.value)}
-                      className={`w-full px-3 py-2.5 border rounded-xl text-xs ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      disabled
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
-                    >
-                      {Array.from({ length: 70 }, (_, i) => 2026 - i).map((y) => (
-                        <option key={y} value={y}>{y}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                   <div>
                     <label className={`text-[11px] font-bold block mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Blood Type</label>
                     <input
                       type="text"
                       value={bloodType}
-                      onChange={(e) => setBloodType(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs font-normal ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      disabled
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs font-normal cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
@@ -566,9 +551,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                     <input
                       type="text"
                       value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      disabled
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
@@ -577,9 +562,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                     <input
                       type="text"
                       value={houseNo}
-                      onChange={(e) => setHouseNo(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      disabled
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
@@ -588,9 +573,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                     <input
                       type="text"
                       value={street}
-                      onChange={(e) => setStreet(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      disabled
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
@@ -599,9 +584,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                     <input
                       type="text"
                       value={barangay}
-                      onChange={(e) => setBarangay(e.target.value)}
-                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase ${
-                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                      disabled
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs uppercase cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                       }`}
                     />
                   </div>
@@ -615,41 +600,54 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <div className="space-y-2">
                   <label className={`text-xs block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Are you working in Quezon City?</label>
                   <div className="flex items-center gap-6">
-                    <label className={`flex items-center gap-2 text-xs cursor-pointer ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                    <label className={`flex items-center gap-2 text-xs cursor-not-allowed opacity-80 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                       <input
                         type="radio"
                         name="workingQC"
                         value="Yes"
                         checked={workingInQC === 'Yes'}
-                        onChange={(e) => setWorkingInQC(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-slate-700"
+                        disabled
+                        className="w-4 h-4 text-blue-600 border-slate-700 cursor-not-allowed"
                       />
                       <span>Yes</span>
                     </label>
-                    <label className={`flex items-center gap-2 text-xs cursor-pointer ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                    <label className={`flex items-center gap-2 text-xs cursor-not-allowed opacity-80 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                       <input
                         type="radio"
                         name="workingQC"
                         value="No"
                         checked={workingInQC === 'No'}
-                        onChange={(e) => setWorkingInQC(e.target.value)}
-                        className="w-4 h-4 text-blue-600 border-slate-700"
+                        disabled
+                        className="w-4 h-4 text-blue-600 border-slate-700 cursor-not-allowed"
                       />
                       <span>No</span>
                     </label>
                   </div>
                 </div>
 
-                <div className="pt-2 space-y-2">
-                  <label className={`text-[11px] font-bold block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Occupation</label>
-                  <input
-                    type="text"
-                    value={occupation}
-                    onChange={(e) => setOccupation(e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-xl text-xs uppercase ${
-                      darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-                    }`}
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div className="space-y-1">
+                    <label className={`text-[11px] font-bold block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Occupation</label>
+                    <input
+                      type="text"
+                      value={occupation}
+                      disabled
+                      className={`w-full px-4 py-3 border rounded-xl text-xs uppercase cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className={`text-[11px] font-bold block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Civil Status</label>
+                    <input
+                      type="text"
+                      value={civilStatus}
+                      disabled
+                      className={`w-full px-4 py-3 border rounded-xl text-xs cursor-not-allowed opacity-90 ${
+                        darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
+                      }`}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -657,16 +655,14 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className={`text-[11px] font-bold block ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Sex</label>
-                  <select
+                  <input
+                    type="text"
                     value={sex}
-                    onChange={(e) => setSex(e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                    disabled
+                    className={`w-full px-4 py-3 border rounded-xl text-xs cursor-not-allowed opacity-90 ${
+                      darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                     }`}
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
+                  />
                 </div>
 
                 <div className="space-y-1">
@@ -674,9 +670,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   <input
                     type="text"
                     value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-xl text-xs ${
-                      darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                    disabled
+                    className={`w-full px-4 py-3 border rounded-xl text-xs cursor-not-allowed opacity-90 ${
+                      darkMode ? 'bg-[#0e1933] border-slate-700 text-white' : 'bg-slate-100 border-slate-300 text-slate-900'
                     }`}
                   />
                 </div>
@@ -703,7 +699,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                   Deactivating your account is a permanent action. All your data will be removed and you will lose access to the portal.
                 </p>
-                <div className="flex flex-wrap gap-3 pt-2">
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => alert('Account deactivation requested.')}
@@ -819,7 +815,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                   Deactivating your account is a permanent action. All your data will be removed and you will lose access to the portal.
                 </p>
-                <div className="flex flex-wrap gap-3 pt-2">
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => alert('Account deactivation requested.')}
@@ -887,7 +883,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                   Deactivating your account is a permanent action. All your data will be removed and you will lose access to the portal.
                 </p>
-                <div className="flex flex-wrap gap-3 pt-2">
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => alert('Account deactivation requested.')}

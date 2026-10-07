@@ -19,6 +19,7 @@ import { SeniorCitizenAssistanceView } from './components/user/SeniorCitizenAssi
 import { SoloParentAssistanceView } from './components/user/SoloParentAssistanceView';
 import { UserProfileView } from './components/user/UserProfileView';
 import { LoginView } from './components/login/LoginView';
+import { LandingView } from './components/landing';
 import { 
   AdminAicsView, 
   AdminPwdSeniorView, 
@@ -61,7 +62,7 @@ import {
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [darkMode, setDarkMode] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<string>('help-guide');
+  const [activeTab, setActiveTab] = useState<string>('landing');
   const [userRole, setUserRole] = useState<'user' | 'admin'>('user');
   const [adminTab, setAdminTab] = useState<string>('reports');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -422,6 +423,16 @@ export default function App() {
     'profile': 'User Profile',
   };
 
+  if (activeTab === 'landing') {
+    return (
+      <LandingView
+        onAccessPortal={() => setActiveTab('login')}
+        darkMode={darkMode}
+        onToggleDarkMode={() => setDarkMode(!darkMode)}
+      />
+    );
+  }
+
   if (activeTab === 'login') {
     return (
       <LoginView
@@ -429,7 +440,7 @@ export default function App() {
           setUserRole(role);
           setActiveTab('help-guide');
         }}
-        onBackToHome={() => setActiveTab('help-guide')}
+        onBackToHome={() => setActiveTab('landing')}
         darkMode={darkMode}
       />
     );

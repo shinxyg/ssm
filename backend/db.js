@@ -1,5 +1,6 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -472,12 +473,69 @@ export const initDB = async () => {
       ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS uploaded_documents JSONB;
       ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS details JSONB;
       ALTER TABLE training_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        role VARCHAR(50) NOT NULL DEFAULT 'user',
+        first_name VARCHAR(100),
+        middle_name VARCHAR(100),
+        last_name VARCHAR(100),
+        suffix VARCHAR(20),
+        dob VARCHAR(50),
+        blood_type VARCHAR(20),
+        civil_status VARCHAR(50),
+        sex VARCHAR(20),
+        occupation VARCHAR(255),
+        phone_number VARCHAR(50),
+        house_no VARCHAR(100),
+        street_name VARCHAR(150),
+        barangay VARCHAR(150),
+        city VARCHAR(150) DEFAULT 'QUEZON CITY',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
-    console.log('✅ Database tables for AICS, Appointments, PWD, Senior, Livelihood, Solo Parent, Financial Disbursements, Educational Assistance, and Training Applications verified & ready!');
+    // Seed default admin and user accounts if not present
+    const adminCheck = await client.query('SELECT * FROM users WHERE email = $1;', ['admin@gmail.com']);
+    if (adminCheck.rows.length === 0) {
+      const hashedAdminPass = await bcrypt.hash('Admin!2026', 10);
+      await client.query(`
+        INSERT INTO users (email, password, role, first_name, last_name)
+        VALUES ($1, $2, $3, $4, $5);
+      `, ['admin@gmail.com', hashedAdminPass, 'admin', 'System', 'Admin']);
+      console.log('✅ Default Admin account seeded: admin@gmail.com / Admin!2026');
+    }
+
+    const userCheck = await client.query('SELECT * FROM users WHERE email = $1;', ['jeffersonlee1234@gmail.com']);
+    if (userCheck.rows.length === 0) {
+      const hashedUserPass = await bcrypt.hash('User!2026', 10);
+      await client.query(`
+        INSERT INTO users (
+          email, password, role, first_name, middle_name, last_name, suffix,
+          dob, blood_type, civil_status, sex, occupation, phone_number,
+          house_no, street_name, barangay, city
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7,
+          $8, $9, $10, $11, $12, $13,
+          $14, $15, $16, $17
+        );
+      `, [
+        'jeffersonlee1234@gmail.com', hashedUserPass, 'user',
+        'JEFFERSON', 'FERNANDO', 'LEE', '',
+        '2004-09-27', 'O+', 'Single', 'Male', 'IT SUPPORT', '09155582122',
+        '176', '23', 'BAGONG SILANGAN', 'QUEZON CITY'
+      ]);
+      console.log('✅ Default Resident user seeded: jeffersonlee1234@gmail.com / User!2026');
+    }
+
+    console.log('✅ Database tables for AICS, Appointments, PWD, Senior, Livelihood, Solo Parent, Financial Disbursements, Educational Assistance, Training Applications, and Users verified & ready!');
     client.release();
   } catch (err) {
     console.error('❌ Database Connection Warning/Notice:', err.message);
   }
 };
+
 

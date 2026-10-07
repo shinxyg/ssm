@@ -74,26 +74,47 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
       {/* Search Input Bar */}
       <div className="relative z-10 mb-5">
-        <div className="relative max-w-3xl">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <Search className="w-4 h-4 text-slate-400" />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const elem = document.getElementById('service-catalog');
+            if (elem) {
+              elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
+          className="relative max-w-3xl flex items-center gap-2"
+        >
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <Search className="w-4 h-4 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search services, requirements, or benefits (e.g. Medical, Senior Booklet, PWD ID, Funeral, Livelihood)..."
+              className="w-full pl-10 pr-16 py-3 bg-[#0d162a] border border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:border-blue-500 shadow-inner transition-colors"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
           </div>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search services, requirements, or benefits (e.g. Medical, Senior Booklet, PWD ID, Funeral, Livelihood)..."
-            className="w-full pl-10 pr-4 py-3 bg-[#0d162a] border border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:border-blue-500 shadow-inner transition-colors"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-400 hover:text-white"
-            >
-              Clear
-            </button>
-          )}
-        </div>
+
+          <button
+            type="submit"
+            className="px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md border border-blue-400/40 transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
+            title="Search Services"
+          >
+            <Search className="w-4 h-4" />
+            <span className="hidden sm:inline">Search</span>
+          </button>
+        </form>
       </div>
 
       {/* Filter Category Pills */}
@@ -103,11 +124,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           return (
             <button
               key={pill.id}
-              onClick={() => setActiveFilter(pill.id)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
+              onClick={() => {
+                setActiveFilter(pill.id);
+                const elem = document.getElementById('service-catalog');
+                if (elem) {
+                  elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
                 isActive
-                  ? 'bg-blue-600 text-white border border-blue-400 shadow-md'
-                  : 'bg-slate-900/80 hover:bg-slate-900 text-slate-200 border border-slate-700/60'
+                  ? 'bg-blue-600 text-white border border-blue-400 shadow-md scale-105'
+                  : 'bg-slate-900/80 hover:bg-slate-900 text-slate-200 border border-slate-700/60 hover:border-blue-500/50'
               }`}
             >
               {pill.label}
@@ -118,7 +145,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         {/* Special Blue Glow Pill: Assistance & Eligibility Finder */}
         <button
           onClick={onOpenEligibilityModal}
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/40 border border-blue-400/50 transition-all"
+          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/40 border border-blue-400/50 transition-all cursor-pointer"
         >
           <HeartHandshake className="w-3.5 h-3.5" />
           <span>Assistance & Eligibility Finder</span>
