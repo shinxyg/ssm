@@ -172,9 +172,6 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
         <h1 className="text-2xl font-extrabold tracking-tight text-white">
           PWD & Senior Citizens Registry
         </h1>
-        <p className="text-xs text-slate-400 mt-1">
-          Review, verify, and initial approve Senior Citizen & PWD Financial Assistance applications.
-        </p>
       </div>
 
       {/* Stats Cards */}

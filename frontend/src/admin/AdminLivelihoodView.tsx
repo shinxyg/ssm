@@ -255,13 +255,9 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
     <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
       {/* Page Title Header */}
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
-          <Building2 className="w-7 h-7 text-blue-400" />
-          <span>Livelihood & Grants Services</span>
+        <h1 className="text-2xl font-extrabold tracking-tight text-white">
+          Livelihood & Grants Services
         </h1>
-        <p className="text-xs text-slate-400 mt-1">
-          Review applicant sector qualifications, business proposals, set site assessment appointments, and disburse ₱15,000 Livelihood Capital Grants.
-        </p>
       </div>
 
       {/* KPI Stats Cards Grid (Matching AICS Layout) */}

@@ -429,9 +429,6 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
         <h1 className="text-2xl font-extrabold tracking-tight text-white">
           Appointments & Case Scheduling
         </h1>
-        <p className="text-xs font-semibold text-slate-400 mt-1">
-          Set schedules, conduct assessments, approve aid vouchers, and issue partner agency referrals.
-        </p>
       </div>
 
       {/* METRICS CARDS */}

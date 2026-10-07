@@ -275,18 +275,18 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
         </div>
 
         <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">PENDING REVIEW</span>
-          <div className="text-3xl font-extrabold text-white tracking-tight mt-2">{pendingCount}</div>
+          <span className="text-[11px] font-bold tracking-wider text-amber-400 uppercase">PENDING REVIEW</span>
+          <div className="text-3xl font-extrabold text-amber-400 tracking-tight mt-2">{pendingCount}</div>
         </div>
 
         <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">APPROVED</span>
-          <div className="text-3xl font-extrabold text-white tracking-tight mt-2">{approvedCount}</div>
+          <span className="text-[11px] font-bold tracking-wider text-emerald-400 uppercase">APPROVED</span>
+          <div className="text-3xl font-extrabold text-emerald-400 tracking-tight mt-2">{approvedCount}</div>
         </div>
 
         <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg">
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">REJECTED</span>
-          <div className="text-3xl font-extrabold text-white tracking-tight mt-2">{rejectedCount}</div>
+          <span className="text-[11px] font-bold tracking-wider text-rose-400 uppercase">REJECTED</span>
+          <div className="text-3xl font-extrabold text-rose-400 tracking-tight mt-2">{rejectedCount}</div>
         </div>
       </div>
 

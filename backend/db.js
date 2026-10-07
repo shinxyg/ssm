@@ -493,9 +493,16 @@ export const initDB = async () => {
         street_name VARCHAR(150),
         barangay VARCHAR(150),
         city VARCHAR(150) DEFAULT 'QUEZON CITY',
+        status VARCHAR(50) DEFAULT 'Active',
+        is_online BOOLEAN DEFAULT FALSE,
+        last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'Active';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
     `);
 
     // Seed default admin and user accounts if not present

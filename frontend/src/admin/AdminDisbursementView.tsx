@@ -186,9 +186,6 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
           <h1 className="text-2xl font-extrabold tracking-tight text-white">
             Financial Aid Disbursement & Releasing
           </h1>
-          <p className="text-xs font-semibold text-slate-400 mt-1">
-            Masterlist of approved Guarantee Letters, Vouchers, and Cash Subsidies ready for release.
-          </p>
         </div>
       </div>
 
@@ -197,8 +194,7 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
         <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg flex justify-between items-start">
           <div>
             <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase block">TOTAL RELEASED</span>
-            <div className="text-2xl font-extrabold text-white tracking-tight mt-2">{releasedCount} Records</div>
-            <span className="text-[11px] font-semibold text-emerald-400 mt-1 block">✓ Successfully Processed</span>
+            <div className="text-3xl font-extrabold text-emerald-400 tracking-tight mt-2">{releasedCount}</div>
           </div>
           <div className="p-2 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400">
             <CheckCircle2 className="w-4 h-4" />
@@ -208,8 +204,7 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
         <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg flex justify-between items-start">
           <div>
             <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase block">PENDING RELEASE</span>
-            <div className="text-2xl font-extrabold text-amber-400 tracking-tight mt-2">{pendingCount} Payouts</div>
-            <span className="text-[11px] font-semibold text-amber-400 mt-1 block">Ready for Disbursement</span>
+            <div className="text-3xl font-extrabold text-amber-400 tracking-tight mt-2">{pendingCount}</div>
           </div>
           <div className="p-2 rounded-full bg-amber-950/60 border border-amber-500/30 text-amber-400">
             <Clock className="w-4 h-4" />
@@ -219,8 +214,7 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
         <div className="bg-[#0e1726] border border-slate-800/90 rounded-2xl p-5 shadow-lg flex justify-between items-start">
           <div>
             <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase block">TOTAL MASTERLIST</span>
-            <div className="text-2xl font-extrabold text-white tracking-tight mt-2">{disbursementRecords.length}</div>
-            <span className="text-[11px] font-semibold text-blue-400 mt-1 block">Disbursement Entries</span>
+            <div className="text-3xl font-extrabold text-blue-400 tracking-tight mt-2">{disbursementRecords.length}</div>
           </div>
           <div className="p-2 rounded-full bg-blue-950/60 border border-blue-500/30 text-blue-400">
             <Users className="w-4 h-4" />

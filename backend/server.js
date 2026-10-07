@@ -1872,10 +1872,37 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid email address or password' });
     }
 
+    // Mark user as online upon successful login
+    await pool.query(
+      'UPDATE users SET is_online = TRUE, last_active = CURRENT_TIMESTAMP WHERE id = $1;',
+      [user.id]
+    );
+
     const { password: _, ...userData } = user;
+    userData.is_online = true;
+    userData.presence = 'Online';
     res.json({ success: true, user: userData });
   } catch (err) {
     console.error('Login error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/logout - Mark user as offline upon logout
+app.post('/api/logout', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'Email is required' });
+  }
+
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    await pool.query(
+      'UPDATE users SET is_online = FALSE, last_active = CURRENT_TIMESTAMP WHERE LOWER(email) = $1;',
+      [cleanEmail]
+    );
+    res.json({ success: true, message: 'User logged out successfully' });
+  } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -1889,13 +1916,71 @@ app.get('/api/user/profile', async (req, res) => {
 
   try {
     const cleanEmail = email.trim().toLowerCase();
-    const result = await pool.query('SELECT id, email, role, first_name, middle_name, last_name, suffix, dob, blood_type, civil_status, sex, occupation, phone_number, house_no, street_name, barangay, city FROM users WHERE LOWER(email) = $1;', [cleanEmail]);
+    const result = await pool.query('SELECT id, email, role, first_name, middle_name, last_name, suffix, dob, blood_type, civil_status, sex, occupation, phone_number, house_no, street_name, barangay, city, COALESCE(is_online, FALSE) as is_online FROM users WHERE LOWER(email) = $1;', [cleanEmail]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User profile not found' });
     }
 
     res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/users - Fetch all users for Admin User Management
+app.get('/api/users', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, email, role, first_name, middle_name, last_name, suffix, dob, blood_type, civil_status, sex, occupation, phone_number, house_no, street_name, barangay, city, COALESCE(status, 'Active') as status, COALESCE(is_online, FALSE) as is_online, created_at
+      FROM users
+      ORDER BY id ASC;
+    `);
+
+    const formattedUsers = result.rows.map((u) => ({
+      id: u.id,
+      userId: `USR-2026-${String(u.id).padStart(3, '0')}`,
+      email: u.email,
+      role: u.role === 'admin' ? 'Administrator' : 'User / Beneficiary',
+      rawRole: u.role,
+      name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+      firstName: u.first_name,
+      lastName: u.last_name,
+      phoneNumber: u.phone_number || 'N/A',
+      barangay: u.barangay || 'N/A',
+      city: u.city || 'QUEZON CITY',
+      status: u.status || 'Active',
+      isOnline: u.is_online === true,
+      presence: u.is_online === true ? 'Online' : 'Offline',
+      createdAt: u.created_at
+    }));
+
+    res.json(formattedUsers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/users/:id/status - Toggle user account status (Active / Inactive)
+app.patch('/api/users/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!status) {
+    return res.status(400).json({ error: 'Status is required' });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE users SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, email, status;',
+      [status, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ success: true, user: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

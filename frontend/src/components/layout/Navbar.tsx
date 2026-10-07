@@ -469,8 +469,24 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   setShowProfileMenu(false);
+                  try {
+                    const savedUser = localStorage.getItem('currentUser');
+                    if (savedUser) {
+                      const parsed = JSON.parse(savedUser);
+                      if (parsed?.email) {
+                        await fetch('http://localhost:5000/api/logout', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ email: parsed.email }),
+                        });
+                      }
+                    }
+                  } catch (e) {
+                    console.error('Logout error:', e);
+                  }
+                  localStorage.removeItem('currentUser');
                   if (onNavigateToLogin) onNavigateToLogin();
                 }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-red-500 rounded-lg transition-colors cursor-pointer mt-0.5 ${
