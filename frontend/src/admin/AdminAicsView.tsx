@@ -153,8 +153,8 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-6 pt-1 text-xs">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-row items-center gap-4 flex-nowrap overflow-x-auto pt-1 text-xs">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">CATEGORY</span>
             <button
               type="button"
@@ -202,7 +202,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-2 border-l border-slate-800/80 pl-6">
+          <div className="flex items-center gap-2 border-l border-slate-800/80 pl-4 flex-shrink-0">
             <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase mr-1">STATUS</span>
             <button
               type="button"
