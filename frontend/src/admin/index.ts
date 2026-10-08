@@ -5,7 +5,6 @@ export { AdminSoloChildView } from './AdminSoloChildView';
 export { AdminLivelihoodView } from './AdminLivelihoodView';
 export { AdminDisbursementView } from './AdminDisbursementView';
 export { AdminBeneficiaryView } from './AdminBeneficiaryView';
-export { AdminCaseView } from './AdminCaseView';
 export { AdminAppointmentView } from './AdminAppointmentView';
 export { AdminActivityView } from './AdminActivityView';
 export { AdminUserView } from './AdminUserView';

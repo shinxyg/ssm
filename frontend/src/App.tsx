@@ -27,7 +27,6 @@ import {
   AdminLivelihoodView, 
   AdminDisbursementView, 
   AdminBeneficiaryView, 
-  AdminCaseView, 
   AdminAppointmentView, 
   AdminActivityView, 
   AdminUserView, 
@@ -456,7 +455,6 @@ export default function App() {
       'livelihood': 'Livelihood & Grants Management',
       'disbursement': 'Disbursement & Financial Aid Payouts',
       'beneficiaries': 'Beneficiary Master Registry',
-      'cases': 'Social Worker Case Management',
       'appointments': 'Citizen Appointments Calendar',
       'activity': 'System Security & Activity Log',
       'users': 'User & Access Control Management',
@@ -557,30 +555,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* CASE MANAGE Section */}
-            <div className="pt-2 border-t border-slate-800/60 space-y-1">
-              {sidebarOpen && (
-                <div className="px-4 text-[10px] font-bold tracking-wider uppercase mb-1.5 text-slate-500">
-                  CASE MANAGE
-                </div>
-              )}
-              <button
-                onClick={() => setAdminTab('cases')}
-                className={`w-full flex items-center ${
-                  sidebarOpen ? 'gap-3.5 px-4 py-3 justify-start' : 'justify-center p-3'
-                } rounded-2xl text-[13px] font-semibold transition-all duration-150 border group cursor-pointer ${
-                  adminTab === 'cases'
-                    ? 'bg-[#152747] text-white border-blue-500/30 shadow-md'
-                    : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
-                }`}
-                title={sidebarOpen ? undefined : "Case Management"}
-              >
-                <FolderKanban className={`w-4 h-4 shrink-0 transition-colors ${
-                  adminTab === 'cases' ? 'text-blue-400' : 'text-[#94a3b8] group-hover:text-white'
-                }`} />
-                {sidebarOpen && <span className="truncate">Case Management</span>}
-              </button>
-            </div>
+
 
             {/* SCHEDULING Section */}
             <div className="pt-2 border-t border-slate-800/60 space-y-1">
@@ -703,8 +678,6 @@ export default function App() {
               />
             ) : adminTab === 'beneficiaries' ? (
               <AdminBeneficiaryView darkMode={darkMode} />
-            ) : adminTab === 'cases' ? (
-              <AdminCaseView darkMode={darkMode} />
             ) : adminTab === 'appointments' ? (
               <AdminAppointmentView 
                 darkMode={darkMode} 

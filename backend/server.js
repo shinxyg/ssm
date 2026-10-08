@@ -2045,6 +2045,57 @@ app.post('/api/activity-logs', async (req, res) => {
   }
 });
 
+// DELETE /api/activity-logs/bulk/soft-delete-all - Move all active logs to Recently Deleted
+app.delete('/api/activity-logs/bulk/soft-delete-all', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE activity_logs 
+       SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP 
+       WHERE is_deleted = FALSE 
+       RETURNING *;`
+    );
+    res.json({ success: true, count: result.rows.length });
+  } catch (err) {
+    console.error('Error soft-deleting all activity logs:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/activity-logs/bulk/empty-trash - Permanently delete all logs in Recently Deleted
+app.delete('/api/activity-logs/bulk/empty-trash', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `DELETE FROM activity_logs 
+       WHERE is_deleted = TRUE 
+       RETURNING *;`
+    );
+    res.json({ success: true, count: result.rows.length });
+  } catch (err) {
+    console.error('Error emptying trash activity logs:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/activity-logs/:id/permanent - Permanently delete a single log from Recently Deleted
+app.delete('/api/activity-logs/:id/permanent', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `DELETE FROM activity_logs 
+       WHERE id = $1 AND is_deleted = TRUE 
+       RETURNING *;`,
+      [id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Log entry not found in trash' });
+    }
+    res.json({ success: true, log: result.rows[0] });
+  } catch (err) {
+    console.error('Error permanently deleting activity log:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // DELETE /api/activity-logs/:id - Soft delete an activity log (move to recently deleted)
 app.delete('/api/activity-logs/:id', async (req, res) => {
   const { id } = req.params;

@@ -80,17 +80,22 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
   const [zoomScale, setZoomScale] = useState<number>(1);
   const [verificationNotes, setVerificationNotes] = useState<string>('Documents inspected and verified by Social Worker.');
   const [isSubmittingVerif, setIsSubmittingVerif] = useState<boolean>(false);
-  const [isPrivacyMasked, setIsPrivacyMasked] = useState<boolean>(true);
+  const [unmaskedCitizenKeys, setUnmaskedCitizenKeys] = useState<Set<string>>(new Set());
 
-  const togglePrivacyMode = () => {
-    const nextState = !isPrivacyMasked;
-    setIsPrivacyMasked(nextState);
-    if (!nextState) {
-      logDataUnmaskEvent(
-        'Beneficiary Management',
-        'Admin unmasked citizen phone numbers, addresses, and ID numbers in Beneficiary Registry'
-      );
-    }
+  const toggleUnmaskBeneficiary = (b: Beneficiary) => {
+    setUnmaskedCitizenKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(b.citizenKey)) {
+        next.delete(b.citizenKey);
+      } else {
+        next.add(b.citizenKey);
+        logDataUnmaskEvent(
+          'Beneficiary Management',
+          `Admin unmasked citizen profile details (ID, phone, email) for ${b.name}`
+        );
+      }
+      return next;
+    });
   };
 
   const openDocPreview = (url: string | null, title: string) => {
@@ -288,57 +293,10 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
     <div className={`space-y-6 select-none font-['Plus_Jakarta_Sans',sans-serif] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
       
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className={`text-2xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-              Beneficiary Management
-            </h1>
-            <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
-              darkMode ? 'bg-blue-950/60 text-blue-400 border-blue-800/60' : 'bg-blue-50 text-blue-700 border-blue-200'
-            }`}>
-              Master Registry
-            </span>
-          </div>
-          <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-            Cross-module citizen directory, multi-program assistance ledger, and uploaded document verification queue.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={togglePrivacyMode}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-2 transition-all cursor-pointer ${
-              isPrivacyMasked
-                ? darkMode
-                  ? 'bg-blue-950/60 border-blue-700/80 text-blue-300 hover:bg-blue-900/80'
-                  : 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'
-                : darkMode
-                  ? 'bg-amber-950/60 border-amber-700/80 text-amber-300 hover:bg-amber-900/80'
-                  : 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
-            }`}
-            title={isPrivacyMasked ? 'Privacy Masking ACTIVE (Click to unmask citizen data)' : 'Privacy Masking OFF (Click to mask citizen data)'}
-          >
-            {isPrivacyMasked ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            <span>{isPrivacyMasked ? 'Privacy Masking ON' : 'Privacy Masking OFF'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={refreshAll}
-            disabled={isRefreshing}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-2 transition-all cursor-pointer ${
-              darkMode 
-                ? 'bg-[#121c2e] hover:bg-[#1a2842] border-slate-700 text-slate-200' 
-                : 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700 shadow-sm'
-            }`}
-            title="Refresh Beneficiary Data"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-400' : ''}`} />
-            <span>{isRefreshing ? 'Syncing...' : 'Refresh Registry'}</span>
-          </button>
-        </div>
+      <div>
+        <h1 className={`text-2xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+          Beneficiary Management
+        </h1>
       </div>
 
       {/* 4 KPI Cards */}
@@ -400,56 +358,8 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
         </div>
       </div>
 
-      {/* Tabs Row */}
-      <div className={`flex items-center gap-2 border rounded-2xl p-2 w-fit shadow-lg ${
-        darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90'
-      }`}>
-        <button
-          type="button"
-          onClick={() => setActiveTab('list')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-            activeTab === 'list' 
-              ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' 
-              : darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-[#121c2e]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
-        >
-          <FileText className="w-3.5 h-3.5" />
-          <span>Beneficiary List ({beneficiaries.length})</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('queue')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-            activeTab === 'queue' 
-              ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' 
-              : darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-[#121c2e]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
-        >
-          <UserCheck className="w-3.5 h-3.5" />
-          <span>Document Inspection ({pendingCount})</span>
-          {pendingCount > 0 && (
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-          )}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('history')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-            activeTab === 'history' 
-              ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40' 
-              : darkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-[#121c2e]' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
-        >
-          <History className="w-3.5 h-3.5" />
-          <span>System Audit Log</span>
-        </button>
-      </div>
-
-      {/* TAB 1: BENEFICIARY MASTER LIST */}
-      {activeTab === 'list' && (
-        <div className="space-y-4">
+      {/* BENEFICIARY MASTER LIST SECTION */}
+      <div className="space-y-4">
           {/* Search & Filters */}
           <div className={`border rounded-2xl p-5 space-y-4 shadow-xl ${
             darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90 shadow-sm'
@@ -613,9 +523,31 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
                                   </span>
                                 )}
                               </div>
-                              <div className={`text-[10px] font-mono ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                                {b.idType} ({b.qcId ? `ID: ${maskIdNumber(b.qcId, isPrivacyMasked)}` : 'Alternative Doc'})
-                              </div>
+                              {(() => {
+                                const isUnmasked = unmaskedCitizenKeys.has(b.citizenKey);
+                                return (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`text-[10px] font-mono ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                      {b.idType} ({b.qcId ? `ID: ${isUnmasked ? b.qcId : maskIdNumber(b.qcId, true)}` : 'Alternative Doc'})
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleUnmaskBeneficiary(b);
+                                      }}
+                                      className={`p-1 rounded-lg border transition-all cursor-pointer ${
+                                        isUnmasked
+                                          ? 'bg-blue-950/60 border-blue-700/80 text-blue-400'
+                                          : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                                      }`}
+                                      title={isUnmasked ? 'Click to mask beneficiary details' : 'Click to unmask beneficiary details'}
+                                    >
+                                      {isUnmasked ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                    </button>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </td>
 
@@ -639,183 +571,6 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
             )}
           </div>
         </div>
-      )}
-
-      {/* TAB 2: DOCUMENT INSPECTION */}
-      {activeTab === 'queue' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className={`text-sm font-bold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                Document Inspection Queue <span className={`font-mono text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>({queueItems.length})</span>
-              </h3>
-              <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Citizens awaiting social worker document inspection and credential validation.
-              </p>
-            </div>
-          </div>
-
-          {queueItems.length === 0 ? (
-            <div className={`border rounded-2xl p-16 text-center shadow-xl flex flex-col items-center justify-center ${
-              darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90 shadow-sm'
-            }`}>
-              <div className="p-3.5 rounded-2xl mb-3 bg-emerald-950/60 border border-emerald-800/80 text-emerald-400">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-              <h4 className={`text-base font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>All Applicant Documents Inspected!</h4>
-              <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                There are no pending documents in the inspection queue.
-              </p>
-            </div>
-          ) : (
-            <div className={`border rounded-2xl overflow-hidden shadow-xl ${
-              darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90 shadow-sm'
-            }`}>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className={`border-b text-[10px] uppercase tracking-wider font-extrabold ${
-                      darkMode ? 'bg-[#0b1324]/80 text-slate-400 border-slate-800' : 'bg-slate-50 text-slate-500 border-slate-200'
-                    }`}>
-                      <th className="py-3.5 px-4">Applicant</th>
-                      <th className="py-3.5 px-4">Sector / Program</th>
-                      <th className="py-3.5 px-4">Document Submitted</th>
-                      <th className="py-3.5 px-4">Status</th>
-                      <th className="py-3.5 px-4 text-right">Inspection Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {queueItems.map((b) => (
-                      <tr key={b.citizenKey} className={darkMode ? 'hover:bg-[#121c2e]/70' : 'hover:bg-slate-50'}>
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-9 h-9 rounded-xl bg-gradient-to-tr ${getBadgeGradient(b.initials)} flex items-center justify-center font-extrabold text-xs shadow-md shrink-0`}>
-                              {b.initials}
-                            </div>
-                            <div>
-                              <div className={`font-extrabold text-sm ${darkMode ? 'text-white' : 'text-slate-900'}`}>{b.name}</div>
-                              <div className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{b.address}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <div className="flex flex-wrap gap-1.5">
-                            {b.sectorBadges.map((sec, idx) => (
-                              <span key={idx} className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${getSectorStyle(sec)}`}>
-                                {sec}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <div className="space-y-0.5">
-                            <div className={`font-bold text-xs ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                              {b.idType}
-                            </div>
-                            <div className={`text-[10px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                              {b.idDocumentName || 'Document attachment attached'}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-400 bg-amber-950/60 border border-amber-800/80 px-2.5 py-1 rounded-xl">
-                            <Clock className="w-3.5 h-3.5 text-amber-400" />
-                            Pending Review
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setInspectingQueueItem(b);
-                              setVerificationNotes(`Inspected ${b.idType} for ${b.name}. Verified QC resident.`);
-                            }}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-md inline-flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <UserCheck className="w-3.5 h-3.5" />
-                            <span>Inspect Document</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 3: SYSTEM AUDIT LOG */}
-      {activeTab === 'history' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className={`text-sm font-bold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                System Audit Log & Verification History
-              </h3>
-              <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Chronological audit record of Social Worker document inspections, verifications, and program updates.
-              </p>
-            </div>
-          </div>
-
-          <div className={`border rounded-2xl overflow-hidden shadow-xl ${
-            darkMode ? 'bg-[#0e1726] border-slate-800/90' : 'bg-white border-slate-200/90 shadow-sm'
-          }`}>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className={`border-b text-[10px] uppercase tracking-wider font-extrabold ${
-                    darkMode ? 'bg-[#0b1324]/80 text-slate-400 border-slate-800' : 'bg-slate-50 text-slate-500 border-slate-200'
-                  }`}>
-                    <th className="py-3.5 px-4">Date & Time</th>
-                    <th className="py-3.5 px-4">Staff / Officer</th>
-                    <th className="py-3.5 px-4">Action</th>
-                    <th className="py-3.5 px-4">Module / Sector</th>
-                    <th className="py-3.5 px-4">Activity Details</th>
-                    <th className="py-3.5 px-4">Reference No.</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {activityLogs.map((log) => (
-                    <tr key={log.id} className={darkMode ? 'hover:bg-[#121c2e]/70' : 'hover:bg-slate-50'}>
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400">
-                        {new Date(log.timestamp).toLocaleString('en-US', {
-                          month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                        })}
-                      </td>
-                      <td className="py-3.5 px-4 font-extrabold text-slate-200">
-                        {log.staff_name}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-lg border ${
-                          log.action.toLowerCase().includes('approv') || log.action.toLowerCase().includes('verif')
-                            ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800'
-                            : log.action.toLowerCase().includes('reject')
-                            ? 'bg-rose-950/60 text-rose-400 border-rose-800'
-                            : 'bg-blue-950/60 text-blue-400 border-blue-800'
-                        }`}>
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-slate-300">
-                        {log.module}
-                      </td>
-                      <td className="py-3.5 px-4 text-slate-300 max-w-md">
-                        {log.details}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-blue-400 font-bold">
-                        {log.reference_no || 'N/A'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* SIDE DRAWER: BENEFICIARY PROFILE & ASSISTANCE HISTORY (PORTAL TO BODY)    */}
@@ -916,14 +671,33 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
                     <span className="text-[10px] text-slate-400 block uppercase">QC Residence Address</span>
                     <span className="font-bold">{selectedBeneficiary.address}</span>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block uppercase">Contact Number</span>
-                    <span className="font-bold font-mono">{maskPhoneNumber(selectedBeneficiary.phone, isPrivacyMasked)}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block uppercase">Email Address</span>
-                    <span className="font-bold truncate block">{maskEmail(selectedBeneficiary.email, isPrivacyMasked)}</span>
-                  </div>
+                  {(() => {
+                    const isUnmasked = unmaskedCitizenKeys.has(selectedBeneficiary.citizenKey);
+                    return (
+                      <>
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 block uppercase">Contact Number</span>
+                            <button
+                              type="button"
+                              onClick={() => toggleUnmaskBeneficiary(selectedBeneficiary)}
+                              className="text-slate-400 hover:text-blue-400 p-0.5"
+                              title={isUnmasked ? 'Click to mask details' : 'Click to unmask details'}
+                            >
+                              {isUnmasked ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            </button>
+                          </div>
+                          <span className="font-bold font-mono">{isUnmasked ? selectedBeneficiary.phone : maskPhoneNumber(selectedBeneficiary.phone, true)}</span>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 block uppercase">Email Address</span>
+                          </div>
+                          <span className="font-bold truncate block">{isUnmasked ? selectedBeneficiary.email : maskEmail(selectedBeneficiary.email, true)}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
