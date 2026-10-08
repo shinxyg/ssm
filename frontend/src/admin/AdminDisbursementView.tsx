@@ -11,9 +11,12 @@ import {
   Printer, 
   Building2, 
   Pill, 
-  Wallet 
+  Wallet,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import type { ApplicationRecord } from '../types';
+import { maskIdNumber, maskName, maskPhoneNumber, logDataUnmaskEvent } from '../utils/masking';
 
 interface AdminDisbursementViewProps {
   darkMode?: boolean;
@@ -44,6 +47,18 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
   const [releaseDate, setReleaseDate] = useState<string>(getCurrentDateString());
   const [releaseTime, setReleaseTime] = useState<string>(getCurrentTimeString());
   const [scheduledPayoutTimes, setScheduledPayoutTimes] = useState<Record<string, { date: string; time: string }>>({});
+  const [isPrivacyMasked, setIsPrivacyMasked] = useState<boolean>(true);
+
+  const togglePrivacyMode = () => {
+    const nextState = !isPrivacyMasked;
+    setIsPrivacyMasked(nextState);
+    if (!nextState) {
+      logDataUnmaskEvent(
+        'Financial Aid Disbursement',
+        'Admin unmasked applicant names and disbursement ID references in Payout Masterlist'
+      );
+    }
+  };
 
   // Sync modal date & time to current real-time clock when modal is opened for a record
   React.useEffect(() => {
@@ -256,17 +271,37 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
             </p>
           </div>
 
-          <div className="relative w-full lg:w-72">
-            <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-            <input
-              type="text"
-              placeholder="Search ID / Beneficiary name..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full border rounded-xl pl-10 pr-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all ${
-                darkMode ? 'bg-[#0b1220] border-slate-700/80 text-slate-200 placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+          <div className="flex items-center gap-2 w-full lg:w-auto">
+            <button
+              type="button"
+              onClick={togglePrivacyMode}
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                isPrivacyMasked
+                  ? darkMode
+                    ? 'bg-blue-950/60 border-blue-700/80 text-blue-300 hover:bg-blue-900/80'
+                    : 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'
+                  : darkMode
+                    ? 'bg-amber-950/60 border-amber-700/80 text-amber-300 hover:bg-amber-900/80'
+                    : 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
               }`}
-            />
+              title={isPrivacyMasked ? 'Privacy Masking ACTIVE (Click to unmask applicant names & IDs)' : 'Privacy Masking OFF (Click to mask applicant names & IDs)'}
+            >
+              {isPrivacyMasked ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              <span>{isPrivacyMasked ? 'Privacy Masking ON' : 'Privacy Masking OFF'}</span>
+            </button>
+
+            <div className="relative w-full lg:w-72">
+              <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
+              <input
+                type="text"
+                placeholder="Search ID / Beneficiary name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full border rounded-xl pl-10 pr-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all ${
+                  darkMode ? 'bg-[#0b1220] border-slate-700/80 text-slate-200 placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                }`}
+              />
+            </div>
           </div>
         </div>
 
@@ -364,8 +399,12 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
 
                   return (
                     <tr key={app.referenceNo} className={`transition-colors ${darkMode ? 'hover:bg-[#142036]' : 'hover:bg-slate-50'}`}>
-                      <td className="py-3 px-4 font-mono font-bold text-blue-400">DISB-{app.referenceNo}</td>
-                      <td className={`py-3 px-4 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{name}</td>
+                      <td className="py-3 px-4 font-mono font-bold text-blue-400">
+                        {maskIdNumber(`DISB-${app.referenceNo}`, isPrivacyMasked)}
+                      </td>
+                      <td className={`py-3 px-4 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        {maskName(name, isPrivacyMasked)}
+                      </td>
                       <td className={`py-3 px-4 font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{app.serviceName}</td>
                       <td className="py-3 px-4 font-mono text-amber-500 font-bold text-[11px]">{benefitText}</td>
                       <td className={`py-3 px-4 text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{locationText}</td>

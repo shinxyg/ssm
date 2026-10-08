@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   Search, FileText, ChevronDown, UserCheck, ShieldCheck, Clock, 
-  AlertCircle, Eye, X, CheckCircle2, XCircle, ExternalLink, 
+  AlertCircle, Eye, EyeOff, X, CheckCircle2, XCircle, ExternalLink, 
   MapPin, Phone, Mail, Award, History, RefreshCw, Calendar, Tag,
   ZoomIn, ZoomOut, RotateCcw
 } from 'lucide-react';
+import { maskPhoneNumber, maskIdNumber, maskAddressHouseStreet, maskName, maskEmail, logDataUnmaskEvent } from '../utils/masking';
 
 export interface AssistanceHistoryItem {
   program: string;
@@ -79,6 +80,18 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
   const [zoomScale, setZoomScale] = useState<number>(1);
   const [verificationNotes, setVerificationNotes] = useState<string>('Documents inspected and verified by Social Worker.');
   const [isSubmittingVerif, setIsSubmittingVerif] = useState<boolean>(false);
+  const [isPrivacyMasked, setIsPrivacyMasked] = useState<boolean>(true);
+
+  const togglePrivacyMode = () => {
+    const nextState = !isPrivacyMasked;
+    setIsPrivacyMasked(nextState);
+    if (!nextState) {
+      logDataUnmaskEvent(
+        'Beneficiary Management',
+        'Admin unmasked citizen phone numbers, addresses, and ID numbers in Beneficiary Registry'
+      );
+    }
+  };
 
   const openDocPreview = (url: string | null, title: string) => {
     setDocLoadError(false);
@@ -292,20 +305,40 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={refreshAll}
-          disabled={isRefreshing}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-2 transition-all cursor-pointer self-start sm:self-auto ${
-            darkMode 
-              ? 'bg-[#121c2e] hover:bg-[#1a2842] border-slate-700 text-slate-200' 
-              : 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700 shadow-sm'
-          }`}
-          title="Refresh Beneficiary Data"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-400' : ''}`} />
-          <span>{isRefreshing ? 'Syncing...' : 'Refresh Registry'}</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={togglePrivacyMode}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-2 transition-all cursor-pointer ${
+              isPrivacyMasked
+                ? darkMode
+                  ? 'bg-blue-950/60 border-blue-700/80 text-blue-300 hover:bg-blue-900/80'
+                  : 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'
+                : darkMode
+                  ? 'bg-amber-950/60 border-amber-700/80 text-amber-300 hover:bg-amber-900/80'
+                  : 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
+            }`}
+            title={isPrivacyMasked ? 'Privacy Masking ACTIVE (Click to unmask citizen data)' : 'Privacy Masking OFF (Click to mask citizen data)'}
+          >
+            {isPrivacyMasked ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            <span>{isPrivacyMasked ? 'Privacy Masking ON' : 'Privacy Masking OFF'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={refreshAll}
+            disabled={isRefreshing}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-2 transition-all cursor-pointer ${
+              darkMode 
+                ? 'bg-[#121c2e] hover:bg-[#1a2842] border-slate-700 text-slate-200' 
+                : 'bg-white hover:bg-slate-50 border-slate-300 text-slate-700 shadow-sm'
+            }`}
+            title="Refresh Beneficiary Data"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-blue-400' : ''}`} />
+            <span>{isRefreshing ? 'Syncing...' : 'Refresh Registry'}</span>
+          </button>
+        </div>
       </div>
 
       {/* 4 KPI Cards */}
@@ -581,7 +614,7 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
                                 )}
                               </div>
                               <div className={`text-[10px] font-mono ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                                {b.idType} ({b.qcId ? `ID: ${b.qcId}` : 'Alternative Doc'})
+                                {b.idType} ({b.qcId ? `ID: ${maskIdNumber(b.qcId, isPrivacyMasked)}` : 'Alternative Doc'})
                               </div>
                             </div>
                           </td>
@@ -885,11 +918,11 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block uppercase">Contact Number</span>
-                    <span className="font-bold font-mono">{selectedBeneficiary.phone}</span>
+                    <span className="font-bold font-mono">{maskPhoneNumber(selectedBeneficiary.phone, isPrivacyMasked)}</span>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block uppercase">Email Address</span>
-                    <span className="font-bold truncate block">{selectedBeneficiary.email}</span>
+                    <span className="font-bold truncate block">{maskEmail(selectedBeneficiary.email, isPrivacyMasked)}</span>
                   </div>
                 </div>
               </div>

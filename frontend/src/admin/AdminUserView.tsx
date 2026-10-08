@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Users, CheckCircle2, Ban, Shield, ChevronDown, UserCog, RefreshCw, Power, Radio } from 'lucide-react';
+import { Search, Users, CheckCircle2, Ban, Shield, ChevronDown, UserCog, RefreshCw, Power, Radio, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { maskEmail, maskPhoneNumber, logDataUnmaskEvent } from '../utils/masking';
 
 interface UserRecord {
   id: number;
@@ -26,6 +27,18 @@ export const AdminUserView: React.FC<{ darkMode?: boolean }> = ({ darkMode = tru
   const [roleFilter, setRoleFilter] = useState<string>('All Roles');
   const [presenceFilter, setPresenceFilter] = useState<string>('All Presences');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [isPrivacyMasked, setIsPrivacyMasked] = useState<boolean>(true);
+
+  const togglePrivacyMode = () => {
+    const nextState = !isPrivacyMasked;
+    setIsPrivacyMasked(nextState);
+    if (!nextState) {
+      logDataUnmaskEvent(
+        'User Management',
+        'Admin unmasked sensitive citizen emails and contact numbers in User Management list'
+      );
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -107,17 +120,37 @@ export const AdminUserView: React.FC<{ darkMode?: boolean }> = ({ darkMode = tru
             User Management
           </h1>
         </div>
-        <button
-          onClick={fetchUsers}
-          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-            darkMode 
-              ? 'bg-[#0e1726] border-slate-700 text-slate-300 hover:text-white hover:bg-[#121c2e]' 
-              : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-          }`}
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-400' : ''}`} />
-          <span>Live Sync</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={togglePrivacyMode}
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+              isPrivacyMasked
+                ? darkMode
+                  ? 'bg-blue-950/60 border-blue-700/80 text-blue-300 hover:bg-blue-900/80'
+                  : 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'
+                : darkMode
+                  ? 'bg-amber-950/60 border-amber-700/80 text-amber-300 hover:bg-amber-900/80'
+                  : 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
+            }`}
+            title={isPrivacyMasked ? 'Privacy Masking ACTIVE (Click to unmask citizen data)' : 'Privacy Masking OFF (Click to mask citizen data)'}
+          >
+            {isPrivacyMasked ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            <span>{isPrivacyMasked ? 'Privacy Masking ON' : 'Privacy Masking OFF'}</span>
+          </button>
+
+          <button
+            onClick={fetchUsers}
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+              darkMode 
+                ? 'bg-[#0e1726] border-slate-700 text-slate-300 hover:text-white hover:bg-[#121c2e]' 
+                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-400' : ''}`} />
+            <span>Live Sync</span>
+          </button>
+        </div>
       </div>
 
       {/* Top 4 Summary Metric Cards */}
@@ -289,8 +322,12 @@ export const AdminUserView: React.FC<{ darkMode?: boolean }> = ({ darkMode = tru
                         )}
                       </td>
                       <td className={`px-5 py-4 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                        <div className={`font-mono ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{u.email}</div>
-                        <div className={`text-[10px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{u.phoneNumber}</div>
+                        <div className={`font-mono ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                          {u.rawRole === 'admin' ? u.email : maskEmail(u.email, isPrivacyMasked)}
+                        </div>
+                        <div className={`text-[10px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {u.rawRole === 'admin' ? u.phoneNumber : maskPhoneNumber(u.phoneNumber, isPrivacyMasked)}
+                        </div>
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide uppercase ${
