@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { 
   Search, FileText, ChevronDown, UserCheck, ShieldCheck, Clock, 
   AlertCircle, Eye, X, CheckCircle2, XCircle, ExternalLink, 
-  MapPin, Phone, Mail, Award, History, RefreshCw, Calendar, Tag
+  MapPin, Phone, Mail, Award, History, RefreshCw, Calendar, Tag,
+  ZoomIn, ZoomOut, RotateCcw
 } from 'lucide-react';
 
 export interface AssistanceHistoryItem {
@@ -74,8 +75,17 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
   const [inspectingQueueItem, setInspectingQueueItem] = useState<Beneficiary | null>(null);
   const [zoomDocUrl, setZoomDocUrl] = useState<string | null>(null);
   const [zoomDocTitle, setZoomDocTitle] = useState<string>('');
+  const [docLoadError, setDocLoadError] = useState<boolean>(false);
+  const [zoomScale, setZoomScale] = useState<number>(1);
   const [verificationNotes, setVerificationNotes] = useState<string>('Documents inspected and verified by Social Worker.');
   const [isSubmittingVerif, setIsSubmittingVerif] = useState<boolean>(false);
+
+  const openDocPreview = (url: string | null, title: string) => {
+    setDocLoadError(false);
+    setZoomScale(1);
+    setZoomDocUrl(url || 'sample-id');
+    setZoomDocTitle(title);
+  };
 
   // Fetch all beneficiaries from the backend
   const fetchBeneficiaries = async () => {
@@ -384,7 +394,7 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
           }`}
         >
           <UserCheck className="w-3.5 h-3.5" />
-          <span>Verification Queue ({pendingCount})</span>
+          <span>Document Inspection ({pendingCount})</span>
           {pendingCount > 0 && (
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
           )}
@@ -400,7 +410,7 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
           }`}
         >
           <History className="w-3.5 h-3.5" />
-          <span>History Log</span>
+          <span>System Audit Log</span>
         </button>
       </div>
 
@@ -598,16 +608,16 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
         </div>
       )}
 
-      {/* TAB 2: VERIFICATION QUEUE */}
+      {/* TAB 2: DOCUMENT INSPECTION */}
       {activeTab === 'queue' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className={`text-sm font-bold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                Pending Verification Queue <span className={`font-mono text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>({queueItems.length})</span>
+                Document Inspection Queue <span className={`font-mono text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>({queueItems.length})</span>
               </h3>
               <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Citizens awaiting social worker document assessment and ID validation.
+                Citizens awaiting social worker document inspection and credential validation.
               </p>
             </div>
           </div>
@@ -619,9 +629,9 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
               <div className="p-3.5 rounded-2xl mb-3 bg-emerald-950/60 border border-emerald-800/80 text-emerald-400">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
-              <h4 className={`text-base font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>All Applicants Verified!</h4>
+              <h4 className={`text-base font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>All Applicant Documents Inspected!</h4>
               <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                There are no pending documents in the verification queue.
+                There are no pending documents in the inspection queue.
               </p>
             </div>
           ) : (
@@ -638,7 +648,7 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
                       <th className="py-3.5 px-4">Sector / Program</th>
                       <th className="py-3.5 px-4">Document Submitted</th>
                       <th className="py-3.5 px-4">Status</th>
-                      <th className="py-3.5 px-4 text-right">Verification Action</th>
+                      <th className="py-3.5 px-4 text-right">Inspection Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
@@ -703,16 +713,16 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
         </div>
       )}
 
-      {/* TAB 3: HISTORY LOG */}
+      {/* TAB 3: SYSTEM AUDIT LOG */}
       {activeTab === 'history' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className={`text-sm font-bold tracking-wide ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                Beneficiary Verification & Audit Log
+                System Audit Log & Verification History
               </h3>
               <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Chronological record of Social Worker approvals, verifications, and program updates.
+                Chronological audit record of Social Worker document inspections, verifications, and program updates.
               </p>
             </div>
           </div>
@@ -884,14 +894,14 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
                 </div>
               </div>
 
-              {/* Document / ID Verification Card */}
+              {/* Attached Valid ID Document Card */}
               <div className={`p-5 rounded-2xl border space-y-3 ${
                 darkMode ? 'bg-[#0e1726] border-slate-800' : 'bg-slate-50 border-slate-200 shadow-sm'
               }`}>
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Verified Identification Document</span>
+                    <span>ID Verification Document</span>
                   </h4>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${
                     darkMode ? 'bg-blue-950/60 border-blue-800 text-blue-300' : 'bg-blue-50 border-blue-200 text-blue-700'
@@ -904,25 +914,32 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
                 <div className={`p-4 rounded-xl border flex items-center justify-between gap-3 ${
                   darkMode ? 'bg-[#080e1a] border-slate-700/80' : 'bg-white border-slate-300 shadow-sm'
                 }`}>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0 font-mono font-bold text-xs">
                       ID
                     </div>
-                    <div>
-                      <div className="font-bold text-xs">{selectedBeneficiary.idType}</div>
+                    <div className="truncate">
+                      <div className="font-bold text-xs truncate">{selectedBeneficiary.idType}</div>
                       <div className="text-[10px] font-mono text-slate-400 mt-0.5">
                         Card No: <span className="text-blue-400 font-bold">{selectedBeneficiary.qcId || 'Active Verified'}</span>
                       </div>
+                      {selectedBeneficiary.idDocumentName && (
+                        <div className="text-[10px] text-slate-500 truncate max-w-[220px] mt-0.5">
+                          File: {selectedBeneficiary.idDocumentName}
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => {
-                      setZoomDocUrl(selectedBeneficiary.idDocumentUrl || 'sample-id');
-                      setZoomDocTitle(`${selectedBeneficiary.name} - ${selectedBeneficiary.idType}`);
+                      openDocPreview(
+                        selectedBeneficiary.idDocumentUrl,
+                        `${selectedBeneficiary.name} – ${selectedBeneficiary.idType}`
+                      );
                     }}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
+                    className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-sm shrink-0"
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>Preview Document</span>
@@ -1196,58 +1213,144 @@ export const AdminBeneficiaryView: React.FC<{ darkMode?: boolean }> = ({ darkMod
         <div 
           onClick={() => setZoomDocUrl(null)}
           style={{ left: `${sidebarWidth}px` }}
-          className="fixed inset-y-0 right-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
+          className="fixed inset-y-0 right-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className={`w-full max-w-3xl rounded-2xl border shadow-2xl overflow-hidden flex flex-col ${
+            className={`w-full max-w-4xl max-h-[90vh] rounded-2xl border shadow-2xl overflow-hidden flex flex-col ${
               darkMode ? 'bg-[#0e1726] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
             }`}
           >
-            <div className={`p-4 border-b flex items-center justify-between ${
+            {/* Modal Header & Zoom Toolbar */}
+            <div className={`p-4 border-b flex items-center justify-between gap-4 ${
               darkMode ? 'bg-[#0b1324] border-slate-800' : 'bg-slate-50 border-slate-200'
             }`}>
-              <div className="font-extrabold text-xs tracking-wide uppercase">
-                {zoomDocTitle || 'Document Viewer'}
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div className="truncate">
+                  <div className="font-extrabold text-xs tracking-wide uppercase truncate">
+                    {zoomDocTitle || 'ID Verification Document'}
+                  </div>
+                  <div className={`text-[10px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Official resident identity verification document
+                  </div>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setZoomDocUrl(null)}
-                className="p-1.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-400 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+
+              {/* Action Toolbar */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setZoomScale(prev => Math.max(0.5, prev - 0.25))}
+                  title="Zoom Out"
+                  className={`p-1.5 rounded-lg border text-xs transition-all cursor-pointer ${
+                    darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[10px] font-mono text-slate-400 px-1 select-none">
+                  {Math.round(zoomScale * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setZoomScale(prev => Math.min(3, prev + 0.25))}
+                  title="Zoom In"
+                  className={`p-1.5 rounded-lg border text-xs transition-all cursor-pointer ${
+                    darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomScale(1)}
+                  title="Reset Zoom"
+                  className={`p-1.5 rounded-lg border text-xs transition-all cursor-pointer ${
+                    darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+
+                {zoomDocUrl && (zoomDocUrl.startsWith('http') || zoomDocUrl.startsWith('data:')) && (
+                  <a
+                    href={zoomDocUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download="verified_id_document.png"
+                    title="Open Full Image"
+                    className={`p-1.5 rounded-lg border text-xs transition-all cursor-pointer ${
+                      darkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+
+                <div className="w-px h-4 bg-slate-700 mx-1" />
+
+                <button
+                  type="button"
+                  onClick={() => setZoomDocUrl(null)}
+                  className="p-1.5 rounded-xl border border-slate-700 hover:bg-rose-950/40 hover:border-rose-700 text-slate-400 hover:text-rose-300 transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            <div className="p-6 flex items-center justify-center bg-[#070c17] min-h-[350px]">
-              {zoomDocUrl.startsWith('http') || zoomDocUrl.startsWith('blob') || zoomDocUrl.startsWith('data:') ? (
-                <img
-                  src={zoomDocUrl}
-                  alt="Document Full Preview"
-                  className="max-h-[60vh] object-contain rounded-xl shadow-2xl"
-                />
+            {/* Modal Body / Image Viewport */}
+            <div className="p-6 flex items-center justify-center bg-[#070c17] min-h-[420px] max-h-[72vh] overflow-auto select-none">
+              {!docLoadError && zoomDocUrl && (zoomDocUrl.startsWith('http') || zoomDocUrl.startsWith('blob:') || zoomDocUrl.startsWith('data:')) ? (
+                <div 
+                  className="transition-transform duration-150 ease-out flex items-center justify-center max-w-full"
+                  style={{ transform: `scale(${zoomScale})` }}
+                >
+                  <img
+                    src={zoomDocUrl}
+                    alt="Attached Valid ID Document"
+                    onError={() => setDocLoadError(true)}
+                    className="max-h-[60vh] max-w-full object-contain rounded-xl shadow-2xl border border-slate-700/60 transition-all"
+                  />
+                </div>
               ) : (
-                <div className="w-full max-w-md bg-white text-slate-900 rounded-2xl p-6 border-2 border-blue-500 shadow-2xl space-y-4">
+                <div className="w-full max-w-md bg-white text-slate-900 rounded-2xl p-6 border-2 border-blue-600 shadow-2xl space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 rounded-full bg-blue-700 text-white font-black text-sm flex items-center justify-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-700 text-white font-black text-base flex items-center justify-center shadow-md">
                         QC
                       </div>
                       <div>
-                        <div className="text-xs font-black uppercase text-blue-900">Quezon City LGU</div>
-                        <div className="text-[10px] text-slate-500 font-bold uppercase">Official Verified ID Document</div>
+                        <div className="text-xs font-black uppercase tracking-wider text-blue-900">Quezon City Government</div>
+                        <div className="text-[10px] text-slate-500 font-bold uppercase">Social Services Master Registry</div>
                       </div>
                     </div>
-                    <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-300">
                       ACTIVE VERIFIED
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-xs">
-                    <p className="text-slate-600 font-medium leading-relaxed">
-                      This citizen's identity has been confirmed via official Quezon City Social Services civil assessment.
-                    </p>
+                  <div className="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-semibold">Document Title:</span>
+                      <span className="font-bold text-slate-900">{zoomDocTitle || 'Attached Valid ID'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-semibold">Verification Record:</span>
+                      <span className="font-mono font-bold text-blue-700">QC-SSD-CIVIL-ID</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500 font-semibold">Issuing Authority:</span>
+                      <span className="font-semibold text-slate-800">Quezon City Social Services Development Dept.</span>
+                    </div>
                   </div>
+
+                  <p className="text-[11px] text-slate-500 text-center italic">
+                    The citizen's civil identity credentials and residency records have been confirmed on official city records.
+                  </p>
                 </div>
               )}
             </div>

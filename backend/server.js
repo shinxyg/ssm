@@ -2185,6 +2185,19 @@ app.get('/api/beneficiaries', async (req, res) => {
              st.includes('payout') || st.includes('qualified') || st.includes('enrolled');
     };
 
+    // Helper to safely assign or upgrade citizen ID document
+    const assignCitizenIdDoc = (c, docUrl, docName, idTypeLabel) => {
+      if (!docUrl) return;
+      const currentIsBlob = !c.idDocumentUrl || c.idDocumentUrl.startsWith('blob:');
+      const newIsBase64OrHttp = docUrl.startsWith('data:image/') || (docUrl.startsWith('http') && !docUrl.startsWith('blob:'));
+      
+      if (!c.idDocumentUrl || (currentIsBlob && newIsBase64OrHttp)) {
+        c.idDocumentUrl = docUrl;
+        c.idDocumentName = docName || 'Uploaded Valid ID';
+        if (idTypeLabel) c.idType = idTypeLabel;
+      }
+    };
+
     // 1. Process AICS
     aicsRes.rows.forEach(a => {
       const name = a.applicant_name || `${a.first_name || ''} ${a.last_name || ''}`.trim() || 'AICS Client';
@@ -2195,9 +2208,9 @@ app.get('/api/beneficiaries', async (req, res) => {
       c.nonCashCount += 1;
       
       const docData = a.details?.uploadedDocData || {};
-      if (!c.idDocumentUrl && (docData.validId?.dataUrl || docData.otherSupport?.dataUrl)) {
-        c.idDocumentUrl = docData.validId?.dataUrl || docData.otherSupport?.dataUrl;
-        c.idDocumentName = docData.validId?.name || docData.otherSupport?.name || 'Valid ID Document';
+      const aicsDoc = docData.government_id || docData.qcid_patient || docData.validId || docData.otherSupport;
+      if (aicsDoc?.dataUrl) {
+        assignCitizenIdDoc(c, aicsDoc.dataUrl, aicsDoc.name || 'Valid ID Document', 'QCitizen / Valid Gov ID');
       }
 
       c.history.push({
@@ -2223,9 +2236,9 @@ app.get('/api/beneficiaries', async (req, res) => {
       if (s.senior_id_no) c.qcId = s.senior_id_no;
 
       const docData = s.details?.uploadedDocData || {};
-      if (docData.seniorIdCard?.dataUrl) {
-        c.idDocumentUrl = docData.seniorIdCard.dataUrl;
-        c.idDocumentName = docData.seniorIdCard.name || 'Senior Citizen ID Card';
+      const seniorDoc = docData.seniorIdCard || docData.otherSupport;
+      if (seniorDoc?.dataUrl) {
+        assignCitizenIdDoc(c, seniorDoc.dataUrl, seniorDoc.name || 'Senior Citizen ID Card', 'Senior Citizen ID (OSCA)');
       }
 
       const amt = parseFloat(s.amount) || 3000;
@@ -2252,6 +2265,12 @@ app.get('/api/beneficiaries', async (req, res) => {
       c.sectors.add('PWD');
       c.idType = 'PDAO PWD ID Card';
 
+      const docData = p.details?.uploadedDocData || p.uploaded_documents || {};
+      const pwdDoc = docData.pwd_id || docData.pwdId || docData.valid_id;
+      if (pwdDoc?.dataUrl || typeof pwdDoc === 'string') {
+        assignCitizenIdDoc(c, pwdDoc?.dataUrl || pwdDoc, pwdDoc?.name || 'PWD ID Card', 'PDAO PWD ID Card');
+      }
+
       const amt = parseFloat(p.amount) || 3000;
       if (isApprovedStatus(p.status)) c.totalCash += amt;
 
@@ -2276,6 +2295,12 @@ app.get('/api/beneficiaries', async (req, res) => {
       c.sectors.add('Solo Parent');
       c.idType = 'Solo Parent ID (SPIC)';
 
+      const docs = sp.uploaded_documents || sp.details?.uploadedDocData || {};
+      const soloDoc = docs.spic || docs.qcid || docs.valid_id;
+      if (soloDoc?.dataUrl) {
+        assignCitizenIdDoc(c, soloDoc.dataUrl, soloDoc.name || 'Solo Parent ID (SPIC)', 'Solo Parent ID (SPIC)');
+      }
+
       const amt = parseFloat(sp.amount) || 3000;
       if (isApprovedStatus(sp.status)) c.totalCash += amt;
 
@@ -2299,6 +2324,12 @@ app.get('/api/beneficiaries', async (req, res) => {
       const c = getOrCreateCitizen(key, name, edu);
       const isCw = (edu.category || '').toLowerCase().includes('child') || (edu.reference_no || '').startsWith('CW-');
       c.sectors.add(isCw ? 'Child Welfare' : 'Edu Assistance');
+
+      const docs = edu.uploaded_documents || edu.details?.uploadedDocData || {};
+      const eduDoc = docs.soloParentId || docs.qcitizenId || docs.enrollment || docs.indigency;
+      if (eduDoc?.dataUrl || eduDoc?.url) {
+        assignCitizenIdDoc(c, eduDoc.dataUrl || eduDoc.url, eduDoc.name || 'Educational Valid ID Proof', isCw ? 'Child Welfare Ward ID' : 'Edu Assistance Valid ID');
+      }
 
       const amt = parseFloat(edu.amount) || 5000;
       if (isApprovedStatus(edu.status)) c.totalCash += amt;
@@ -2325,6 +2356,12 @@ app.get('/api/beneficiaries', async (req, res) => {
       c.idType = 'PSA Birth Certificate / Referral';
       c.nonCashCount += 1;
 
+      const docs = cw.uploaded_documents || cw.details?.uploadedDocData || {};
+      const cwDoc = docs.birth_cert || docs.referral || docs.valid_id;
+      if (cwDoc?.dataUrl || typeof cwDoc === 'string') {
+        assignCitizenIdDoc(c, cwDoc?.dataUrl || cwDoc, cwDoc?.name || 'PSA Birth Certificate / Referral', 'PSA Birth Certificate / Referral');
+      }
+
       c.history.push({
         program: cw.service_name || 'Child Welfare Services',
         category: 'child_welfare',
@@ -2345,6 +2382,12 @@ app.get('/api/beneficiaries', async (req, res) => {
       const c = getOrCreateCitizen(key, name, liv);
       c.sectors.add('Livelihood');
       c.nonCashCount += 1;
+
+      const docs = liv.uploaded_documents || liv.details?.uploadedDocData || {};
+      const livDoc = docs.valid_id || docs.proof_of_residency;
+      if (livDoc?.dataUrl || livDoc?.url) {
+        assignCitizenIdDoc(c, livDoc.dataUrl || livDoc.url, livDoc.name || 'Livelihood Valid ID', 'Livelihood Valid ID');
+      }
 
       const amt = parseFloat(liv.amount) || 15000;
       if (isApprovedStatus(liv.status)) c.totalCash += amt;
@@ -2370,9 +2413,10 @@ app.get('/api/beneficiaries', async (req, res) => {
       c.sectors.add('Skills Trainee');
       c.nonCashCount += 1;
 
-      if (!c.idDocumentUrl && (tr.doc_qc_id || tr.uploaded_documents?.docQcId)) {
-        c.idDocumentUrl = tr.doc_qc_id || tr.uploaded_documents?.docQcId;
-        c.idDocumentName = 'QCitizen ID Residency Proof';
+      const docs = tr.uploaded_documents || {};
+      const trDoc = docs.docQcId || tr.doc_qc_id;
+      if (trDoc?.dataUrl || typeof trDoc === 'string') {
+        assignCitizenIdDoc(c, trDoc?.dataUrl || trDoc, trDoc?.name || 'QCitizen ID Residency Proof', 'QCitizen ID Residency Proof');
       }
 
       c.history.push({
