@@ -332,7 +332,7 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                   : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-300 hover:bg-slate-50 shadow-sm'
               }`}
             >
-              FINANCIAL / CAPITAL ₱15K
+              FINANCIAL
             </button>
             <button
               type="button"
