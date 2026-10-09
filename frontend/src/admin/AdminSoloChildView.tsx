@@ -767,8 +767,6 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
 
                 <div className="space-y-2.5">
                   {(() => {
-                    const isEdu = (selectedApp.category || '').toLowerCase() === 'educational' || (selectedApp.referenceNo || '').startsWith('QC-SP-EDU-') || (selectedApp.serviceName || '').toLowerCase().includes('educational');
-
                     const docsList = [
                       { 
                         key: 'proof_income', 
@@ -777,7 +775,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                         file: 'proof_of_indigency.png', 
                         icon: FileText 
                       },
-                      ...(isEdu ? [{ 
+                      ...(isEduApp ? [{ 
                         key: 'enrollment', 
                         altKeys: ['enrollment'], 
                         title: 'CERTIFICATE OF ENROLLMENT', 

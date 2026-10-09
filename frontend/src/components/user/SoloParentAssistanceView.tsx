@@ -1250,9 +1250,9 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
 
               <div className="space-y-4">
                 {[
-                  { key: 'spic', title: 'SOLO PARENT IDENTIFICATION CARD (SPIC) *' },
-                  { key: 'qcid', title: 'QCITIZEN ID (QC ID) *' },
-                  { key: 'proof_income', title: proofLabel.title.toUpperCase() + ' *' },
+                  { key: 'proof_income', title: 'ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY *' },
+                  { key: 'qcid', title: 'QCITIZEN ID *' },
+                  { key: 'spic', title: 'SOLO PARENT ID / CERTIFICATION *' },
                 ].map((doc) => {
                   const uploaded = uploadedFiles[doc.key];
                   const previewUrl = uploaded ? URL.createObjectURL(uploaded) : null;
