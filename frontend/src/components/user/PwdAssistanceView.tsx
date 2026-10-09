@@ -195,18 +195,73 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
   };
 
   // Submit Application Handler
-  const handleSubmitApplication = () => {
+  const handleSubmitApplication = async () => {
     const newRef = `QC-PWD-${Math.floor(100000 + Math.random() * 900000)}`;
     setGeneratedRefNo(newRef);
+
+    const uploadedDocsPayload = {
+      pwd_id: docPwdId ? { name: docPwdId.name, url: docPwdId.url } : null,
+      indigency_cert: docIndigency ? { name: docIndigency.name, url: docIndigency.url } : null,
+      medical_cert: docMedical ? { name: docMedical.name, url: docMedical.url } : null,
+      disability_photo: docResidency ? { name: docResidency.name, url: docResidency.url } : null
+    };
+
+    const fullApplicantName = [firstName, middleName, lastName, suffix].filter(Boolean).join(' ').trim();
+
+    const payload = {
+      referenceNo: newRef,
+      applicantName: fullApplicantName || 'Jefferson Fernando Lee',
+      firstName,
+      middleName,
+      lastName,
+      suffix,
+      nationality,
+      dob,
+      age,
+      gender,
+      civilStatus,
+      houseNo,
+      streetName: street,
+      barangay,
+      phoneNumber: phone,
+      pwdIdNo: pwdIdNumber ? (pwdIdNumber.startsWith('PWD-') ? pwdIdNumber : `PWD-${pwdIdNumber}`) : 'PWD-13-7404-000-0012345',
+      employmentStatus,
+      occupation,
+      sourceOfIncome,
+      approxMonthlyIncome,
+      educationalAttainment: highestEducation,
+      otherEducationInfo,
+      familyMembers,
+      monthlyExpenses,
+      disabilityType: typeOfDisability,
+      swaQualifyingCategory: swaCategory,
+      reasonForAssistance,
+      uploadedDocuments: uploadedDocsPayload,
+      serviceName: 'PWD Social Assistance Program',
+      category: 'pwd',
+      assistanceType: 'PWD Social Aid',
+      amount: 5000.00,
+      status: 'Pending Review'
+    };
+
+    try {
+      await fetch('http://localhost:5000/api/pwd/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.warn("Failed to persist PWD application to backend database:", err);
+    }
 
     const newAppRecord: ApplicationRecord = {
       referenceNo: newRef,
       serviceName: 'PWD Social Assistance Program',
       category: 'PWD Services',
       dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
-      status: 'Ready for Payout',
+      status: 'PENDING (Pending Document Validation)',
       assignedSocialWorker: 'Maria Santos, RSW (QC Social Services)',
-      amountOrType: '₱5,000 Social Aid / Assistive Device',
+      amountOrType: '₱1,500.00 Quarterly Cash Pension',
       qrCodeData: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${newRef}`
     };
 
@@ -1110,8 +1165,12 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
                           const file = e.target.files[0];
-                          const url = URL.createObjectURL(file);
-                          item.setDoc({ name: file.name, url });
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            const base64Url = reader.result as string;
+                            item.setDoc({ name: file.name, url: base64Url });
+                          };
+                          reader.readAsDataURL(file);
                         }
                       }}
                     />

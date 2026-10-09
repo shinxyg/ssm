@@ -28,5 +28,6 @@ export interface ApplicationRecord {
   appointmentTime?: string;
   scheduledPayoutDate?: string;
   scheduledPayoutTime?: string;
+  qrCodeData?: string;
   details?: Record<string, any>;
 }

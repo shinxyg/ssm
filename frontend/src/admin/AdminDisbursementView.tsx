@@ -369,8 +369,8 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
                     benefitText = 'Up to ₱25,000 Funeral Guarantee';
                     locationText = 'Partner Funeral Parlor';
                   } else if (s.includes('pwd') || cat.includes('pwd')) {
-                    benefitText = 'Assistive Device & Financial Aid';
-                    locationText = 'PDAO Center, QC Hall';
+                    benefitText = '₱1,500.00 Quarterly Pension & Financial Aid';
+                    locationText = 'Quezon City Hall PDAO Room 102';
                   } else if (s.includes('senior') || cat.includes('senior')) {
                     benefitText = '₱3,000 Quarterly Social Pension';
                     locationText = 'OSCA Distribution Desk';

@@ -226,15 +226,16 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
         st.includes('DISAPPROV') || 
         st.includes('DISQUALIF');
 
-      const isPending = 
-        st === 'UNDER REVIEW' || 
-        st === 'PENDING DOCUMENTS' ||
-        st === 'PENDING DOCUMENT VALIDATION' ||
-        st === 'PENDING VALIDATION' ||
+      const isPendingDoc = 
+        st.includes('PENDING DOCUMENT') ||
+        st.includes('PENDING REVIEW') ||
+        st.includes('PENDING VALIDATION') ||
+        st.includes('UNDER REVIEW') ||
+        st === 'PENDING' ||
         st === 'SUBMITTED' ||
         st === 'FOR VALIDATION';
 
-      return !isPending && !isRejected;
+      return !isPendingDoc && !isRejected;
     });
 
     const merged: (ApplicationRecord & { appointmentDetails?: AppointmentEntry })[] = approvedApps.map((app) => {
@@ -1014,7 +1015,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                 {/* HEADER */}
                 <div className="text-center space-y-1 border-b pb-4 border-slate-300">
                   <div className="relative flex items-center justify-center min-h-[56px] py-1">
-                    <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-14 h-14 object-contain absolute left-0 top-0" />
+                    <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-14 h-14 object-contain absolute left-0 top-1/2 -translate-y-1/2" />
                     <div className="text-center w-full px-16">
                       <h2 className="text-base font-black tracking-tight uppercase text-slate-900">REPUBLIC OF THE PHILIPPINES</h2>
                       <h3 className="text-xs font-bold text-slate-700">QUEZON CITY GOVERNMENT</h3>
@@ -1118,12 +1119,13 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
               <div>
                 {/* HEADER */}
                 <div className="text-center space-y-1 border-b pb-4 border-slate-300">
-                  <div className="flex items-center justify-center gap-3">
-                    <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-12 h-12 object-contain" />
-                    <div>
+                  <div className="relative flex items-center justify-center min-h-[56px] py-1">
+                    <img src="/Government Service Integrity Seal.png" alt="QC Seal" className="w-14 h-14 object-contain absolute left-0 top-1/2 -translate-y-1/2" />
+                    <div className="text-center w-full px-16">
                       <h2 className="text-base font-black tracking-tight uppercase text-slate-900">REPUBLIC OF THE PHILIPPINES</h2>
                       <h3 className="text-xs font-bold text-slate-700">QUEZON CITY GOVERNMENT</h3>
                       <h4 className="text-[11px] font-extrabold text-blue-900 uppercase">SOCIAL SERVICES & DEVELOPMENT DEPARTMENT (SSDD)</h4>
+                      <p className="text-[10px] text-slate-500 font-medium">City Hall Compound, Elliptical Road, Quezon City</p>
                     </div>
                   </div>
                   <div className="pt-2">

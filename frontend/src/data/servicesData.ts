@@ -49,7 +49,7 @@ export const initialServices: ServiceItem[] = [
       'Valid Government Photo ID'
     ],
     processingTime: '3 - 5 Business Days',
-    benefitAmount: 'Financial Aid & Assistive Devices',
+    benefitAmount: '₱1,500.00 Quarterly Pension & Financial Aid',
     iconName: 'pwd',
     badge: 'PWD Welfare'
   },

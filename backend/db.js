@@ -125,13 +125,85 @@ export const initDB = async () => {
         id SERIAL PRIMARY KEY,
         reference_no VARCHAR(50) UNIQUE NOT NULL,
         applicant_name VARCHAR(255) NOT NULL,
-        pwd_id_no VARCHAR(50),
-        disability_type VARCHAR(100),
+        first_name VARCHAR(100),
+        middle_name VARCHAR(100),
+        last_name VARCHAR(100),
+        suffix VARCHAR(20),
+        nationality VARCHAR(50) DEFAULT 'FILIPINO',
+        dob VARCHAR(50),
+        age VARCHAR(10),
+        gender VARCHAR(20),
+        civil_status VARCHAR(50),
+        house_no VARCHAR(100),
+        street_name VARCHAR(150),
         barangay VARCHAR(150),
         phone_number VARCHAR(50),
+        pwd_id_no VARCHAR(50),
+        employment_status VARCHAR(100),
+        occupation VARCHAR(255),
+        source_of_income VARCHAR(255),
+        approx_monthly_income VARCHAR(100),
+        educational_attainment VARCHAR(150),
+        other_education_info TEXT,
+        family_members JSONB,
+        monthly_expenses VARCHAR(100),
+        disability_type VARCHAR(150),
+        swa_qualifying_category VARCHAR(150),
+        reason_for_assistance TEXT,
+        uploaded_documents JSONB,
+        service_name VARCHAR(255) DEFAULT 'PWD Social Assistance Program',
+        category VARCHAR(50) DEFAULT 'pwd',
+        assistance_type VARCHAR(100) DEFAULT 'PWD Social Aid',
+        amount NUMERIC(10,2) DEFAULT 5000.00,
         status VARCHAR(100) DEFAULT 'Pending Review',
-        date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        disapproval_reason TEXT,
+        appointment_date VARCHAR(50),
+        appointment_time VARCHAR(50),
+        appointment_venue VARCHAR(255),
+        payout_date VARCHAR(50),
+        payout_time VARCHAR(50),
+        payout_venue VARCHAR(255),
+        details JSONB,
+        date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS first_name VARCHAR(100);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS middle_name VARCHAR(100);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS last_name VARCHAR(100);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS suffix VARCHAR(20);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS nationality VARCHAR(50) DEFAULT 'FILIPINO';
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS dob VARCHAR(50);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS age VARCHAR(10);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS gender VARCHAR(20);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS civil_status VARCHAR(50);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS house_no VARCHAR(100);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS street_name VARCHAR(150);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS pwd_id_no VARCHAR(50);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS employment_status VARCHAR(100);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS occupation VARCHAR(255);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS source_of_income VARCHAR(255);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS approx_monthly_income VARCHAR(100);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS educational_attainment VARCHAR(150);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS other_education_info TEXT;
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS family_members JSONB;
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS monthly_expenses VARCHAR(100);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS swa_qualifying_category VARCHAR(150);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS reason_for_assistance TEXT;
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS uploaded_documents JSONB;
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS service_name VARCHAR(255) DEFAULT 'PWD Social Assistance Program';
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'pwd';
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS assistance_type VARCHAR(100) DEFAULT 'PWD Social Aid';
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS amount NUMERIC(10,2) DEFAULT 5000.00;
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS disapproval_reason TEXT;
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS appointment_date VARCHAR(50);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS appointment_time VARCHAR(50);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS appointment_venue VARCHAR(255);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS payout_date VARCHAR(50);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS payout_time VARCHAR(50);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS payout_venue VARCHAR(255);
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS details JSONB;
+      ALTER TABLE pwd_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
       CREATE TABLE IF NOT EXISTS senior_applications (
         id SERIAL PRIMARY KEY,

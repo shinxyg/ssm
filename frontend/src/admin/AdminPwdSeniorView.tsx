@@ -17,19 +17,26 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'PWD' | 'SENIOR'>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
 
-  // DB Senior applications state
+  // DB Senior & PWD applications state
   const [dbSeniorApps, setDbSeniorApps] = useState<any[]>([]);
+  const [dbPwdApps, setDbPwdApps] = useState<any[]>([]);
   const [selectedApp, setSelectedApp] = useState<any | null>(null);
   const [rejectModalApp, setRejectModalApp] = useState<any | null>(null);
   const [rejectReason, setRejectReason] = useState<string>('');
   const [viewingDoc, setViewingDoc] = useState<{ title: string; fileName: string; dataUrl?: string; url?: string } | null>(null);
 
-  const fetchSeniorApps = async () => {
+  const fetchDbApps = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/senior/applications');
-      if (res.ok) {
-        const data = await res.json();
-        setDbSeniorApps(data);
+      const [srRes, pwdRes] = await Promise.all([
+        fetch('http://localhost:5000/api/senior/applications').catch(() => null),
+        fetch('http://localhost:5000/api/pwd/applications').catch(() => null)
+      ]);
+
+      if (srRes && srRes.ok) {
+        setDbSeniorApps(await srRes.json());
+      }
+      if (pwdRes && pwdRes.ok) {
+        setDbPwdApps(await pwdRes.json());
       }
     } catch (err) {
       console.warn('Backend API connection notice:', err);
@@ -37,17 +44,17 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
   };
 
   useEffect(() => {
-    fetchSeniorApps();
-    const interval = setInterval(fetchSeniorApps, 4000);
+    fetchDbApps();
+    const interval = setInterval(fetchDbApps, 4000);
     return () => clearInterval(interval);
   }, []);
 
-  // Merge DB senior records with applications from prop
+  // Merge DB senior & PWD records with applications from prop
   const combinedApps = useMemo(() => {
     const list: any[] = [];
     const seenRefs = new Set<string>();
 
-    // 1. DB Applications
+    // 1. DB Senior Applications
     dbSeniorApps.forEach((item) => {
       seenRefs.add(item.reference_no);
       let detailsObj = {};
@@ -64,6 +71,67 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
         dateSubmitted: item.date_submitted ? new Date(item.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
         disapprovalReason: item.disapproval_reason,
         details: detailsObj,
+        rawDbRecord: item
+      });
+    });
+
+    // 2. DB PWD Applications
+    dbPwdApps.forEach((item) => {
+      seenRefs.add(item.reference_no);
+      let detailsObj = {};
+      try {
+        detailsObj = typeof item.details === 'string' ? JSON.parse(item.details) : item.details || {};
+      } catch (e) {}
+
+      let uploadedDocs = {};
+      try {
+        uploadedDocs = typeof item.uploaded_documents === 'string' ? JSON.parse(item.uploaded_documents) : item.uploaded_documents || {};
+      } catch (e) {}
+
+      let familyMembers = [];
+      try {
+        familyMembers = typeof item.family_members === 'string' ? JSON.parse(item.family_members) : item.family_members || [];
+      } catch (e) {}
+
+      const dbFullName = [item.first_name, item.middle_name, item.last_name, item.suffix].filter(Boolean).join(' ').trim();
+
+      list.push({
+        referenceNo: item.reference_no,
+        applicantName: dbFullName || item.applicant_name,
+        serviceName: item.service_name || 'PWD Social Assistance Program',
+        category: item.category || 'pwd',
+        status: item.status || 'Pending Review',
+        dateSubmitted: item.date_submitted ? new Date(item.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
+        disapprovalReason: item.disapproval_reason,
+        details: {
+          ...detailsObj,
+          firstName: item.first_name,
+          middleName: item.middle_name,
+          lastName: item.last_name,
+          suffix: item.suffix,
+          nationality: item.nationality,
+          dob: item.dob,
+          age: item.age,
+          gender: item.gender,
+          civilStatus: item.civil_status,
+          houseNo: item.house_no,
+          street: item.street_name,
+          barangay: item.barangay,
+          phone: item.phone_number,
+          pwdIdNumber: item.pwd_id_no,
+          employmentStatus: item.employment_status,
+          occupation: item.occupation,
+          sourceOfIncome: item.source_of_income,
+          approxMonthlyIncome: item.approx_monthly_income,
+          highestEducation: item.educational_attainment,
+          otherEducationInfo: item.other_education_info,
+          familyMembers,
+          monthlyExpenses: item.monthly_expenses,
+          typeOfDisability: item.disability_type,
+          swaCategory: item.swa_qualifying_category,
+          reasonForAssistance: item.reason_for_assistance,
+          uploadedDocs
+        },
         rawDbRecord: item
       });
     });
@@ -86,7 +154,7 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
     });
 
     return list;
-  }, [dbSeniorApps, applications]);
+  }, [dbSeniorApps, dbPwdApps, applications]);
 
   // Filtered List
   const filteredApps = useMemo(() => {
@@ -133,8 +201,10 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
 
   const handleInitialApprove = async (app: any) => {
     const newStatus = 'APPROVED BY ADMIN';
+    const isPwd = (app.referenceNo || '').startsWith('QC-PWD-') || (app.category || '').toLowerCase().includes('pwd') || (app.serviceName || '').toLowerCase().includes('pwd');
+    const apiModule = isPwd ? 'pwd' : 'senior';
     try {
-      await fetch(`http://localhost:5000/api/senior/applications/${app.referenceNo}/status`, {
+      await fetch(`http://localhost:5000/api/${apiModule}/applications/${app.referenceNo}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -144,14 +214,16 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
     if (onUpdateStatus) {
       onUpdateStatus(app.referenceNo, newStatus as any);
     }
-    fetchSeniorApps();
+    fetchDbApps();
   };
 
   const handleConfirmReject = async () => {
     if (!rejectModalApp) return;
     const newStatus = 'REJECTED';
+    const isPwd = (rejectModalApp.referenceNo || '').startsWith('QC-PWD-') || (rejectModalApp.category || '').toLowerCase().includes('pwd') || (rejectModalApp.serviceName || '').toLowerCase().includes('pwd');
+    const apiModule = isPwd ? 'pwd' : 'senior';
     try {
-      await fetch(`http://localhost:5000/api/senior/applications/${rejectModalApp.referenceNo}/status`, {
+      await fetch(`http://localhost:5000/api/${apiModule}/applications/${rejectModalApp.referenceNo}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus, disapprovalReason: rejectReason || 'Requirements non-compliant' })
@@ -163,7 +235,7 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
     }
     setRejectModalApp(null);
     setRejectReason('');
-    fetchSeniorApps();
+    fetchDbApps();
   };
 
   return (
@@ -307,11 +379,91 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
         const det = selectedApp.details || {};
         const pInfo = det.personalInformation || {};
         const occInfo = det.occupationFinancialInformation || {};
-        const famMembers = det.familyComposition || [];
         const expInfo = det.monthlyHouseholdExpenses || {};
         const livInfo = det.livingSituationAdditionalInfo || {};
         const othInfo = det.otherAssistanceBenefits || {};
         const docsInfo = det.uploadedDocuments || {};
+
+        const isPwdApp = selectedApp.category === 'pwd' || selectedApp.serviceName?.includes('PWD') || selectedApp.referenceNo?.startsWith('QC-PWD');
+
+        // Parse JSON fields cleanly for PWD & Senior
+        let famMembers: any[] = [];
+        if (Array.isArray(det.familyMembers)) famMembers = det.familyMembers;
+        else if (Array.isArray(det.familyComposition)) famMembers = det.familyComposition;
+        else if (Array.isArray(raw.family_members)) famMembers = raw.family_members;
+        else if (typeof raw.family_members === 'string') {
+          try { famMembers = JSON.parse(raw.family_members); } catch (e) {}
+        }
+
+        let uploadedDocsObj: any = det.uploadedDocs || docsInfo;
+        if (typeof raw.uploaded_documents === 'string') {
+          try { uploadedDocsObj = JSON.parse(raw.uploaded_documents); } catch (e) {}
+        } else if (raw.uploaded_documents) {
+          uploadedDocsObj = raw.uploaded_documents;
+        }
+
+        const pwdIdNo = det.pwdIdNumber || raw.pwd_id_no || 'N/A';
+        const seniorIdNo = pInfo.seniorCitizenId || det.seniorCitizenId || raw.senior_id_no || 'N/A';
+        const totalExpenses = det.monthlyExpenses || expInfo.totalMonthlyExpenses || raw.monthly_expenses || raw.total_monthly_expenses;
+        const swaCategoryVal = det.swaCategory || det.typeOfDisability || raw.swa_qualifying_category || raw.disability_type;
+        const reasonVal = det.reasonForAssistance || livInfo.reasonForAssistance || raw.reason_for_assistance;
+
+        const pwdDocsList = [
+          {
+            title: 'QC PWD ID / Applicable Identification Card',
+            fileName: uploadedDocsObj?.pwd_id?.name || uploadedDocsObj?.pwdId?.name || (typeof uploadedDocsObj?.pwd_id === 'string' ? uploadedDocsObj.pwd_id : 'pwd_id_photo.jpg'),
+            dataUrl: uploadedDocsObj?.pwd_id?.url || uploadedDocsObj?.pwdId?.url || (typeof uploadedDocsObj?.pwd_id === 'string' ? uploadedDocsObj.pwd_id : undefined),
+            icon: FileText,
+            iconColor: 'text-blue-400'
+          },
+          {
+            title: 'Barangay Certificate of Indigency',
+            fileName: uploadedDocsObj?.indigency_cert?.name || uploadedDocsObj?.indigencyCert?.name || (typeof uploadedDocsObj?.indigency_cert === 'string' ? uploadedDocsObj.indigency_cert : 'indigency_certificate.jpg'),
+            dataUrl: uploadedDocsObj?.indigency_cert?.url || uploadedDocsObj?.indigencyCert?.url || (typeof uploadedDocsObj?.indigency_cert === 'string' ? uploadedDocsObj.indigency_cert : undefined),
+            icon: FileText,
+            iconColor: 'text-emerald-400'
+          },
+          {
+            title: 'Medical Certificate / Clinical Abstract',
+            fileName: uploadedDocsObj?.medical_cert?.name || uploadedDocsObj?.medicalCert?.name || (typeof uploadedDocsObj?.medical_cert === 'string' ? uploadedDocsObj.medical_cert : 'medical_certificate.jpg'),
+            dataUrl: uploadedDocsObj?.medical_cert?.url || uploadedDocsObj?.medicalCert?.url || (typeof uploadedDocsObj?.medical_cert === 'string' ? uploadedDocsObj.medical_cert : undefined),
+            icon: FileText,
+            iconColor: 'text-purple-400'
+          },
+          {
+            title: 'Required Photo / Documentation depending on Disability',
+            fileName: uploadedDocsObj?.disability_photo?.name || uploadedDocsObj?.disabilityPhoto?.name || (typeof uploadedDocsObj?.disability_photo === 'string' ? uploadedDocsObj.disability_photo : 'disability_proof_photo.jpg'),
+            dataUrl: uploadedDocsObj?.disability_photo?.url || uploadedDocsObj?.disabilityPhoto?.url || (typeof uploadedDocsObj?.disability_photo === 'string' ? uploadedDocsObj.disability_photo : undefined),
+            icon: FileText,
+            iconColor: 'text-amber-400'
+          }
+        ];
+
+        const seniorDocsList = [
+          { 
+            title: 'Senior Citizen ID Card / Valid Photo ID (PhilSys / OSCA)', 
+            fileName: typeof docsInfo.seniorIdCard === 'object' ? docsInfo.seniorIdCard?.name : (docsInfo.seniorIdCard || det.seniorIdCard || 'Senior_ID_Photo.png'),
+            dataUrl: typeof docsInfo.seniorIdCard === 'object' ? (docsInfo.seniorIdCard?.dataUrl || docsInfo.seniorIdCard?.url) : (det.uploadedDocData?.seniorIdCard?.dataUrl || det.uploadedDocData?.seniorIdCard?.url),
+            icon: FileText,
+            iconColor: 'text-blue-400'
+          },
+          { 
+            title: 'Certificate of Indigency (Barangay Indigency Clearance)', 
+            fileName: typeof docsInfo.indigencyCert === 'object' ? docsInfo.indigencyCert?.name : (docsInfo.indigencyCert || det.indigencyCert || 'Barangay_Indigency.png'),
+            dataUrl: typeof docsInfo.indigencyCert === 'object' ? (docsInfo.indigencyCert?.dataUrl || docsInfo.indigencyCert?.url) : (det.uploadedDocData?.indigencyCert?.dataUrl || det.uploadedDocData?.indigencyCert?.url),
+            icon: FileText,
+            iconColor: 'text-emerald-400'
+          },
+          { 
+            title: 'Supporting Documents / Proof of Residency & Income', 
+            fileName: typeof docsInfo.otherSupport === 'object' ? docsInfo.otherSupport?.name : (docsInfo.otherSupport || det.otherSupport || 'Proof_Residency.png'),
+            dataUrl: typeof docsInfo.otherSupport === 'object' ? (docsInfo.otherSupport?.dataUrl || docsInfo.otherSupport?.url) : (det.uploadedDocData?.otherSupport?.dataUrl || det.uploadedDocData?.otherSupport?.url),
+            icon: FileText,
+            iconColor: 'text-purple-400'
+          }
+        ];
+
+        const activeDocsList = isPwdApp ? pwdDocsList : seniorDocsList;
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
@@ -405,14 +557,14 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                       <span className="font-bold text-white">
                         {[
                           pInfo.houseNo || det.houseNo || raw.house_no,
-                          pInfo.streetName || det.streetName || raw.street_name,
+                          pInfo.streetName || det.streetName || det.street || raw.street_name,
                           (pInfo.barangay || det.barangay || raw.barangay) ? `Barangay ${pInfo.barangay || det.barangay || raw.barangay}` : ''
                         ].filter(Boolean).join(', ') || 'Not Specified'}
                       </span>
                     </div>
                     <div className="col-span-2 sm:col-span-3">
-                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Senior Citizen ID No.</span>
-                      <span className="font-bold font-mono text-white">{pInfo.seniorCitizenId || det.seniorCitizenId || raw.senior_id_no || 'N/A'}</span>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">{isPwdApp ? 'PWD ID Number' : 'Senior Citizen ID No.'}</span>
+                      <span className="font-bold font-mono text-white">{isPwdApp ? pwdIdNo : seniorIdNo}</span>
                     </div>
                   </div>
                 </div>
@@ -426,19 +578,19 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4">
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 block uppercase">Employment Status</span>
-                      <span className="font-bold text-white">{occInfo.employmentStatus || raw.employment_status || 'Not Specified'}</span>
+                      <span className="font-bold text-white">{occInfo.employmentStatus || det.employmentStatus || raw.employment_status || 'Not Specified'}</span>
                     </div>
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 block uppercase">Current / Previous Occupation</span>
-                      <span className="font-bold text-white">{occInfo.occupation || raw.occupation || 'Not Specified'}</span>
+                      <span className="font-bold text-white">{occInfo.occupation || det.occupation || raw.occupation || 'Not Specified'}</span>
                     </div>
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 block uppercase">Source of Income</span>
-                      <span className="font-bold text-white">{occInfo.sourceOfIncome || raw.source_of_income || 'Not Specified'}</span>
+                      <span className="font-bold text-white">{occInfo.sourceOfIncome || det.sourceOfIncome || raw.source_of_income || 'Not Specified'}</span>
                     </div>
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 block uppercase">Approx. Monthly Income</span>
-                      <span className="font-bold text-white">{occInfo.approxMonthlyIncome || raw.approx_monthly_income || 'Not Specified'}</span>
+                      <span className="font-bold text-white">{occInfo.approxMonthlyIncome || det.approxMonthlyIncome || raw.approx_monthly_income || 'Not Specified'}</span>
                     </div>
                     <div className="col-span-1 sm:col-span-2">
                       <span className="text-[10px] font-bold text-slate-400 block uppercase">Pension / Benefits Received</span>
@@ -449,11 +601,29 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                   </div>
                 </div>
 
-                {/* 3. FAMILY COMPOSITION */}
+                {/* 3. EDUCATIONAL BACKGROUND */}
+                <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
+                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <FileText className="w-4 h-4" />
+                    <span>3. Educational Background</span>
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Highest Educational Attainment</span>
+                      <span className="font-bold text-white">{det.highestEducation || det.educationalAttainment || raw.educational_attainment || 'Not Specified'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Other Relevant Education Information</span>
+                      <span className="font-bold text-white">{det.otherEducationInfo || raw.other_education_info || 'None'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. FAMILY COMPOSITION */}
                 <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
                   <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
                     <Users className="w-4 h-4" />
-                    <span>3. Family Composition & Dependents</span>
+                    <span>4. Family Composition & Dependents</span>
                   </h4>
                   {famMembers.length === 0 ? (
                     <span className="text-slate-400 italic">No family members listed.</span>
@@ -466,17 +636,15 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                             <th className="py-1.5 px-2">Relationship</th>
                             <th className="py-1.5 px-2">Age</th>
                             <th className="py-1.5 px-2">Occupation</th>
-                            <th className="py-1.5 px-2">Income / Support</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/60 font-medium">
                           {famMembers.map((m: any, idx: number) => (
                             <tr key={idx}>
                               <td className="py-2 px-2 font-bold text-white">{m.name || 'N/A'}</td>
-                              <td className="py-2 px-2 text-slate-300">{m.relationship || 'N/A'}</td>
+                              <td className="py-2 px-2 text-slate-300">{m.rel || m.relationship || 'N/A'}</td>
                               <td className="py-2 px-2 text-slate-300">{m.age || 'N/A'}</td>
-                              <td className="py-2 px-2 text-slate-300">{m.occupation || 'N/A'}</td>
-                              <td className="py-2 px-2 font-bold text-white">{m.incomeSource || m.incomeSupport || 'N/A'}</td>
+                              <td className="py-2 px-2 text-slate-300">{m.occ || m.occupation || 'N/A'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -485,55 +653,46 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                   )}
                 </div>
 
-                {/* 4. MONTHLY HOUSEHOLD EXPENSES */}
+                {/* 5. MONTHLY HOUSEHOLD EXPENSES */}
                 <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-2">
                   <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
                     <DollarSign className="w-4 h-4" />
-                    <span>4. Monthly Household Expenses</span>
+                    <span>5. Monthly Household Expenses</span>
                   </h4>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 block uppercase">Total Monthly Household Expenses</span>
                     <span className="font-bold text-white text-sm">
-                      {expInfo.totalMonthlyExpenses || raw.total_monthly_expenses ? `₱${expInfo.totalMonthlyExpenses || raw.total_monthly_expenses}` : 'Not Specified'}
+                      {totalExpenses ? (String(totalExpenses).startsWith('₱') ? totalExpenses : `₱${totalExpenses}`) : 'Not Specified'}
                     </span>
                   </div>
                 </div>
 
-                {/* 5. LIVING SITUATION */}
+                {/* 6. QUALIFYING CATEGORY & ASSESSMENT DETAILS */}
                 <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
                   <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
                     <Home className="w-4 h-4" />
-                    <span>5. Living Situation & Additional Information</span>
+                    <span>6. {isPwdApp ? 'Qualifying Category & Assessment Details' : 'Living Situation & Additional Information'}</span>
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-4">
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Living Arrangement</span>
-                      <span className="font-bold text-white">{livInfo.livingArrangement === 'Other' ? (livInfo.customLivingArrangement || 'Other') : (livInfo.livingArrangement || raw.living_arrangement || 'Not Specified')}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 block uppercase">Source of Financial Support</span>
-                      <span className="font-bold text-white">{livInfo.financialSupportSource === 'Other' ? (livInfo.customFinancialSupport || 'Other') : (livInfo.financialSupportSource || raw.financial_support_source || 'Not Specified')}</span>
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4">
+                    {isPwdApp ? (
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 block uppercase">Qualifying Category / Disability Type</span>
+                        <span className="font-bold text-white">{swaCategoryVal || 'Not Specified'}</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 block uppercase">Living Arrangement</span>
+                        <span className="font-bold text-white">{livInfo.livingArrangement === 'Other' ? (livInfo.customLivingArrangement || 'Other') : (livInfo.livingArrangement || raw.living_arrangement || 'Not Specified')}</span>
+                      </div>
+                    )}
                     <div>
                       <span className="text-[10px] font-bold text-slate-400 block uppercase">Reason for Requesting Assistance</span>
-                      <span className="font-bold text-white">{livInfo.reasonForAssistance === 'Other' ? (livInfo.customReasonForAssistance || 'Other') : (livInfo.reasonForAssistance || raw.reason_for_assistance || 'Not Specified')}</span>
+                      <span className="font-bold text-white">{reasonVal || 'Not Specified'}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* 6. OTHER ASSISTANCE & BENEFITS RECORDED */}
-                <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
-                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
-                    <HelpCircle className="w-4 h-4" />
-                    <span>6. Other Assistance & Benefits Recorded</span>
-                  </h4>
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 block uppercase">Other Benefits Received</span>
-                    <span className="font-bold text-white text-sm">{othInfo.benefitReceived === 'Other' ? (othInfo.customBenefitReceived || 'Other') : (othInfo.benefitReceived || raw.other_benefits_received || 'None')}</span>
-                  </div>
-                </div>
-
-                {/* 7. UPLOADED REQUIREMENT DOCUMENTS (MATCHING EXACT AICS INSPECTION LAYOUT) */}
+                {/* 7. UPLOADED REQUIREMENT DOCUMENTS */}
                 <div className="p-4 rounded-xl bg-[#091124] border border-slate-800 space-y-3">
                   <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
                     <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider flex items-center gap-2">
@@ -543,29 +702,7 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                   </div>
 
                   <div className="flex flex-col gap-2.5">
-                    {[
-                      { 
-                        title: 'Senior Citizen ID Card / Valid Photo ID (PhilSys / OSCA)', 
-                        fileName: typeof docsInfo.seniorIdCard === 'object' ? docsInfo.seniorIdCard?.name : (docsInfo.seniorIdCard || det.seniorIdCard || 'RobloxScreenShot20250301_175759300.png'),
-                        dataUrl: typeof docsInfo.seniorIdCard === 'object' ? (docsInfo.seniorIdCard?.dataUrl || docsInfo.seniorIdCard?.url) : (det.uploadedDocData?.seniorIdCard?.dataUrl || det.uploadedDocData?.seniorIdCard?.url),
-                        icon: FileText,
-                        iconColor: 'text-blue-400'
-                      },
-                      { 
-                        title: 'Certificate of Indigency (Barangay Indigency Clearance)', 
-                        fileName: typeof docsInfo.indigencyCert === 'object' ? docsInfo.indigencyCert?.name : (docsInfo.indigencyCert || det.indigencyCert || 'RobloxScreenShot20250301_175032220.png'),
-                        dataUrl: typeof docsInfo.indigencyCert === 'object' ? (docsInfo.indigencyCert?.dataUrl || docsInfo.indigencyCert?.url) : (det.uploadedDocData?.indigencyCert?.dataUrl || det.uploadedDocData?.indigencyCert?.url),
-                        icon: FileText,
-                        iconColor: 'text-emerald-400'
-                      },
-                      { 
-                        title: 'Supporting Documents / Proof of Residency & Income', 
-                        fileName: typeof docsInfo.otherSupport === 'object' ? docsInfo.otherSupport?.name : (docsInfo.otherSupport || det.otherSupport || 'RobloxScreenShot20250301_182750971.png'),
-                        dataUrl: typeof docsInfo.otherSupport === 'object' ? (docsInfo.otherSupport?.dataUrl || docsInfo.otherSupport?.url) : (det.uploadedDocData?.otherSupport?.dataUrl || det.uploadedDocData?.otherSupport?.url),
-                        icon: FileText,
-                        iconColor: 'text-purple-400'
-                      }
-                    ].map((doc, idx) => {
+                    {activeDocsList.map((doc, idx) => {
                       const IconComp = doc.icon;
                       return (
                         <button
@@ -582,8 +719,8 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                               <span className="text-xs font-extrabold text-white block truncate group-hover:text-blue-300 transition-colors">
                                 {doc.title}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
-                                ✓ Uploaded: {doc.fileName}
+                              <span className="text-[11px] font-mono text-slate-400 block truncate mt-0.5">
+                                📎 {doc.fileName}
                               </span>
                             </div>
                           </div>
@@ -722,6 +859,10 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                   <img 
                     src={viewingDoc.dataUrl || viewingDoc.url} 
                     alt={viewingDoc.title}
+                    onError={() => {
+                      // Switch viewingDoc dataUrl to undefined so it shows clean file verification card
+                      setViewingDoc(prev => prev ? { ...prev, dataUrl: undefined, url: undefined } : null);
+                    }}
                     className="max-h-[360px] w-auto max-w-full rounded-lg object-contain shadow-2xl border border-slate-700/60"
                   />
                 </div>

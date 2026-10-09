@@ -775,6 +775,167 @@ app.get('/api/pwd/applications', async (req, res) => {
   }
 });
 
+// POST submit new PWD application to PostgreSQL DB
+app.post('/api/pwd/applications', async (req, res) => {
+  const { 
+    referenceNo, 
+    applicantName, 
+    firstName,
+    middleName,
+    lastName,
+    suffix,
+    nationality,
+    dob,
+    age,
+    gender,
+    civilStatus,
+    houseNo,
+    streetName,
+    barangay,
+    phoneNumber,
+    pwdIdNo,
+    employmentStatus,
+    occupation,
+    sourceOfIncome,
+    approxMonthlyIncome,
+    educationalAttainment,
+    otherEducationInfo,
+    familyMembers,
+    monthlyExpenses,
+    disabilityType,
+    swaQualifyingCategory,
+    reasonForAssistance,
+    uploadedDocuments,
+    serviceName,
+    category,
+    assistanceType,
+    amount,
+    status,
+    details
+  } = req.body;
+
+  try {
+    const query = `
+      INSERT INTO pwd_applications (
+        reference_no, applicant_name, first_name, middle_name, last_name, suffix,
+        nationality, dob, age, gender, civil_status, house_no, street_name, barangay,
+        phone_number, pwd_id_no, employment_status, occupation, source_of_income,
+        approx_monthly_income, educational_attainment, other_education_info,
+        family_members, monthly_expenses, disability_type, swa_qualifying_category,
+        reason_for_assistance, uploaded_documents, service_name, category,
+        assistance_type, amount, status, details
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+        $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+        $31, $32, $33, $34
+      ) RETURNING *;
+    `;
+
+    const computedName = [firstName, middleName, lastName, suffix].filter(Boolean).join(' ').trim();
+    const values = [
+      referenceNo || `QC-PWD-${Math.floor(100000 + Math.random() * 900000)}`,
+      applicantName || computedName || 'PWD Applicant',
+      firstName || '',
+      middleName || '',
+      lastName || '',
+      suffix || '',
+      nationality || 'FILIPINO',
+      dob || '',
+      age || '',
+      gender || '',
+      civilStatus || '',
+      houseNo || '',
+      streetName || '',
+      barangay || '',
+      phoneNumber || '',
+      pwdIdNo || '',
+      employmentStatus || '',
+      occupation || '',
+      sourceOfIncome || '',
+      approxMonthlyIncome || '',
+      educationalAttainment || '',
+      otherEducationInfo || '',
+      familyMembers ? JSON.stringify(familyMembers) : null,
+      monthlyExpenses || '',
+      disabilityType || swaQualifyingCategory || 'General PWD',
+      swaQualifyingCategory || disabilityType || '',
+      reasonForAssistance || '',
+      uploadedDocuments ? JSON.stringify(uploadedDocuments) : null,
+      serviceName || 'PWD Social Assistance Program',
+      category || 'pwd',
+      assistanceType || 'PWD Social Aid',
+      amount || 5000.00,
+      status || 'Pending Review',
+      details ? JSON.stringify(details) : null
+    ];
+
+    const result = await pool.query(query, values);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error("Error inserting PWD application:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update status of PWD application in PostgreSQL DB
+app.put('/api/pwd/applications/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { 
+    status, 
+    disapprovalReason, 
+    appointmentDate, 
+    appointmentTime, 
+    appointmentVenue, 
+    payoutDate, 
+    payoutTime, 
+    payoutVenue 
+  } = req.body;
+
+  try {
+    const query = `
+      UPDATE pwd_applications 
+      SET 
+        status = COALESCE($1, status),
+        disapproval_reason = COALESCE($2, disapproval_reason),
+        appointment_date = COALESCE($3, appointment_date),
+        appointment_time = COALESCE($4, appointment_time),
+        appointment_venue = COALESCE($5, appointment_venue),
+        payout_date = COALESCE($6, payout_date),
+        payout_time = COALESCE($7, payout_time),
+        payout_venue = COALESCE($8, payout_venue),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id::text = $9 OR reference_no = $9
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [
+      status, disapprovalReason, appointmentDate, appointmentTime, appointmentVenue,
+      payoutDate, payoutTime, payoutVenue, id
+    ]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'PWD application not found' });
+    }
+    const row = result.rows[0];
+
+    sendNotificationEmail({
+      to: row.phone_number || 'clarencemillares15@gmail.com',
+      subject: `PWD Social Assistance Update (${row.reference_no}): ${row.status}`,
+      title: `PWD Assistance Status Update: ${row.status}`,
+      applicantName: row.applicant_name,
+      refNo: row.reference_no,
+      status: row.status,
+      detailsMessage: row.disapproval_reason ? `Reason: ${row.disapproval_reason}` : `Your PWD Social Assistance Program application status has been updated.`,
+      appointmentInfo: row.appointment_date ? `Interview on ${row.appointment_date} at ${row.appointment_time || '09:00 AM'} (${row.appointment_venue || 'PDAO Room 102'})` : (row.payout_date ? `Payout on ${row.payout_date} at ${row.payout_time || '09:00 AM'} (${row.payout_venue || 'PDAO Room 102'})` : null)
+    });
+
+    res.json({ message: 'PWD status updated successfully', record: row });
+  } catch (err) {
+    console.error('Error updating PWD application status:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 // GET all Child Welfare applications from PostgreSQL DB
 app.get('/api/child-welfare/applications', async (req, res) => {
   try {
@@ -2140,12 +2301,21 @@ app.post('/api/activity-logs/:id/restore', async (req, res) => {
 // BENEFICIARY MANAGEMENT ENDPOINTS
 // ==========================================
 
-// Helper to normalize citizen key for deduplication
-const normalizeCitizenKey = (name = '', phone = '', email = '') => {
+// Helper to normalize citizen key for deduplication across all modules
+const normalizeCitizenKey = (name = '', phone = '', email = '', obj = {}) => {
+  const cleanPhone = (phone || obj.phone_number || '').trim().replace(/[^0-9]/g, '');
+  if (cleanPhone && cleanPhone.length >= 7) return `phone-${cleanPhone.slice(-10)}`;
+
+  const cleanEmail = (email || obj.email_address || obj.email || '').trim().toLowerCase();
+  if (cleanEmail && cleanEmail.includes('@')) return `email-${cleanEmail}`;
+
+  const firstName = (obj.first_name || '').trim().toLowerCase();
+  const lastName = (obj.last_name || '').trim().toLowerCase();
+  if (firstName && lastName) return `name-${firstName}-${lastName}`;
+
   const cleanName = (name || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (cleanName) return cleanName;
-  if (email) return email.trim().toLowerCase();
-  if (phone) return phone.trim().replace(/[^0-9]/g, '');
+  if (cleanName) return `name-${cleanName}`;
+
   return 'unknown-citizen';
 };
 
@@ -2193,7 +2363,8 @@ app.get('/api/beneficiaries', async (req, res) => {
         const firstName = sourceObj.first_name || personalInfo.firstName || '';
         const lastName = sourceObj.last_name || personalInfo.lastName || '';
         const middleName = sourceObj.middle_name || personalInfo.middleName || '';
-        const rawName = defaultName || `${firstName} ${middleName} ${lastName}`.trim() || 'QC Resident';
+        const fullComboName = [firstName, middleName, lastName, sourceObj.suffix].filter(Boolean).join(' ').trim();
+        const rawName = fullComboName || defaultName || `${firstName} ${middleName} ${lastName}`.trim() || 'QC Resident';
 
         const houseNo = sourceObj.house_no || personalInfo.houseNo || '176';
         const street = sourceObj.street_name || personalInfo.streetName || '23';
@@ -2225,6 +2396,14 @@ app.get('/api/beneficiaries', async (req, res) => {
           nonCashCount: 0,
           manualVerification: verifMap.get(key) || null,
         });
+      } else {
+        const citizen = citizenMap.get(key);
+        const newMiddle = sourceObj.middle_name || (sourceObj.details && sourceObj.details.middleName) || '';
+        if (newMiddle && !citizen.middleName) {
+          citizen.middleName = formatProperCase(newMiddle);
+          const fullNameCombo = [sourceObj.first_name || citizen.firstName, newMiddle, sourceObj.last_name || citizen.lastName, sourceObj.suffix].filter(Boolean).join(' ');
+          citizen.name = formatProperCase(fullNameCombo);
+        }
       }
       return citizenMap.get(key);
     };

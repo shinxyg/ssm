@@ -78,9 +78,10 @@ export default function App() {
   // Fetch applications from PostgreSQL DB with fast O(1) state comparison
   const fetchDBApplications = async () => {
     try {
-      const [resAics, resSenior, resSolo, resEdu, resLivelihood, resTraining] = await Promise.all([
+      const [resAics, resSenior, resPwd, resSolo, resEdu, resLivelihood, resTraining] = await Promise.all([
         fetch('http://localhost:5000/api/aics/applications').catch(() => null),
         fetch('http://localhost:5000/api/senior/applications').catch(() => null),
+        fetch('http://localhost:5000/api/pwd/applications').catch(() => null),
         fetch('http://localhost:5000/api/solo-parent/applications').catch(() => null),
         fetch('http://localhost:5000/api/educational/applications').catch(() => null),
         fetch('http://localhost:5000/api/livelihood/applications').catch(() => null),
@@ -89,6 +90,7 @@ export default function App() {
 
       const aicsApps: ApplicationRecord[] = (resAics && resAics.ok) ? await resAics.json() : [];
       const seniorRaw: any[] = (resSenior && resSenior.ok) ? await resSenior.json() : [];
+      const pwdRaw: any[] = (resPwd && resPwd.ok) ? await resPwd.json() : [];
       const soloRaw: any[] = (resSolo && resSolo.ok) ? await resSolo.json() : [];
       const eduRaw: any[] = (resEdu && resEdu.ok) ? await resEdu.json() : [];
       const lvhRaw: any[] = (resLivelihood && resLivelihood.ok) ? await resLivelihood.json() : [];
@@ -113,6 +115,30 @@ export default function App() {
           appointmentTime: row.appointment_time,
           venue: row.appointment_venue || 'QC Hall OSCA Desk',
           assignedWorker: 'OSCA Evaluator, RSW'
+        },
+        disapprovalReason: row.disapproval_reason,
+        details: row.details
+      }));
+
+      const pwdApps: ApplicationRecord[] = (Array.isArray(pwdRaw) ? pwdRaw : []).map(row => ({
+        referenceNo: row.reference_no,
+        applicantName: row.applicant_name,
+        serviceName: row.service_name || 'PWD Social Assistance Program',
+        category: row.category || 'pwd',
+        assistanceType: row.assistance_type || 'PWD Social Aid',
+        status: row.status || 'Pending Review',
+        dateSubmitted: row.date_submitted ? new Date(row.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
+        amountOrType: '₱1,500.00 Quarterly Cash Pension',
+        assignedSocialWorker: 'Maria Santos, RSW (QC Social Services)',
+        scheduledPayoutDate: row.payout_date || row.scheduled_payout_date,
+        scheduledPayoutTime: row.payout_time || row.scheduled_payout_time,
+        appointmentDate: row.appointment_date,
+        appointmentTime: row.appointment_time,
+        appointmentDetails: {
+          appointmentDate: row.appointment_date,
+          appointmentTime: row.appointment_time,
+          venue: row.appointment_venue || 'Quezon City Hall PDAO Room 102',
+          assignedWorker: 'PDAO Evaluator, RSW'
         },
         disapprovalReason: row.disapproval_reason,
         details: row.details
@@ -222,13 +248,20 @@ export default function App() {
         }
       }));
 
+      // Filter out non-AICS records from aicsApps list so module-specific tables take precedence
+      const cleanAicsApps = (Array.isArray(aicsApps) ? aicsApps : []).filter(item => {
+        const ref = item?.referenceNo || '';
+        return !ref.startsWith('QC-PWD-') && !ref.startsWith('SENIOR-') && !ref.startsWith('SP-') && !ref.startsWith('LVH-') && !ref.startsWith('TRN-');
+      });
+
       const allDbApps = [
-        ...(Array.isArray(aicsApps) ? aicsApps : []), 
+        ...pwdApps,
         ...seniorApps,
         ...soloApps,
         ...eduApps,
         ...lvhApps,
-        ...trnApps
+        ...trnApps,
+        ...cleanAicsApps
       ];
 
       const uniqueMap = new Map<string, ApplicationRecord>();
@@ -258,13 +291,14 @@ export default function App() {
     // Update local state immediately
     setApplications((prev) => [newApp, ...prev.filter(a => a.referenceNo !== newApp.referenceNo)]);
 
+    const isPwd = (newApp.category || '').toLowerCase().includes('pwd') || (newApp.serviceName || '').toLowerCase().includes('pwd') || (newApp.referenceNo || '').startsWith('QC-PWD-');
     const isSenior = (newApp.category || '').toLowerCase().includes('senior') || (newApp.serviceName || '').toLowerCase().includes('senior') || (newApp.referenceNo || '').startsWith('SENIOR-');
     const isSolo = (newApp.category || '').toLowerCase() === 'soloparent' || (newApp.referenceNo || '').startsWith('SP-SUBSIDY-') || (newApp.referenceNo || '').startsWith('SP-');
     const isEdu = (newApp.category || '').toLowerCase() === 'educational' || (newApp.referenceNo || '').startsWith('QC-SP-EDU-');
     const isLvh = (newApp.category || '').toLowerCase() === 'livelihood' || (newApp.referenceNo || '').startsWith('LVH-');
     const isTrn = (newApp.category || '').toLowerCase() === 'training' || (newApp.referenceNo || '').startsWith('TRN-');
 
-    if (isSenior || isSolo || isEdu || isLvh || isTrn) {
+    if (isPwd || isSenior || isSolo || isEdu || isLvh || isTrn) {
       return;
     }
 
@@ -296,6 +330,7 @@ export default function App() {
   const handleUpdateStatus = async (refNo: string, newStatus: ApplicationRecord['status'], extraFields?: Record<string, any>) => {
     setApplications(prev => prev.map(app => app.referenceNo === refNo ? { ...app, status: newStatus, ...(extraFields || {}) } : app));
     const isSenior = (refNo || '').startsWith('SENIOR-');
+    const isPwd = (refNo || '').startsWith('QC-PWD-') || (refNo || '').includes('PWD');
     const isSolo = (refNo || '').startsWith('SP-SUBSIDY-') || (refNo || '').startsWith('SP-');
     const isEdu = (refNo || '').startsWith('QC-SP-EDU-');
     const isLvh = (refNo || '').startsWith('LVH-');
@@ -304,6 +339,8 @@ export default function App() {
     let endpoint = `http://localhost:5000/api/aics/applications/${encodeURIComponent(refNo)}/status`;
     if (isSenior) {
       endpoint = `http://localhost:5000/api/senior/applications/${encodeURIComponent(refNo)}/status`;
+    } else if (isPwd) {
+      endpoint = `http://localhost:5000/api/pwd/applications/${encodeURIComponent(refNo)}/status`;
     } else if (isSolo) {
       endpoint = `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`;
     } else if (isEdu) {
