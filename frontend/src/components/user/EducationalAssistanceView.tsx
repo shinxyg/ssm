@@ -839,7 +839,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   {mode === 'childwelfare' && (
                     <div>
                       <h3 className={`text-xs font-extrabold tracking-wider uppercase mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
-                        {isTagalog ? 'HINILING NA SERBISYO (Pumili ng lahat ng naaangkop) *' : 'SERVICE REQUESTED (Select all that apply) *'}
+                        {isTagalog ? 'HINILING NA SERBISYO *' : 'SERVICE REQUESTED *'}
                       </h3>
                       <div className={`p-4 rounded-xl border space-y-3 ${
                         darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/80 border-slate-200'
@@ -857,13 +857,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                             <input
                               type="checkbox"
                               checked={selectedServices.includes(srv.raw)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedServices((prev) => [...prev, srv.raw]);
-                                } else {
-                                  setSelectedServices((prev) => prev.filter((s) => s !== srv.raw));
-                                }
-                              }}
+                              onChange={() => setSelectedServices([srv.raw])}
                               className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
                             />
                             <span className={`text-xs font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
