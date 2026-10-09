@@ -352,14 +352,13 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                         <td className={`py-3.5 px-4 font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{app.serviceName}</td>
                         <td className={`py-3.5 px-4 font-mono text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{app.dateSubmitted}</td>
                         <td className="py-3.5 px-4">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold border ${
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold border ${
                             isApproved
                               ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30'
                               : isRejected
                               ? 'bg-rose-950/60 text-rose-300 border-rose-500/30'
                               : 'bg-amber-950/60 text-amber-300 border-amber-500/30'
                           }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${isApproved ? 'bg-emerald-400' : isRejected ? 'bg-rose-400' : 'bg-amber-400'}`}></span>
                             <span>{app.status}</span>
                           </span>
                         </td>

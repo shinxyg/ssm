@@ -286,7 +286,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
                       <td className={`py-4 px-6 font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{app.serviceName}</td>
                       <td className={`py-4 px-6 font-mono text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{app.dateSubmitted}</td>
                       <td className="py-4 px-6">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold border ${
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-extrabold border ${
                           app.status === 'Ready for Payout' || app.status === 'Approved' || app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed'
                             ? 'bg-emerald-950/60 text-emerald-400 border-emerald-500/30'
                             : app.status === 'Under Review' || app.status === 'Pending Documents'
@@ -295,15 +295,6 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
                             ? 'bg-blue-950/60 text-blue-400 border-blue-500/30'
                             : 'bg-rose-950/60 text-rose-400 border-rose-500/30'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            app.status === 'Ready for Payout' || app.status === 'Approved' || app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed'
-                              ? 'bg-emerald-400'
-                              : app.status === 'Under Review' || app.status === 'Pending Documents'
-                              ? 'bg-amber-400'
-                              : app.status === 'Pending Appointment' || app.status === 'Interview Scheduled'
-                              ? 'bg-blue-400'
-                              : 'bg-rose-400'
-                          }`}></span>
                           {app.status}
                         </span>
                       </td>

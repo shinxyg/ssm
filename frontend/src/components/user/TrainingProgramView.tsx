@@ -1999,7 +1999,7 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                     <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/50 text-rose-300 text-xs space-y-1">
                       <div className="font-extrabold text-sm flex items-center gap-1.5">
                         <X className="w-4 h-4 text-rose-400" />
-                        <span>🔴 UNQUALIFIED</span>
+                        <span>UNQUALIFIED</span>
                       </div>
                       <p className="text-[11px]">Sorry, you were Unqualified during the Orientation Assessment.</p>
                     </div>
@@ -2008,7 +2008,7 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                       <div className="p-3 rounded-xl bg-blue-950/60 border border-blue-500/50 text-blue-200 space-y-2">
                         <div className="font-extrabold text-sm text-blue-300 flex items-center gap-1.5">
                           <Clock className="w-4 h-4 text-blue-400" />
-                          <span>🔵 TRAINING SCHEDULED / ORIENTATION APPOINTED</span>
+                          <span>TRAINING SCHEDULED / ORIENTATION APPOINTED</span>
                         </div>
                         <p className="text-[11px] leading-relaxed text-slate-200">
                           Training Orientation has been set at <strong className="text-white">{venueVal}</strong>.
@@ -2036,7 +2036,7 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                     <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-600/40 text-emerald-300 text-xs space-y-1">
                       <div className="font-extrabold text-sm flex items-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        <span>🟢 SSDD VALIDATED</span>
+                        <span>SSDD VALIDATED</span>
                       </div>
                       <p className="text-[11px]">Your documents and qualification form have been validated. Moved to Stage 2 (Scheduling).</p>
                     </div>
@@ -2044,7 +2044,7 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
                     <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-600/40 text-amber-300 text-xs space-y-1">
                       <div className="font-extrabold text-sm flex items-center gap-1.5">
                         <Clock className="w-4 h-4 text-amber-400" />
-                        <span>🟡 PENDING (Pending SSDD Validation)</span>
+                        <span>PENDING (Pending SSDD Validation)</span>
                       </div>
                       <p className="text-[11px]">Admin is reviewing your Barangay Clearance, Valid ID, and Qualification Form.</p>
                     </div>

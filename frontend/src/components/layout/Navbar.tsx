@@ -138,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       // Step 1: Form Submitted / Application Received
       list.unshift({
         id: `${ref}-step1`,
-        title: 'Step 1: Application Received',
+        title: 'Application Received',
         message: isSenior 
           ? `QC Govt: Received your Senior Assistance request (Ref: ${ref}).`
           : `Application received for ${serv} (Ref: ${ref}). Admin is evaluating submitted requirements.`,
@@ -150,7 +150,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       if (st.includes('APPROVED BY ADMIN') || st.includes('INTERVIEW SCHEDULED') || st.includes('APPROVED BY OSCA') || st.includes('PAYOUT') || st.includes('RELEASED') || st.includes('COMPLETED') || st === 'APPROVED' || st === 'PENDING APPOINTMENT') {
         list.unshift({
           id: `${ref}-step2`,
-          title: 'Step 2: Initial Verification Approved',
+          title: 'Initial Verification Approved',
           message: isSenior
             ? `QC Govt: Documents verified. Please wait for your interview schedule (Ref: ${ref}).`
             : `Initial Approval: Your ${serv} (Ref: ${ref}) has been verified and queued for interview scheduling.`,
@@ -160,7 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       } else if (st.includes('REJECT') || st.includes('DISQUALIFIED')) {
         list.unshift({
           id: `${ref}-step2-rejected`,
-          title: 'Step 2: Disapproved',
+          title: 'Disapproved',
           message: isSenior
             ? `QC Govt: Disapproved your Senior Assistance request (Ref: ${ref})${app.disapprovalReason ? ` due to: ${app.disapprovalReason}` : '.'}`
             : `Your ${serv} application (Ref: ${ref}) was disapproved due to requirement discrepancies.`,
@@ -175,7 +175,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         const apptTime = app.appointmentTime || (app as any).appointmentDetails?.appointmentTime || '';
         list.unshift({
           id: `${ref}-step3`,
-          title: 'Step 3: Interview Scheduled',
+          title: 'Interview Scheduled',
           message: isSenior
             ? `QC Govt: Scheduled OSCA interview at QC Hall on ${apptDate} ${apptTime}.`
             : `Interview Scheduled: Your appointment for ${serv} (Ref: ${ref}) is set at QC Hall SSDD Desk.`,
@@ -188,7 +188,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       if (st.includes('APPROVED BY OSCA') || st.includes('PAYOUT') || st.includes('RELEASED') || st.includes('COMPLETED')) {
         list.unshift({
           id: `${ref}-step4-approved`,
-          title: 'Step 4: Assessment Passed',
+          title: 'Assessment Passed',
           message: isSenior
             ? `QC Govt: Approved your Senior Assistance for ₱3,000 Cash Grant (Ref: ${ref}). Please wait for Payout schedule.`
             : `Your ${serv} (Ref: ${ref}) has been officially approved! Benefit ready for payout release.`,
@@ -198,7 +198,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       } else if (st.includes('REFERRED')) {
         list.unshift({
           id: `${ref}-step4-referred`,
-          title: 'Step 4: Case Referred',
+          title: 'Case Referred',
           message: `Your ${serv} case (Ref: ${ref}) has been referred to partner government agency.`,
           time: 'Referred',
           type: 'warning'
@@ -211,7 +211,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         const payTime = (app as any).scheduledPayoutTime || '';
         list.unshift({
           id: `${ref}-step5`,
-          title: 'Step 5: Payout Scheduled',
+          title: 'Payout Scheduled',
           message: isSenior
             ? `QC Govt: Scheduled your ₱3,000 Payout on ${payDate} ${payTime} at QC Hall OSCA Desk.`
             : `Scheduled your financial payout for ${serv} on ${payDate} ${payTime}.`,
@@ -224,7 +224,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       if (st.includes('RELEASED') || st.includes('COMPLETED')) {
         list.unshift({
           id: `${ref}-step6`,
-          title: 'Step 6: Release Completed',
+          title: 'Release Completed',
           message: isSenior
             ? `QC Govt: Released your ₱3,000 Senior Allowance. Thank you! (Ref: ${ref})`
             : `Completed: Financial assistance benefit for ${serv} (Ref: ${ref}) has been released.`,
@@ -388,7 +388,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             {notif.type === 'info' && <Info className="w-3 h-3 text-blue-400" />}
                             {notif.type === 'warning' && <AlertTriangle className="w-3 h-3 text-amber-400" />}
                             {notif.type === 'error' && <XCircle className="w-3 h-3 text-rose-400" />}
-                            <span>{notif.title}</span>
+                            <span>{notif.title ? notif.title.replace(/^Step\s+\d+:\s*/i, '') : ''}</span>
                           </span>
                           <div className="flex items-center gap-1.5">
                             <span className="text-[9px] font-mono text-slate-400">{notif.time}</span>

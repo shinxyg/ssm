@@ -305,9 +305,8 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               const isTrnUnqualified = statusText === 'UNQUALIFIED' || statusText === 'Unqualified';
 
               let statusBadge = (
-                <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-                  {isTrn ? '🟡 PENDING (Pending SSDD Validation)' : '🟡 PENDING (Pending Document Validation)'}
+                <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-500/10 border border-amber-500/30 text-amber-400 inline-block">
+                  {isTrn ? 'PENDING (Pending SSDD Validation)' : 'PENDING (Pending Document Validation)'}
                 </span>
               );
 
@@ -317,73 +316,64 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
 
               if (isTrn && isTrnUnqualified) {
                 statusBadge = (
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-rose-400"></span>
-                    🔴 UNQUALIFIED
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-500/10 border border-rose-500/30 text-rose-400 inline-block">
+                    UNQUALIFIED
                   </span>
                 );
                 processExplanation = "Pasensya na, ikaw ay Unqualified sa Orientation Assessment.";
               } else if (isTrn && isTrnEnrolled) {
                 statusBadge = (
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    🟢 QUALIFIED / ENROLLED
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 inline-block">
+                    QUALIFIED / ENROLLED
                   </span>
                 );
                 processExplanation = "Binabati kita! Qualified at Enrolled ka na sa Training Program! Class Batch Number: Batch 3 (2026). (Non-Financial Program — Walang Financial Payout / Disbursement).";
               } else if (isTrn && isTrnScheduled) {
                 statusBadge = (
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-                    🔵 TRAINING SCHEDULED / ORIENTATION APPOINTED
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-blue-500/10 border border-blue-500/30 text-blue-400 inline-block">
+                    TRAINING SCHEDULED / ORIENTATION APPOINTED
                   </span>
                 );
                 processExplanation = `Naitakda ang Training Orientation sa Quezon City Skills Development Center sa ${interviewDateFormatted} sa ganap na ${interviewTimeFormatted || '09:00 AM'}.`;
               } else if (isTrn && isSsddValidated) {
                 statusBadge = (
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    🟢 SSDD VALIDATED
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 inline-block">
+                    SSDD VALIDATED
                   </span>
                 );
                 processExplanation = "Validated na ang inyong qualification at mga dokumento. Inilipat sa Stage 2 (Scheduling).";
               } else if (isApprovedByAdmin) {
                 statusBadge = (
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    🟢 APPROVED BY ADMIN
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 inline-block">
+                    APPROVED BY ADMIN
                   </span>
                 );
                 processExplanation = "Nakalinya na sa interview schedule. Inilipat ang inyong record sa SSDD Appointments.";
               } else if (isInterviewScheduled) {
                 statusBadge = (
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-                    🔵 INTERVIEW SCHEDULED
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-blue-500/10 border border-blue-500/30 text-blue-400 inline-block">
+                    INTERVIEW SCHEDULED
                   </span>
                 );
                 processExplanation = `Naitakda ang interview sa Quezon City Hall SSDD Office sa ${interviewDateFormatted} sa ganap na ${interviewTimeFormatted || '09:00 AM'}.`;
               } else if (isApproved) {
                 statusBadge = (
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    🟢 APPROVED
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 inline-block">
+                    APPROVED
                   </span>
                 );
                 processExplanation = "Nakalipas sa Physical Interview! Inisyu na ang Official Solo Parent ID Card at ₱3,000 Cash Subsidy Certificate. Awtomatikong pumasok sa Financial Aid Masterlist na may Fixed Amount: ₱3,000.00.";
               } else if (isPayoutScheduled) {
                 statusBadge = (
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-                    🟣 PAYOUT SCHEDULED
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 border border-purple-500/30 text-purple-400 inline-block">
+                    PAYOUT SCHEDULED
                   </span>
                 );
                 processExplanation = `Naitakda ang ₱3,000 Solo Parent Payout release date sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`;
               } else if (isReleased) {
                 statusBadge = (
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 border border-purple-500/30 text-purple-300 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-                    🟣 COMPLETED ({isTrn ? 'Training Completed' : '₱3,000 Cash Subsidy Release Completed'})
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 border border-purple-500/30 text-purple-300 inline-block">
+                    COMPLETED ({isTrn ? 'Training Completed' : '₱3,000 Cash Subsidy Release Completed'})
                   </span>
                 );
                 processExplanation = isTrn
@@ -391,9 +381,8 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                   : "Nailabas na ang inyong ₱3,000 Solo Parent Subsidy. Maraming salamat!";
               } else if (isRejected) {
                 statusBadge = (
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-rose-400"></span>
-                    🔴 REJECTED
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-500/10 border border-rose-500/30 text-rose-400 inline-block">
+                    REJECTED
                   </span>
                 );
                 processExplanation = `Disapproved ang request. Dahilan: ${app.disapprovalReason || 'Documents or qualifications failed verification.'}`;
@@ -466,7 +455,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                           <span>ACTIVE PAYOUT CARD (FIXED SOLO PARENT CASH SUBSIDY)</span>
                         </span>
                         <span className="font-mono text-xs font-bold text-purple-400 bg-purple-900/60 px-2.5 py-0.5 rounded-lg">
-                          STATUS: 🟣 PAYOUT SCHEDULED
+                          STATUS: PAYOUT SCHEDULED
                         </span>
                       </div>
 

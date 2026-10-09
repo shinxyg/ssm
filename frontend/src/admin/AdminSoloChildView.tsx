@@ -442,7 +442,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                           {app.date_submitted ? `${new Date(app.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date(app.date_submitted).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}` : 'Oct 5, 2026 • 10:57 AM'}
                         </td>
                         <td className="py-4 px-6 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black border whitespace-nowrap ${
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-black border whitespace-nowrap ${
                             isReleased
                               ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/30'
                               : isApproved
@@ -451,9 +451,6 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                               ? 'bg-rose-950/80 text-rose-400 border-rose-500/30'
                               : 'bg-amber-950/80 text-amber-400 border-amber-500/30'
                           }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              isReleased ? 'bg-emerald-400' : isApproved ? 'bg-emerald-400' : isRejected ? 'bg-rose-400' : 'bg-amber-400 animate-pulse'
-                            }`}></span>
                             <span>{app.status.toUpperCase()}</span>
                           </span>
                         </td>

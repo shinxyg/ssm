@@ -787,8 +787,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
               <div key={prog.id} className="space-y-1.5 group">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-3">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-colors ${prog.bgColor} ${prog.borderColor} ${prog.color}`}>
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: prog.dotColor }}></span>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border transition-colors ${prog.bgColor} ${prog.borderColor} ${prog.color}`}>
                       {prog.name}
                     </span>
                     <span className={`text-[11px] font-medium hidden sm:inline ${subTextClass}`}>

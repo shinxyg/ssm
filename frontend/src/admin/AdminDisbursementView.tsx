@@ -409,14 +409,13 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
                       <td className="py-3 px-4 font-mono text-amber-500 font-bold text-[11px]">{benefitText}</td>
                       <td className={`py-3 px-4 text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{locationText}</td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black border whitespace-nowrap ${
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black border whitespace-nowrap ${
                           isReleased
                             ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/30'
                             : hasSchedule
                             ? 'bg-amber-950/60 text-amber-400 border-amber-500/30'
                             : 'bg-blue-950/60 text-blue-300 border-blue-500/30'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isReleased ? 'bg-emerald-400' : hasSchedule ? 'bg-amber-400' : 'bg-blue-400'}`}></span>
                           <span>
                             {isReleased
                               ? 'RELEASED / COMPLETED'

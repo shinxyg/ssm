@@ -585,7 +585,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                           )}
                         </td>
                         <td className="py-4 px-6 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold border whitespace-nowrap ${
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-extrabold border whitespace-nowrap ${
                             app.status === 'Rejected'
                               ? 'bg-rose-950/60 text-rose-300 border-rose-800/40'
                               : app.status === 'Referred to Partner Agency' || app.status === 'Referred'
@@ -596,17 +596,6 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                               ? 'bg-blue-950/60 text-blue-400 border-blue-500/30'
                               : 'bg-amber-950/60 text-amber-400 border-amber-500/30'
                           }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              app.status === 'Rejected'
-                                ? 'bg-rose-400'
-                                : app.status === 'Referred to Partner Agency' || app.status === 'Referred'
-                                ? 'bg-amber-400'
-                                : isAppApproved(app.status) || isAppApproved(appt?.status)
-                                ? 'bg-emerald-400'
-                                : isScheduled
-                                ? 'bg-blue-400'
-                                : 'bg-amber-400'
-                            }`}></span>
                             <span>
                               {app.status === 'Rejected'
                                 ? 'Rejected'

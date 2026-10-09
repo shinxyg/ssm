@@ -456,16 +456,13 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                           {app.date_submitted ? new Date(app.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
                         </td>
                         <td className="py-4 px-6">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold border ${
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-[11px] font-extrabold border ${
                             isApproved
                               ? 'bg-emerald-950/60 text-emerald-400 border-emerald-500/30'
                               : isPending
                               ? 'bg-amber-950/60 text-amber-400 border-amber-500/30'
                               : 'bg-rose-950/60 text-rose-400 border-rose-500/30'
                           }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              isApproved ? 'bg-emerald-400' : isPending ? 'bg-amber-400' : 'bg-rose-400'
-                            }`}></span>
                             {app.status || 'Pending Document Validation'}
                           </span>
                         </td>
