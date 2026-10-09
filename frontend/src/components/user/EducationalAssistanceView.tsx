@@ -478,7 +478,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             ? (isTagalog ? 'Programa sa Tulong sa Edukasyon para sa Solo Parent' : 'Solo Parent Educational Assistance Program')
             : mode === 'educational'
             ? (isTagalog ? 'Tulong sa Edukasyon para sa mga Kapus-Palad na Bata at Kabataan' : 'Educational Assistance for Indigent Children & Youth')
-            : (isTagalog ? 'Mga Serbisyo sa Kapakanan ng Bata (Child Welfare Services)' : 'Child Welfare Services')}
+            : (isTagalog ? 'Kalinga at Proteksyon ng Bata (Child Welfare Services)' : 'Child Welfare Services')}
         </h1>
 
         <div className="flex items-center">
@@ -919,13 +919,15 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-blue-500" />
               <h3 className={`text-xs font-extrabold tracking-wider uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                A. APPLICANT / PARENT / GUARDIAN INFORMATION (VERIFIED CITIZEN PROFILE - READ ONLY)
+                {isTagalog 
+                  ? 'A. IMPORMASYON NG APLIKANTE / MAGULANG / TAGAPANGALAGA (NAPATUNAYANG PROPYL NG MAMAMAYAN - READ ONLY)'
+                  : 'A. APPLICANT / PARENT / GUARDIAN INFORMATION (VERIFIED CITIZEN PROFILE - READ ONLY)'}
               </h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className={labelClass}>First name *</label>
+                <label className={labelClass}>{isTagalog ? 'Unang pangalan *' : 'First name *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -936,7 +938,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               </div>
 
               <div>
-                <label className={labelClass}>Middle name</label>
+                <label className={labelClass}>{isTagalog ? 'Gitnang pangalan' : 'Middle name'}</label>
                 <input
                   type="text"
                   readOnly
@@ -947,7 +949,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               </div>
 
               <div>
-                <label className={labelClass}>Last name *</label>
+                <label className={labelClass}>{isTagalog ? 'Apelyido *' : 'Last name *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -958,19 +960,19 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               </div>
 
               <div>
-                <label className={labelClass}>Suffix (Jr., Sr., III, etc.)</label>
+                <label className={labelClass}>{isTagalog ? 'Dugtong sa Pangalan (Jr., Sr., III, atbp.)' : 'Suffix (Jr., Sr., III, etc.)'}</label>
                 <input
                   type="text"
                   readOnly
                   disabled
-                  placeholder="Suffix (Jr., Sr., III, etc.)"
+                  placeholder={isTagalog ? 'Dugtong sa Pangalan (Jr., Sr., III, atbp.)' : 'Suffix (Jr., Sr., III, etc.)'}
                   value={applicantSuffix}
                   className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                 />
               </div>
 
               <div>
-                <label className={labelClass}>Nationality *</label>
+                <label className={labelClass}>{isTagalog ? 'Nasyonalidad *' : 'Nationality *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -981,7 +983,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               </div>
 
               <div>
-                <label className={labelClass}>Date of birth *</label>
+                <label className={labelClass}>{isTagalog ? 'Petsa ng Kapanganakan *' : 'Date of birth *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -992,7 +994,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               </div>
 
               <div>
-                <label className={labelClass}>Age *</label>
+                <label className={labelClass}>{isTagalog ? 'Edad *' : 'Age *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -1003,34 +1005,34 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               </div>
 
               <div>
-                <label className={labelClass}>Gender *</label>
+                <label className={labelClass}>{isTagalog ? 'Kasarian *' : 'Gender *'}</label>
                 <select
                   disabled
                   value={applicantGender || 'Male'}
                   className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                 >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
+                  <option value="Male">{isTagalog ? 'Lalaki' : 'Male'}</option>
+                  <option value="Female">{isTagalog ? 'Babae' : 'Female'}</option>
                 </select>
               </div>
 
               <div>
-                <label className={labelClass}>Civil status *</label>
+                <label className={labelClass}>{isTagalog ? 'Katayuang Sibil *' : 'Civil status *'}</label>
                 <select
                   disabled
                   value={applicantCivilStatus || (mode === 'soloparent' ? 'Solo Parent' : 'Single')}
                   className={`${inputClass} select-none cursor-not-allowed border-slate-700/50 opacity-90`}
                 >
-                  <option value="Single">Single</option>
-                  <option value="Married">Married</option>
-                  <option value="Widowed">Widowed</option>
-                  <option value="Separated">Separated</option>
+                  <option value="Single">{isTagalog ? 'Walang asawa' : 'Single'}</option>
+                  <option value="Married">{isTagalog ? 'May asawa' : 'Married'}</option>
+                  <option value="Widowed">{isTagalog ? 'Balo' : 'Widowed'}</option>
+                  <option value="Separated">{isTagalog ? 'Hiwalay' : 'Separated'}</option>
                   <option value="Solo Parent">Solo Parent</option>
                 </select>
               </div>
 
               <div>
-                <label className={labelClass}>House/Building number *</label>
+                <label className={labelClass}>{isTagalog ? 'Numero ng Bahay/Gusali *' : 'House/Building number *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -1041,7 +1043,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               </div>
 
               <div>
-                <label className={labelClass}>Street name *</label>
+                <label className={labelClass}>{isTagalog ? 'Pangalan ng Kalye *' : 'Street name *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -1063,7 +1065,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               </div>
 
               <div>
-                <label className={labelClass}>Phone number *</label>
+                <label className={labelClass}>{isTagalog ? 'Numero ng Telepono *' : 'Phone number *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -1086,7 +1088,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
 
               {mode === 'soloparent' && (
                 <div>
-                  <label className={labelClass}>Existing Solo Parent ID Number *</label>
+                  <label className={labelClass}>{isTagalog ? 'Kasalukuyang Numero ng Solo Parent ID *' : 'Existing Solo Parent ID Number *'}</label>
                   <input
                     type="text"
                     readOnly
@@ -1099,7 +1101,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
 
               {mode === 'childwelfare' && (
                 <div>
-                  <label className={labelClass}>QCitizen ID / Valid Government ID *</label>
+                  <label className={labelClass}>{isTagalog ? 'QCitizen ID / Katibayan sa Pamahalaan *' : 'QCitizen ID / Valid Government ID *'}</label>
                   <input
                     type="text"
                     value={qcitizenId}
@@ -1114,20 +1116,20 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
 
           {/* RELATIONSHIP TO CHILD / BENEFICIARY */}
           <div className={`pt-4 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-            <label className={labelClass}>Relationship to Child *</label>
+            <label className={labelClass}>{isTagalog ? 'Relasyon sa Bata *' : 'Relationship to Child *'}</label>
             <select
               value={relationToChild}
               onChange={(e) => setRelationToChild(e.target.value)}
               className={`${inputClass} max-w-md`}
             >
-              <option value="Select Relationship">Select Relationship</option>
-              <option value="Parent">Parent</option>
-              <option value="Father">Father</option>
-              <option value="Mother">Mother</option>
-              <option value="Guardian">Guardian</option>
-              <option value="Grandparent">Grandparent</option>
-              <option value="Relative">Relative</option>
-              <option value="Other">Other</option>
+              <option value="Select Relationship">{isTagalog ? 'Pumili ng Relasyon' : 'Select Relationship'}</option>
+              <option value="Parent">{isTagalog ? 'Magulang' : 'Parent'}</option>
+              <option value="Father">{isTagalog ? 'Ama' : 'Father'}</option>
+              <option value="Mother">{isTagalog ? 'Ina' : 'Mother'}</option>
+              <option value="Guardian">{isTagalog ? 'Tagapangalaga' : 'Guardian'}</option>
+              <option value="Grandparent">{isTagalog ? 'Lolo/Lola' : 'Grandparent'}</option>
+              <option value="Relative">{isTagalog ? 'Kamag-anak' : 'Relative'}</option>
+              <option value="Other">{isTagalog ? 'Iba pa' : 'Other'}</option>
             </select>
           </div>
 
@@ -1136,26 +1138,28 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-blue-500" />
               <h3 className={`text-xs font-extrabold tracking-wider uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                {mode === 'childwelfare' ? 'B. CHILD INFORMATION' : 'B. CHILD / BENEFICIARY INFORMATION'}
+                {isTagalog 
+                  ? (mode === 'childwelfare' ? 'B. IMPORMASYON NG BATA' : 'B. IMPORMASYON NG BATA / BENEPISYARYO')
+                  : (mode === 'childwelfare' ? 'B. CHILD INFORMATION' : 'B. CHILD / BENEFICIARY INFORMATION')}
               </h3>
             </div>
 
             {mode === 'childwelfare' ? (
               <div className="space-y-4">
                 <div>
-                  <label className={labelClass}>Child's Full Name *</label>
+                  <label className={labelClass}>{isTagalog ? 'Buong Pangalan ng Bata *' : "Child's Full Name *"}</label>
                   <input
                     type="text"
                     value={childFullName}
                     onChange={(e) => setChildFullName(e.target.value)}
-                    placeholder="Enter Child's Full Name"
+                    placeholder={isTagalog ? 'Ilagay ang Buong Pangalan ng Bata' : "Enter Child's Full Name"}
                     className={inputClass}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className={labelClass}>Date of Birth *</label>
+                    <label className={labelClass}>{isTagalog ? 'Petsa ng Kapanganakan *' : 'Date of Birth *'}</label>
                     <input
                       type="date"
                       value={childDob}
@@ -1165,34 +1169,34 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   </div>
 
                   <div>
-                    <label className={labelClass}>Age *</label>
+                    <label className={labelClass}>{isTagalog ? 'Edad *' : 'Age *'}</label>
                     <input
                       type="text"
                       value={childAge}
                       readOnly
                       disabled
-                      placeholder="Auto-computed"
+                      placeholder={isTagalog ? 'Awtomatikong kinuwenta' : 'Auto-computed'}
                       className={`${inputClass} select-none cursor-not-allowed opacity-85`}
                     />
                   </div>
 
                   <div>
-                    <label className={labelClass}>Sex *</label>
+                    <label className={labelClass}>{isTagalog ? 'Kasarian *' : 'Sex *'}</label>
                     <select
                       value={childSex}
                       onChange={(e) => setChildSex(e.target.value)}
                       className={inputClass}
                     >
-                      <option value="Select Sex">Select Sex</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
+                      <option value="Select Sex">{isTagalog ? 'Pumili ng Kasarian' : 'Select Sex'}</option>
+                      <option value="Male">{isTagalog ? 'Lalaki' : 'Male'}</option>
+                      <option value="Female">{isTagalog ? 'Babae' : 'Female'}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Address *</label>
+                    <label className={labelClass}>{isTagalog ? 'Tirahan *' : 'Address *'}</label>
                     <input
                       type="text"
                       value={childAddress}
@@ -1203,12 +1207,12 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   </div>
 
                   <div>
-                    <label className={labelClass}>School, if applicable</label>
+                    <label className={labelClass}>{isTagalog ? 'Paaralan, kung naaangkop' : 'School, if applicable'}</label>
                     <input
                       type="text"
                       value={schoolName}
                       onChange={(e) => setSchoolName(e.target.value)}
-                      placeholder="e.g. Quezon City Elementary School (Optional)"
+                      placeholder={isTagalog ? 'hal. Mababang Paaralan ng Quezon City (Optional)' : 'e.g. Quezon City Elementary School (Optional)'}
                       className={inputClass}
                     />
                   </div>
@@ -1217,18 +1221,18 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className={labelClass}>Full Name *</label>
+                  <label className={labelClass}>{isTagalog ? 'Buong Pangalan *' : 'Full Name *'}</label>
                   <input
                     type="text"
                     value={childFullName}
                     onChange={(e) => setChildFullName(e.target.value)}
-                    placeholder="Enter Child's Full Name"
+                    placeholder={isTagalog ? 'Ilagay ang Buong Pangalan ng Bata' : "Enter Child's Full Name"}
                     className={inputClass}
                   />
                 </div>
 
                 <div>
-                  <label className={labelClass}>Date of Birth *</label>
+                  <label className={labelClass}>{isTagalog ? 'Petsa ng Kapanganakan *' : 'Date of Birth *'}</label>
                   <input
                     type="date"
                     value={childDob}
@@ -1238,48 +1242,48 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                 </div>
 
                 <div>
-                  <label className={labelClass}>Age *</label>
+                  <label className={labelClass}>{isTagalog ? 'Edad *' : 'Age *'}</label>
                   <input
                     type="text"
                     value={childAge}
                     readOnly
                     disabled
-                    placeholder="Auto-computed"
+                    placeholder={isTagalog ? 'Awtomatikong kinuwenta' : 'Auto-computed'}
                     className={`${inputClass} select-none cursor-not-allowed opacity-85`}
                   />
                 </div>
 
                 <div>
-                  <label className={labelClass}>Sex *</label>
+                  <label className={labelClass}>{isTagalog ? 'Kasarian *' : 'Sex *'}</label>
                   <select
                     value={childSex}
                     onChange={(e) => setChildSex(e.target.value)}
                     className={inputClass}
                   >
-                    <option value="Select Sex">Select Sex</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
+                    <option value="Select Sex">{isTagalog ? 'Pumili ng Kasarian' : 'Select Sex'}</option>
+                    <option value="Male">{isTagalog ? 'Lalaki' : 'Male'}</option>
+                    <option value="Female">{isTagalog ? 'Babae' : 'Female'}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className={labelClass}>School Name *</label>
+                  <label className={labelClass}>{isTagalog ? 'Pangalan ng Paaralan *' : 'School Name *'}</label>
                   <input
                     type="text"
                     value={schoolName}
                     onChange={(e) => setSchoolName(e.target.value)}
-                    placeholder="Enter School Name"
+                    placeholder={isTagalog ? 'Ilagay ang Pangalan ng Paaralan' : 'Enter School Name'}
                     className={inputClass}
                   />
                 </div>
 
                 <div>
-                  <label className={labelClass}>Grade Level *</label>
+                  <label className={labelClass}>{isTagalog ? 'Antas / Baitang *' : 'Grade Level *'}</label>
                   <input
                     type="text"
                     value={gradeLevel}
                     onChange={(e) => setGradeLevel(e.target.value)}
-                    placeholder="e.g. Grade 5 / Grade 11"
+                    placeholder={isTagalog ? 'hal. Baitang 5 / Baitang 11' : 'e.g. Grade 5 / Grade 11'}
                     className={inputClass}
                   />
                 </div>
@@ -1290,28 +1294,28 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                     type="text"
                     value={lrnNumber}
                     onChange={(e) => setLrnNumber(e.target.value)}
-                    placeholder="12-digit LRN (Optional)"
+                    placeholder={isTagalog ? '12-digit LRN (Optional)' : '12-digit LRN (Optional)'}
                     className={inputClass}
                   />
                 </div>
 
                 <div>
-                  <label className={labelClass}>Type of School *</label>
+                  <label className={labelClass}>{isTagalog ? 'Uri ng Paaralan *' : 'Type of School *'}</label>
                   <select
                     value={typeOfSchool}
                     onChange={(e) => setTypeOfSchool(e.target.value)}
                     className={inputClass}
                   >
-                    <option value="Select Type of School">Select Type of School</option>
-                    <option value="Public">Public</option>
-                    <option value="Private">Private</option>
+                    <option value="Select Type of School">{isTagalog ? 'Pumili ng Uri ng Paaralan' : 'Select Type of School'}</option>
+                    <option value="Public">{isTagalog ? 'Pampubliko' : 'Public'}</option>
+                    <option value="Private">{isTagalog ? 'Pribado' : 'Private'}</option>
                     <option value="ALS">ALS (Alternative Learning System)</option>
-                    <option value="Other">Other</option>
+                    <option value="Other">{isTagalog ? 'Iba pa' : 'Other'}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className={labelClass}>Other Enrollment Information</label>
+                  <label className={labelClass}>{isTagalog ? 'Iba pang Impormasyon sa Pagpapatala' : 'Other Enrollment Information'}</label>
                   <input
                     type="text"
                     value={otherEnrollmentInfo}
@@ -1333,26 +1337,28 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                 <Users className="w-4 h-4 text-blue-500" />
               )}
               <h3 className={`text-xs font-extrabold tracking-wider uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                {mode === 'childwelfare' ? 'C. REASON FOR REQUEST' : 'C. FAMILY INFORMATION'}
+                {isTagalog 
+                  ? (mode === 'childwelfare' ? 'C. DAHILAN NG HILING' : 'C. IMPORMASYON NG PAMILYA')
+                  : (mode === 'childwelfare' ? 'C. REASON FOR REQUEST' : 'C. FAMILY INFORMATION')}
               </h3>
             </div>
 
             {mode === 'childwelfare' ? (
               <div className="space-y-4">
                 <div>
-                  <label className={labelClass}>Description of concern/problem *</label>
+                  <label className={labelClass}>{isTagalog ? 'Deskripsyon ng alalahanin/problema *' : 'Description of concern/problem *'}</label>
                   <textarea
                     rows={4}
                     value={concernDescription}
                     onChange={(e) => setConcernDescription(e.target.value)}
-                    placeholder="Please provide details regarding the child's situation, concern, or reason for requesting assistance / protection..."
+                    placeholder={isTagalog ? 'Magbigay ng mga detalye ukol sa sitwasyon ng bata, alalahanin, o dahilan ng paghiling ng tulong / proteksyon...' : 'Please provide details regarding the child\'s situation, concern, or reason for requesting assistance / protection...'}
                     className={inputClass}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Date / approximate date of incident, if applicable</label>
+                    <label className={labelClass}>{isTagalog ? 'Petsa / tantyang petsa ng insidente, kung naaangkop' : 'Date / approximate date of incident, if applicable'}</label>
                     <input
                       type="date"
                       value={incidentDate}
@@ -1362,12 +1368,12 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   </div>
 
                   <div>
-                    <label className={labelClass}>Location of incident, if applicable</label>
+                    <label className={labelClass}>{isTagalog ? 'Lokasyon ng insidente, kung naaangkop' : 'Location of incident, if applicable'}</label>
                     <input
                       type="text"
                       value={incidentLocation}
                       onChange={(e) => setIncidentLocation(e.target.value)}
-                      placeholder="e.g. Barangay / Street / Specific location (Optional)"
+                      placeholder={isTagalog ? 'hal. Barangay / Kalye / Tiyak na lokasyon (Optional)' : 'e.g. Barangay / Street / Specific location (Optional)'}
                       className={inputClass}
                     />
                   </div>
@@ -1377,80 +1383,80 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className={labelClass}>Number of Children in the Family *</label>
+                    <label className={labelClass}>{isTagalog ? 'Bilang ng mga Bata sa Pamilya *' : 'Number of Children in the Family *'}</label>
                     <input
                       type="number"
                       value={numChildrenInFamily}
                       onChange={(e) => setNumChildrenInFamily(e.target.value)}
-                      placeholder="Enter number"
+                      placeholder={isTagalog ? 'Ilagay ang bilang' : 'Enter number'}
                       className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label className={labelClass}>Number of Children Currently Studying *</label>
+                    <label className={labelClass}>{isTagalog ? 'Bilang ng mga Batang Kasalukuyang Nag-aaral *' : 'Number of Children Currently Studying *'}</label>
                     <input
                       type="number"
                       value={numChildrenStudying}
                       onChange={(e) => setNumChildrenStudying(e.target.value)}
-                      placeholder="Enter number"
+                      placeholder={isTagalog ? 'Ilagay ang bilang' : 'Enter number'}
                       className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label className={labelClass}>Monthly Family Income *</label>
+                    <label className={labelClass}>{isTagalog ? 'Buwanang Kita ng Pamilya *' : 'Monthly Family Income *'}</label>
                     <select
                       value={monthlyIncome}
                       onChange={(e) => setMonthlyIncome(e.target.value)}
                       className={inputClass}
                     >
-                      <option value="Select Monthly Income">Select Monthly Income</option>
-                      <option value="Below ₱10,000">Below ₱10,000</option>
+                      <option value="Select Monthly Income">{isTagalog ? 'Pumili ng Buwanang Kita' : 'Select Monthly Income'}</option>
+                      <option value="Below ₱10,000">{isTagalog ? 'Mababa sa ₱10,000' : 'Below ₱10,000'}</option>
                       <option value="₱10,000 - ₱15,000">₱10,000 - ₱15,000</option>
                       <option value="₱15,001 - ₱25,000">₱15,001 - ₱25,000</option>
-                      <option value="₱25,001 and above">₱25,001 and above</option>
+                      <option value="₱25,001 and above">{isTagalog ? '₱25,001 pataas' : '₱25,001 and above'}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                   <div>
-                    <label className={labelClass}>4Ps Beneficiary? *</label>
+                    <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng 4Ps? *' : '4Ps Beneficiary? *'}</label>
                     <select
                       value={is4psBeneficiary}
                       onChange={(e) => setIs4psBeneficiary(e.target.value)}
                       className={inputClass}
                     >
-                      <option value="Select Option">Select Option</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
+                      <option value="Select Option">{isTagalog ? 'Pumili ng Pagpipilian' : 'Select Option'}</option>
+                      <option value="Yes">{isTagalog ? 'Oo' : 'Yes'}</option>
+                      <option value="No">{isTagalog ? 'Hindi' : 'No'}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className={labelClass}>Solo Parent Educational Assistance Beneficiary? *</label>
+                    <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng Tulong sa Edukasyon ng Solo Parent? *' : 'Solo Parent Educational Assistance Beneficiary? *'}</label>
                     <select
                       value={isSoloParentBeneficiary}
                       onChange={(e) => setIsSoloParentBeneficiary(e.target.value)}
                       className={inputClass}
                     >
-                      <option value="Select Option">Select Option</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
+                      <option value="Select Option">{isTagalog ? 'Pumili ng Pagpipilian' : 'Select Option'}</option>
+                      <option value="Yes">{isTagalog ? 'Oo' : 'Yes'}</option>
+                      <option value="No">{isTagalog ? 'Hindi' : 'No'}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className={labelClass}>PWD Educational Assistance Beneficiary? *</label>
+                    <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng Tulong sa Edukasyon ng PWD? *' : 'PWD Educational Assistance Beneficiary? *'}</label>
                     <select
                       value={isPwdBeneficiary}
                       onChange={(e) => setIsPwdBeneficiary(e.target.value)}
                       className={inputClass}
                     >
-                      <option value="Select Option">Select Option</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
+                      <option value="Select Option">{isTagalog ? 'Pumili ng Pagpipilian' : 'Select Option'}</option>
+                      <option value="Yes">{isTagalog ? 'Oo' : 'Yes'}</option>
+                      <option value="No">{isTagalog ? 'Hindi' : 'No'}</option>
                     </select>
                   </div>
                 </div>
@@ -1464,7 +1470,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               onClick={() => setCurrentStep(1)}
               className={backBtnClass}
             >
-              BACK
+              {isTagalog ? 'BUMALIK' : 'BACK'}
             </button>
 
             <button
@@ -1479,7 +1485,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
               }`}
             >
-              NEXT
+              {isTagalog ? 'KASUNOD' : 'NEXT'}
             </button>
           </div>
         </div>
@@ -1490,34 +1496,35 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         <div className="space-y-6">
           <div>
             <h2 className={`text-xl font-black tracking-tight mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-              File upload
+              {isTagalog ? 'Pag-upload ng Dokumento' : 'File upload'}
             </h2>
             <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Make sure to upload the appropriate documents for each category and verify that all details—such as your full name (first, middle, and last name) and address—match the information on your QC ID.<br />
-              Upload clear and legible copies of the required documents (JPG, JPEG, PNG, WEBP, or PDF).
+              {isTagalog 
+                ? 'Tiyaking i-upload ang mga angkop na dokumento para sa bawat kategorya at beripikahin na ang lahat ng detalye—tulad ng iyong buong pangalan at tirahan—ay tumutugma sa iyong QC ID.\nMag-upload ng malinaw at nababasang kopya ng mga kailangang dokumento (JPG, JPEG, PNG, WEBP, o PDF).'
+                : 'Make sure to upload the appropriate documents for each category and verify that all details—such as your full name (first, middle, and last name) and address—match the information on your QC ID.\nUpload clear and legible copies of the required documents (JPG, JPEG, PNG, WEBP, or PDF).'}
             </p>
           </div>
 
           <div className="space-y-4">
             {(mode === 'childwelfare'
               ? [
-                  { key: 'available', title: 'UPLOAD AVAILABLE DOCUMENTS *', doc: docAvailable, setDoc: setDocAvailable },
-                  { key: 'referral', title: 'REFERRAL LETTER, IF APPLICABLE (OPTIONAL)', doc: docReferral, setDoc: setDocReferral },
-                  { key: 'birthCert', title: 'BIRTH CERTIFICATE, IF AVAILABLE (OPTIONAL)', doc: docBirthCert, setDoc: setDocBirthCert },
-                  { key: 'medicalPoliceBarangay', title: 'MEDICAL/POLICE/BARANGAY DOCUMENTS, IF APPLICABLE (OPTIONAL)', doc: docMedicalPoliceBarangay, setDoc: setDocMedicalPoliceBarangay },
+                  { key: 'available', title: isTagalog ? 'I-UPLOAD ANG MGA MAGAGAMIT NA DOKUMENTO *' : 'UPLOAD AVAILABLE DOCUMENTS *', doc: docAvailable, setDoc: setDocAvailable },
+                  { key: 'referral', title: isTagalog ? 'LIHAM NG REFERRAL, KUNG NAAANGKOP (OPTIONAL)' : 'REFERRAL LETTER, IF APPLICABLE (OPTIONAL)', doc: docReferral, setDoc: setDocReferral },
+                  { key: 'birthCert', title: isTagalog ? 'SERTIPIKASYON NG KAPANGANAKAN, KUNG MAYROON (OPTIONAL)' : 'BIRTH CERTIFICATE, IF AVAILABLE (OPTIONAL)', doc: docBirthCert, setDoc: setDocBirthCert },
+                  { key: 'medicalPoliceBarangay', title: isTagalog ? 'DOKUMENTONG MEDIKAL/POLIS/BARANGAY, KUNG NAAANGKOP (OPTIONAL)' : 'MEDICAL/POLICE/BARANGAY DOCUMENTS, IF APPLICABLE (OPTIONAL)', doc: docMedicalPoliceBarangay, setDoc: setDocMedicalPoliceBarangay },
                 ]
               : mode === 'soloparent'
               ? [
-                  { key: 'indigency', title: 'ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY *', doc: docIndigency, setDoc: setDocIndigency },
-                  { key: 'enrollment', title: 'CERTIFICATE OF ENROLLMENT *', doc: docEnrollment, setDoc: setDocEnrollment },
-                  { key: 'qcitizenId', title: 'QCITIZEN ID *', doc: docQcitizenId, setDoc: setDocQcitizenId },
-                  { key: 'soloParentId', title: 'SOLO PARENT ID / CERTIFICATION *', doc: docSoloParentId, setDoc: setDocSoloParentId },
+                  { key: 'indigency', title: isTagalog ? 'ORIHINAL NA BARANGAY CERTIFICATE OF INDIGENCY *' : 'ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY *', doc: docIndigency, setDoc: setDocIndigency },
+                  { key: 'enrollment', title: isTagalog ? 'KATIBAYAN NG PAGPAPATALA (CERTIFICATE OF ENROLLMENT) *' : 'CERTIFICATE OF ENROLLMENT *', doc: docEnrollment, setDoc: setDocEnrollment },
+                  { key: 'qcitizenId', title: isTagalog ? 'QCITIZEN ID *' : 'QCITIZEN ID *', doc: docQcitizenId, setDoc: setDocQcitizenId },
+                  { key: 'soloParentId', title: isTagalog ? 'SOLO PARENT ID / SERTIPIKASYON *' : 'SOLO PARENT ID / CERTIFICATION *', doc: docSoloParentId, setDoc: setDocSoloParentId },
                 ]
               : [
-                  { key: 'indigency', title: 'BARANGAY CERTIFICATE OF INDIGENCY – ORIGINAL (PURPOSE: EDUCATIONAL ASSISTANCE) *', doc: docIndigency, setDoc: setDocIndigency },
-                  { key: 'enrollment', title: 'CERTIFICATE OF ENROLLMENT – ORIGINAL *', doc: docEnrollment, setDoc: setDocEnrollment },
-                  { key: 'schoolId', title: 'RECENT SCHOOL ID – IF AVAILABLE (OPTIONAL)', doc: docSchoolId, setDoc: setDocSchoolId },
-                  { key: 'govId', title: 'VALID GOVERNMENT ID / PREFERABLY QCITIZEN ID *', doc: docGovId, setDoc: setDocGovId },
+                  { key: 'indigency', title: isTagalog ? 'BARANGAY CERTIFICATE OF INDIGENCY – ORIHINAL (LAYUNIN: TULONG SA EDUKASYON) *' : 'BARANGAY CERTIFICATE OF INDIGENCY – ORIGINAL (PURPOSE: EDUCATIONAL ASSISTANCE) *', doc: docIndigency, setDoc: setDocIndigency },
+                  { key: 'enrollment', title: isTagalog ? 'KATIBAYAN NG PAGPAPATALA – ORIHINAL *' : 'CERTIFICATE OF ENROLLMENT – ORIGINAL *', doc: docEnrollment, setDoc: setDocEnrollment },
+                  { key: 'schoolId', title: isTagalog ? 'BAGONG SCHOOL ID – KUNG MAYROON (OPTIONAL)' : 'RECENT SCHOOL ID – IF AVAILABLE (OPTIONAL)', doc: docSchoolId, setDoc: setDocSchoolId },
+                  { key: 'govId', title: isTagalog ? 'VALID GOVERNMENT ID / MAS MAINAM NA QCITIZEN ID *' : 'VALID GOVERNMENT ID / PREFERABLY QCITIZEN ID *', doc: docGovId, setDoc: setDocGovId },
                 ]
             ).map((item) => {
               const uploaded = item.doc;
@@ -1544,7 +1551,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                       )}
                     </div>
                     <span className={`text-[11px] block mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Allowed file types: JPG, JPEG, PNG, WEBP (or capture using Camera)
+                      {isTagalog ? 'Pinapayagang uri ng file: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Kamera)' : 'Allowed file types: JPG, JPEG, PNG, WEBP (or capture using Camera)'}
                     </span>
                   </div>
 
@@ -1552,7 +1559,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   <div className="flex flex-wrap items-center gap-3 pt-1">
                     <label className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold cursor-pointer inline-flex items-center gap-2 transition-all shadow-md">
                       <Upload className="w-4 h-4" />
-                      <span>UPLOAD PHOTO</span>
+                      <span>{isTagalog ? 'MAG-UPLOAD NG LITRATO' : 'UPLOAD PHOTO'}</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -1576,7 +1583,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                       className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold cursor-pointer inline-flex items-center gap-2 transition-all shadow-md"
                     >
                       <Camera className="w-4 h-4" />
-                      <span>TAKE PHOTO (CAMERA)</span>
+                      <span>{isTagalog ? 'KUMUHA NG LITRATO (KAMERA)' : 'TAKE PHOTO (CAMERA)'}</span>
                     </button>
                   </div>
 
@@ -1632,7 +1639,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               onClick={() => setCurrentStep(2)}
               className={backBtnClass}
             >
-              BACK
+              {isTagalog ? 'BUMALIK' : 'BACK'}
             </button>
 
             <button
@@ -1647,7 +1654,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
               }`}
             >
-              NEXT
+              {isTagalog ? 'KASUNOD' : 'NEXT'}
             </button>
           </div>
         </div>
@@ -1658,10 +1665,10 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         <div className="space-y-6">
           <div>
             <h3 className={`text-xs font-extrabold tracking-wider uppercase mb-1 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-              REVIEW YOUR APPLICATION
+              {isTagalog ? 'SURIIN ANG IYONG APLIKASYON' : 'REVIEW YOUR APPLICATION'}
             </h3>
             <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Please double check all submitted details before final submission.
+              {isTagalog ? 'Mangyaring suriin nang mabuti ang lahat ng detalye bago ang pinal na pag-submit.' : 'Please double check all submitted details before final submission.'}
             </p>
           </div>
 
@@ -1674,7 +1681,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               <div className={`p-4 border-b flex justify-between items-center ${darkMode ? 'border-slate-800 bg-[#091124]' : 'border-slate-200 bg-slate-50'}`}>
                 <h4 className="text-xs font-extrabold tracking-wide uppercase text-blue-500 dark:text-blue-400 flex items-center gap-2">
                   <ChevronUp className="w-4 h-4 text-slate-400" />
-                  Application & Beneficiary Details
+                  {isTagalog ? 'Mga Detalye ng Aplikasyon at Benepisyaryo' : 'Application & Beneficiary Details'}
                 </h4>
                 <button
                   type="button"
@@ -1682,7 +1689,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
                 >
                   <Pencil className="w-3.5 h-3.5" />
-                  <span>EDIT</span>
+                  <span>{isTagalog ? 'BAGUHIN' : 'EDIT'}</span>
                 </button>
               </div>
 
@@ -1690,59 +1697,59 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                 {/* Section A: Applicant Information */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    A. APPLICANT INFORMATION
+                    {isTagalog ? 'A. IMPORMASYON NG APLIKANTE' : 'A. APPLICANT INFORMATION'}
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-6 text-xs">
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FIRST NAME</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'UNANG PANGALAN' : 'FIRST NAME'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantFirstName || 'JEFFERSON'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>MIDDLE NAME</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'GITNANG PANGALAN' : 'MIDDLE NAME'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantMiddleName || 'FERNANDO'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>LAST NAME</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'APELYIDO' : 'LAST NAME'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantLastName || 'LEE'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SUFFIX</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'DUGTONG SA PANGALAN' : 'SUFFIX'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantSuffix || 'N/A'}</span>
                     </div>
                     {mode === 'soloparent' && (
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SOLO PARENT ID DETAILS</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'MGA DETALYE NG SOLO PARENT ID' : 'SOLO PARENT ID DETAILS'}</span>
                         <span className={`font-bold text-emerald-400`}>{soloParentIdDetails || soloParentIdNumber}</span>
                       </div>
                     )}
                     {mode === 'childwelfare' && (
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>QCITIZEN ID / VALID GOVT ID</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'QCITIZEN ID / VALID GOVT ID' : 'QCITIZEN ID / VALID GOVT ID'}</span>
                         <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{qcitizenId || 'N/A'}</span>
                       </div>
                     )}
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>NATIONALITY</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'NASYONALIDAD' : 'NATIONALITY'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantNationality || 'FILIPINO'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>DATE OF BIRTH</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PETSA NG KAPANGANAKAN' : 'DATE OF BIRTH'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantDob || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>AGE / GENDER</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantAge || '22'} yrs / {applicantGender || 'Male'}</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'EDAD / KASARIAN' : 'AGE / GENDER'}</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantAge || '22'} {isTagalog ? 'taon' : 'yrs'} / {applicantGender === 'Male' ? (isTagalog ? 'Lalaki' : 'Male') : (isTagalog ? 'Babae' : 'Female')}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CIVIL STATUS</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantCivilStatus || 'Single'}</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'KATAYUANG SIBIL' : 'CIVIL STATUS'}</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantCivilStatus || (isTagalog ? 'Walang asawa' : 'Single')}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>HOUSE / BUILDING NUMBER</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'NUMERO NG BAHAY / GUSALI' : 'HOUSE / BUILDING NUMBER'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantHouseNo || '176'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>STREET NAME</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PANGALAN NG KALYE' : 'STREET NAME'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantStreet || '23'}</span>
                     </div>
                     <div>
@@ -1750,15 +1757,15 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{applicantBarangay || 'Bagong Silangan'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PHONE NUMBER</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'NUMERO NG TELEPONO' : 'PHONE NUMBER'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{contactNumber || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>REGISTERED EMAIL ADDRESS</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'REHISTRADONG EMAIL ADDRESS' : 'REGISTERED EMAIL ADDRESS'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{emailAddress || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>RELATION TO CHILD</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'RELASYON SA BATA' : 'RELATION TO CHILD'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{relationToChild || 'N/A'}</span>
                     </div>
                   </div>
@@ -1767,40 +1774,42 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                 {/* Section B: Child Information */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    {mode === 'childwelfare' ? 'B. CHILD INFORMATION' : 'B. CHILD / BENEFICIARY INFORMATION'}
+                    {isTagalog 
+                      ? (mode === 'childwelfare' ? 'B. IMPORMASYON NG BATA' : 'B. IMPORMASYON NG BATA / BENEPISYARYO')
+                      : (mode === 'childwelfare' ? 'B. CHILD INFORMATION' : 'B. CHILD / BENEFICIARY INFORMATION')}
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CHILD FULL NAME</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'BUONG PANGALAN NG BATA' : 'CHILD FULL NAME'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{childFullName || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>DATE OF BIRTH</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PETSA NG KAPANGANAKAN' : 'DATE OF BIRTH'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{childDob || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>AGE / SEX</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{childAge ? `${childAge} yrs` : 'N/A'} ({childSex})</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'EDAD / KASARIAN' : 'AGE / SEX'}</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{childAge ? `${childAge} ${isTagalog ? 'taon' : 'yrs'}` : 'N/A'} ({childSex === 'Male' ? (isTagalog ? 'Lalaki' : 'Male') : childSex === 'Female' ? (isTagalog ? 'Babae' : 'Female') : childSex})</span>
                     </div>
                     {mode === 'childwelfare' ? (
                       <>
                         <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CHILD ADDRESS</span>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'TIRAHAN NG BATA' : 'CHILD ADDRESS'}</span>
                           <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{childAddress || 'N/A'}</span>
                         </div>
                         <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SCHOOL (IF APPLICABLE)</span>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PAARALAN (KUNG NAAANGKOP)' : 'SCHOOL (IF APPLICABLE)'}</span>
                           <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{schoolName || 'N/A'}</span>
                         </div>
                       </>
                     ) : (
                       <>
                         <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SCHOOL NAME</span>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PANGALAN NG PAARALAN' : 'SCHOOL NAME'}</span>
                           <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{schoolName || 'N/A'} ({typeOfSchool})</span>
                         </div>
                         <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>GRADE LEVEL</span>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'ANTAS / BAITANG' : 'GRADE LEVEL'}</span>
                           <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{gradeLevel || 'N/A'}</span>
                         </div>
                         <div>
@@ -1809,7 +1818,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                         </div>
                         {otherEnrollmentInfo && (
                           <div>
-                            <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>OTHER ENROLLMENT INFO</span>
+                            <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'IBA PANG IMPORMASYON SA PAGPAPATALA' : 'OTHER ENROLLMENT INFO'}</span>
                             <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{otherEnrollmentInfo}</span>
                           </div>
                         )}
@@ -1821,21 +1830,23 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                 {/* Section C: Reason for Request / Family Information */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    {mode === 'childwelfare' ? 'C. REASON FOR REQUEST' : 'C. FAMILY INFORMATION'}
+                    {isTagalog 
+                      ? (mode === 'childwelfare' ? 'C. DAHILAN NG HILING' : 'C. IMPORMASYON NG PAMILYA')
+                      : (mode === 'childwelfare' ? 'C. REASON FOR REQUEST' : 'C. FAMILY INFORMATION')}
                   </h5>
                   {mode === 'childwelfare' ? (
                     <div className="space-y-3 text-xs">
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>DESCRIPTION OF CONCERN / PROBLEM</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'DESKRIPSYON NG ALALAHANIN / PROBLEMA' : 'DESCRIPTION OF CONCERN / PROBLEM'}</span>
                         <p className={`font-medium leading-relaxed mt-0.5 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{concernDescription || 'N/A'}</p>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6">
                         <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>DATE OF INCIDENT</span>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PETSA NG INSIDENTE' : 'DATE OF INCIDENT'}</span>
                           <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{incidentDate || 'N/A'}</span>
                         </div>
                         <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>LOCATION OF INCIDENT</span>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'LOKASYON NG INSIDENTE' : 'LOCATION OF INCIDENT'}</span>
                           <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{incidentLocation || 'N/A'}</span>
                         </div>
                       </div>
@@ -1843,15 +1854,15 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CHILDREN IN FAMILY</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'MGA BATA SA PAMILYA' : 'CHILDREN IN FAMILY'}</span>
                         <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{numChildrenInFamily || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CHILDREN STUDYING</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'MGA BATANG NAG-AARAL' : 'CHILDREN STUDYING'}</span>
                         <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{numChildrenStudying || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>MONTHLY FAMILY INCOME</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'BUWANANG KITA NG PAMILYA' : 'MONTHLY FAMILY INCOME'}</span>
                         <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{monthlyIncome}</span>
                       </div>
                       <div>
@@ -1859,7 +1870,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                         <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{is4psBeneficiary} / {isSoloParentBeneficiary}</span>
                       </div>
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PWD BENEFICIARY</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'BENEPISYARYO NG PWD' : 'PWD BENEFICIARY'}</span>
                         <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{isPwdBeneficiary}</span>
                       </div>
                     </div>
@@ -1875,7 +1886,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               <div className={`p-4 border-b flex justify-between items-center ${darkMode ? 'border-slate-800 bg-[#091124]' : 'border-slate-200 bg-slate-50'}`}>
                 <h4 className="text-xs font-extrabold tracking-wide uppercase text-blue-500 dark:text-blue-400 flex items-center gap-2">
                   <ChevronUp className="w-4 h-4 text-slate-400" />
-                  Required documents
+                  {isTagalog ? 'Mga Kailangang Dokumento' : 'Required documents'}
                 </h4>
                 <button
                   type="button"
@@ -1883,29 +1894,29 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
                 >
                   <Pencil className="w-3.5 h-3.5" />
-                  <span>EDIT</span>
+                  <span>{isTagalog ? 'BAGUHIN' : 'EDIT'}</span>
                 </button>
               </div>
               <div className="p-5 space-y-4">
                 {(mode === 'childwelfare'
                   ? [
-                      { key: 'available', title: 'UPLOAD AVAILABLE DOCUMENTS *', doc: docAvailable },
-                      { key: 'referral', title: 'REFERRAL LETTER, IF APPLICABLE (OPTIONAL)', doc: docReferral },
-                      { key: 'birthCert', title: 'BIRTH CERTIFICATE, IF AVAILABLE (OPTIONAL)', doc: docBirthCert },
-                      { key: 'medicalPoliceBarangay', title: 'MEDICAL/POLICE/BARANGAY DOCUMENTS, IF APPLICABLE (OPTIONAL)', doc: docMedicalPoliceBarangay },
+                      { key: 'available', title: isTagalog ? 'I-UPLOAD ANG MGA MAGAGAMIT NA DOKUMENTO *' : 'UPLOAD AVAILABLE DOCUMENTS *', doc: docAvailable },
+                      { key: 'referral', title: isTagalog ? 'LIHAM NG REFERRAL, KUNG NAAANGKOP (OPTIONAL)' : 'REFERRAL LETTER, IF APPLICABLE (OPTIONAL)', doc: docReferral },
+                      { key: 'birthCert', title: isTagalog ? 'SERTIPIKASYON NG KAPANGANAKAN, KUNG MAYROON (OPTIONAL)' : 'BIRTH CERTIFICATE, IF AVAILABLE (OPTIONAL)', doc: docBirthCert },
+                      { key: 'medicalPoliceBarangay', title: isTagalog ? 'DOKUMENTONG MEDIKAL/POLIS/BARANGAY, KUNG NAAANGKOP (OPTIONAL)' : 'MEDICAL/POLICE/BARANGAY DOCUMENTS, IF APPLICABLE (OPTIONAL)', doc: docMedicalPoliceBarangay },
                     ]
                   : mode === 'soloparent'
                   ? [
-                      { key: 'indigency', title: 'ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY *', doc: docIndigency },
-                      { key: 'enrollment', title: 'CERTIFICATE OF ENROLLMENT *', doc: docEnrollment },
-                      { key: 'qcitizenId', title: 'QCITIZEN ID *', doc: docQcitizenId },
-                      { key: 'soloParentId', title: 'SOLO PARENT ID / CERTIFICATION *', doc: docSoloParentId },
+                      { key: 'indigency', title: isTagalog ? 'ORIHINAL NA BARANGAY CERTIFICATE OF INDIGENCY *' : 'ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY *', doc: docIndigency },
+                      { key: 'enrollment', title: isTagalog ? 'KATIBAYAN NG PAGPAPATALA (CERTIFICATE OF ENROLLMENT) *' : 'CERTIFICATE OF ENROLLMENT *', doc: docEnrollment },
+                      { key: 'qcitizenId', title: isTagalog ? 'QCITIZEN ID *' : 'QCITIZEN ID *', doc: docQcitizenId },
+                      { key: 'soloParentId', title: isTagalog ? 'SOLO PARENT ID / SERTIPIKASYON *' : 'SOLO PARENT ID / CERTIFICATION *', doc: docSoloParentId },
                     ]
                   : [
-                      { key: 'indigency', title: 'BARANGAY CERTIFICATE OF INDIGENCY – ORIGINAL (PURPOSE: EDUCATIONAL ASSISTANCE) *', doc: docIndigency },
-                      { key: 'enrollment', title: 'CERTIFICATE OF ENROLLMENT – ORIGINAL *', doc: docEnrollment },
-                      { key: 'schoolId', title: 'RECENT SCHOOL ID – IF AVAILABLE (OPTIONAL)', doc: docSchoolId },
-                      { key: 'govId', title: 'VALID GOVERNMENT ID / PREFERABLY QCITIZEN ID *', doc: docGovId },
+                      { key: 'indigency', title: isTagalog ? 'BARANGAY CERTIFICATE OF INDIGENCY – ORIHINAL (LAYUNIN: TULONG SA EDUKASYON) *' : 'BARANGAY CERTIFICATE OF INDIGENCY – ORIGINAL (PURPOSE: EDUCATIONAL ASSISTANCE) *', doc: docIndigency },
+                      { key: 'enrollment', title: isTagalog ? 'KATIBAYAN NG PAGPAPATALA – ORIHINAL *' : 'CERTIFICATE OF ENROLLMENT – ORIGINAL *', doc: docEnrollment },
+                      { key: 'schoolId', title: isTagalog ? 'BAGONG SCHOOL ID – KUNG MAYROON (OPTIONAL)' : 'RECENT SCHOOL ID – IF AVAILABLE (OPTIONAL)', doc: docSchoolId },
+                      { key: 'govId', title: isTagalog ? 'VALID GOVERNMENT ID / MAS MAINAM NA QCITIZEN ID *' : 'VALID GOVERNMENT ID / PREFERABLY QCITIZEN ID *', doc: docGovId },
                     ]
                 ).map((item) => (
                   <div key={item.key} className="space-y-1.5">
@@ -1936,7 +1947,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                       </div>
                     ) : (
                       <div className="pt-0.5">
-                        <span className={`text-xs italic ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No photo uploaded</span>
+                        <span className={`text-xs italic ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{isTagalog ? 'Walang na-upload na litrato' : 'No photo uploaded'}</span>
                       </div>
                     )}
                   </div>
@@ -1951,7 +1962,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               onClick={() => setCurrentStep(3)}
               className={backBtnClass}
             >
-              BACK
+              {isTagalog ? 'BUMALIK' : 'BACK'}
             </button>
 
             <button
@@ -1959,7 +1970,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               onClick={handleSubmitApplication}
               className="px-8 py-3 rounded-xl text-xs font-extrabold tracking-wider uppercase transition-all bg-blue-600 hover:bg-blue-500 text-white"
             >
-              SUBMIT
+              {isTagalog ? 'IPASA' : 'SUBMIT'}
             </button>
           </div>
         </div>
@@ -1976,7 +1987,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             <div className="flex justify-between items-center">
               <h3 className="text-sm font-extrabold flex items-center gap-2">
                 <Camera className="w-4 h-4 text-cyan-500" />
-                Capture Document Photo
+                {isTagalog ? 'Kumuha ng Litrato ng Dokumento' : 'Capture Document Photo'}
               </h3>
               <button type="button" onClick={closeCameraModal} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
                 <X className="w-5 h-5" />
@@ -1994,14 +2005,14 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                 onClick={closeCameraModal}
                 className="flex-1 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-300 rounded-xl text-xs font-bold"
               >
-                Cancel
+                {isTagalog ? 'Kanselahin' : 'Cancel'}
               </button>
               <button
                 type="button"
                 onClick={handleCapturePhoto}
                 className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md"
               >
-                Take Photo
+                {isTagalog ? 'Kumuha ng Litrato' : 'Take Photo'}
               </button>
             </div>
           </div>
@@ -2019,9 +2030,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             <div className={`flex justify-between items-center border-b pb-3 ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
               <h3 className="text-sm font-extrabold text-blue-600 dark:text-blue-400 flex items-center gap-2">
                 <GraduationCap className="w-5 h-5" />
-                {isTagalog
-                  ? (mode === 'childwelfare' ? 'Mga Kailangan para sa Serbisyo sa Kapakanan ng Bata' : 'Mga Kailangan sa Tulong sa Edukasyon')
-                  : (mode === 'childwelfare' ? 'QC Child Welfare Services Requirements' : 'QC Educational Assistance Requirements')}
+                {isTagalog ? 'Mga Kailangan para sa Tulong sa Edukasyon sa QC' : 'QC Educational Assistance Requirements'}
               </h3>
               <button type="button" onClick={() => setShowReqModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
                 <X className="w-5 h-5" />
@@ -2031,18 +2040,16 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             <div className={`space-y-3 text-xs max-h-96 overflow-y-auto pr-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
               <p>
                 <strong>{isTagalog ? 'Pangunahing Kwalipikasyon:' : 'Primary Qualification:'}</strong>{' '}
-                {isTagalog
-                  ? (mode === 'childwelfare'
-                      ? 'Lehitimong residente ng Lungsod Quezon, kapus-palad na bata, anak ng solo parent, o batang nangangailangan ng kalinga at proteksyon.'
-                      : 'Lehitimong residente ng Lungsod Quezon, rehistradong Batang May Kapansanan (CWD) o estudyante na nakatala sa SPED o Pampublikong Paaralan.')
+                {isTagalog 
+                  ? 'Kapus-palad na residente ng Lungsod Quezon, rehistradong Batang May Kapansanan (CWD) o estudyanteng nakatala sa SPED / Pampublikong Paaralan.' 
                   : 'Indigent resident of Quezon City, registered Child with Disability (CWD) or student enrolled in SPED / Public School.'}
               </p>
               <ul className="list-disc pl-5 space-y-1">
-                <li>{isTagalog ? 'Sertipikasyon ng Indigency mula sa Barangay (mula sa huling 6 na buwan)' : 'Barangay Certificate of Indigency (issued within last 6 months)'}</li>
-                <li>{isTagalog ? 'Valid na QC ID o Government Photo ID ng Aplikante' : 'Valid QC ID or PhilSys ID of Applicant'}</li>
-                <li>{isTagalog ? 'Sertipikasyon ng Pag-aaral / Form 137 / Enrollment (kung nag-aaral)' : 'Certificate of Enrollment / School Registration (SPED / Grade 10 & below)'}</li>
-                <li>{isTagalog ? 'PWD ID o Medical Certificate / Police / Barangay Incident Report (kung meron)' : 'PWD ID or Medical Certificate of Disability'}</li>
-                <li>{isTagalog ? 'Katibayan ng Buwanang Kita ng Pamilya (Php13,873 o pababa)' : 'Monthly Family Income Certificate of Php13,873 or below'}</li>
+                <li>{isTagalog ? 'Barangay Certificate of Indigency (inisyu sa nakalipas na 6 na buwan)' : 'Barangay Certificate of Indigency (issued within last 6 months)'}</li>
+                <li>{isTagalog ? 'Valid QC ID o PhilSys ID ng Aplikante' : 'Valid QC ID or PhilSys ID of Applicant'}</li>
+                <li>{isTagalog ? 'Katibayan ng Pagpapatala / Rehistrasyon sa Paaralan (SPED / Baitang 10 pababa)' : 'Certificate of Enrollment / School Registration (SPED / Grade 10 & below)'}</li>
+                <li>{isTagalog ? 'PWD ID o Medikal na Sertipiko ng Kapansanan' : 'PWD ID or Medical Certificate of Disability'}</li>
+                <li>{isTagalog ? 'Sertipiko ng Buwanang Kita ng Pamilya na Php13,873 o pababa' : 'Monthly Family Income Certificate of Php13,873 or below'}</li>
               </ul>
             </div>
 

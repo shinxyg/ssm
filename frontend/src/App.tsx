@@ -406,29 +406,42 @@ export default function App() {
     }
   };
 
-  const handleApplyFromModule = (title: string, description: string) => {
-    const t = title.toLowerCase();
-    if (t.includes('solo parent') || t.includes('soloparent')) {
-      if (t.includes('educational')) {
+  const handleNavigateToFormDirect = (title: string, description?: string) => {
+    const titleLower = title.toLowerCase();
+
+    // Prioritize exact Title matches so description keywords like "solo parents' children" don't misroute
+    if (
+      titleLower.includes('indigent') ||
+      titleLower.includes('educational assistance for indigent') ||
+      titleLower.includes('tulong sa edukasyon para sa mga bata')
+    ) {
+      setActiveTab('aics-educational');
+      return;
+    }
+
+    if (titleLower.includes('solo parent') || titleLower.includes('soloparent')) {
+      if (titleLower.includes('educational') || titleLower.includes('edu') || titleLower.includes('edukasyon') || titleLower.includes('anak')) {
         setActiveTab('soloparent-edu-form');
       } else {
         setActiveTab('soloparent-form');
       }
       return;
     }
-    if (t.includes('medical')) {
+
+    const t = (title + ' ' + (description || '')).toLowerCase();
+    if (t.includes('medical') || t.includes('medikal') || t.includes('hospital')) {
       setActiveTab('aics-medical');
       return;
     }
-    if (t.includes('burial') || t.includes('funeral')) {
+    if (t.includes('burial') || t.includes('funeral') || t.includes('pagpapalibing')) {
       setActiveTab('aics-funeral');
       return;
     }
-    if (t.includes('educational')) {
+    if (t.includes('educational') || t.includes('education') || t.includes('edukasyon') || t.includes('indigent')) {
       setActiveTab('aics-educational');
       return;
     }
-    if (t.includes('child welfare') || t.includes('childwelfare') || t.includes('child')) {
+    if (t.includes('child welfare') || t.includes('childwelfare') || t.includes('kalinga') || t.includes('proteksyon')) {
       setActiveTab('childwelfare-form');
       return;
     }
@@ -440,21 +453,19 @@ export default function App() {
       setActiveTab('senior-form');
       return;
     }
-    const customService: ServiceItem = {
-      id: `custom-${Date.now()}`,
-      title,
-      description,
-      category: (activeTab as any) || 'aics',
-      requirements: [
-        'Certificate of Indigency from Barangay',
-        'Valid Government Photo ID (PhilSys / Comelec)',
-        'Supporting Documents'
-      ],
-      processingTime: '2 - 3 Business Days',
-      benefitAmount: 'Financial Aid Grant',
-      iconName: 'aics'
-    };
-    setSelectedService(customService);
+    if (t.includes('livelihood') || t.includes('pangkabuhayan') || t.includes('puhunan')) {
+      setActiveTab('livelihood');
+      return;
+    }
+    if (t.includes('training') || t.includes('skills') || t.includes('pagsasanay') || t.includes('bokasyonal')) {
+      setActiveTab('skills-training');
+      return;
+    }
+    setActiveTab('aics-educational');
+  };
+
+  const handleApplyFromModule = (title: string, description: string) => {
+    handleNavigateToFormDirect(title, description);
   };
 
   // Filtered Services Logic for Help Guide Search
@@ -823,32 +834,7 @@ export default function App() {
                 services={filteredServices}
                 darkMode={darkMode}
                 onSelectService={(service) => {
-                  const s = (service.id + ' ' + service.title).toLowerCase();
-                  if (s.includes('medical') || s.includes('hospital')) {
-                    setActiveTab('aics-medical');
-                  } else if (s.includes('funeral') || s.includes('burial')) {
-                    setActiveTab('aics-funeral');
-                  } else if (s.includes('aics') && (s.includes('educational') || s.includes('education'))) {
-                    setActiveTab('aics-educational');
-                  } else if (s.includes('solo parent') || s.includes('soloparent')) {
-                    if (s.includes('educational') || s.includes('edu')) {
-                      setActiveTab('soloparent-edu-form');
-                    } else {
-                      setActiveTab('soloparent-form');
-                    }
-                  } else if (s.includes('child welfare') || s.includes('childwelfare') || s.includes('child')) {
-                    setActiveTab('childwelfare-form');
-                  } else if (s.includes('pwd')) {
-                    setActiveTab('pwd-form');
-                  } else if (s.includes('senior')) {
-                    setActiveTab('senior-form');
-                  } else if (s.includes('skills') || s.includes('training')) {
-                    setActiveTab('skills-training');
-                  } else if (s.includes('livelihood')) {
-                    setActiveTab('livelihood');
-                  } else {
-                    setSelectedService(service);
-                  }
+                  handleNavigateToFormDirect(service.title, service.description);
                 }}
                 filterTitle="Available Social Services Programs"
               />
@@ -875,6 +861,8 @@ export default function App() {
               onBack={() => setActiveTab('childwelfare')}
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
+              onNavigateToModule={(tab) => setActiveTab(tab)}
+              applications={applications}
             />
           ) : activeTab === 'childwelfare-form' ? (
             /* Dedicated QC Child Welfare Services 4-Step Form View */
@@ -883,6 +871,8 @@ export default function App() {
               onBack={() => setActiveTab('childwelfare')}
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
+              onNavigateToModule={(tab) => setActiveTab(tab)}
+              applications={applications}
             />
           ) : activeTab === 'pwd-form' ? (
             /* Dedicated PWD Social Assistance 4-Step Form View */
@@ -1033,13 +1023,6 @@ export default function App() {
           setActiveFilter(category);
           setActiveTab('help-guide');
         }}
-        darkMode={darkMode}
-      />
-
-      <ServiceDetailModal
-        service={selectedService}
-        onClose={() => setSelectedService(null)}
-        onAddApplication={handleAddApplication}
         darkMode={darkMode}
       />
     </div>
