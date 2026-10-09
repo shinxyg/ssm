@@ -282,7 +282,7 @@ export const AdminAicsView: React.FC<AdminAicsViewProps> = ({
                       onClick={() => setSelectedApp(app)}
                     >
                       <td className="py-4 px-6 font-mono font-bold text-blue-400">{app.referenceNo}</td>
-                      <td className={`py-4 px-6 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{(app as any).applicantName || app.details?.applicantName || 'Applicant'}</td>
+                      <td className={`py-4 px-6 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{(app as any).applicantName || app.details?.applicantName || 'Jefferson Fernando Lee'}</td>
                       <td className={`py-4 px-6 font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{app.serviceName}</td>
                       <td className={`py-4 px-6 font-mono text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{app.dateSubmitted}</td>
                       <td className="py-4 px-6">

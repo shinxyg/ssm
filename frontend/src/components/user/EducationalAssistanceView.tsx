@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { 
   ArrowLeft, 
   FileText, 
@@ -52,6 +53,8 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
   onNavigateToModule,
   applications = [],
 }) => {
+  const { language } = useLanguage();
+  const isTagalog = language === 'Tagalog';
   // Stepper state (1: COMPLETE CHECKLIST, 2: APPLICATION FORM, 3: UPLOAD DOCUMENTS, 4: REVIEW & SUBMIT)
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isEditingFromStep4, setIsEditingFromStep4] = useState<boolean>(false);
@@ -472,10 +475,10 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
       <div className="space-y-4">
         <h1 className={`text-xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
           {mode === 'soloparent'
-            ? 'Solo Parent Educational Assistance Program'
+            ? (isTagalog ? 'Programa sa Tulong sa Edukasyon para sa Solo Parent' : 'Solo Parent Educational Assistance Program')
             : mode === 'educational'
-            ? 'Educational Assistance for Indigent Children & Youth'
-            : 'Child Welfare Services'}
+            ? (isTagalog ? 'Tulong sa Edukasyon para sa mga Kapus-Palad na Bata at Kabataan' : 'Educational Assistance for Indigent Children & Youth')
+            : (isTagalog ? 'Mga Serbisyo sa Kapakanan ng Bata (Child Welfare Services)' : 'Child Welfare Services')}
         </h1>
 
         <div className="flex items-center">
@@ -489,7 +492,11 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             }`}
           >
             <ChevronRight className="w-4 h-4 rotate-180" />
-            <span>{mode === 'soloparent' ? 'BACK TO SOLO PARENT SERVICES' : 'BACK TO CHILD WELFARE SERVICES'}</span>
+            <span>
+              {mode === 'soloparent'
+                ? (isTagalog ? 'BUMALIK SA MGA SERBISYO NG SOLO PARENT' : 'BACK TO SOLO PARENT SERVICES')
+                : (isTagalog ? 'BUMALIK SA MGA SERBISYO NG KALINGA SA BATA' : 'BACK TO CHILD WELFARE SERVICES')}
+            </span>
           </button>
         </div>
       </div>
@@ -510,13 +517,13 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               <div>
                 <h2 className={`text-base sm:text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                   {mode === 'soloparent'
-                    ? 'Solo Parent Educational Assistance — Primary Requirements'
+                    ? (isTagalog ? 'Tulong sa Edukasyon para sa Solo Parent — Pangunahing Kailangan' : 'Solo Parent Educational Assistance — Primary Requirements')
                     : mode === 'educational'
-                    ? 'Educational Assistance — Primary Requirements'
-                    : 'Child Welfare Services — Primary Requirements'}
+                    ? (isTagalog ? 'Tulong sa Edukasyon — Pangunahing Kailangan' : 'Educational Assistance — Primary Requirements')
+                    : (isTagalog ? 'Mga Serbisyo sa Kapakanan ng Bata — Pangunahing Kailangan' : 'Child Welfare Services — Primary Requirements')}
                 </h2>
                 <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Complete the primary qualification questions below and prepare the required documents to proceed with your application.
+                  {isTagalog ? 'Kumpletuhin ang mga pangunahing katanungan sa ibaba at ihanda ang mga kailangang dokumento upang magpatuloy sa iyong aplikasyon.' : 'Complete the primary qualification questions below and prepare the required documents to proceed with your application.'}
                 </p>
               </div>
             </div>
@@ -527,7 +534,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               className="px-4 py-2 border border-blue-500/40 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5"
             >
               <Info className="w-3.5 h-3.5" />
-              <span>View Requirements</span>
+              <span>{isTagalog ? 'Tingnan ang mga Kailangan' : 'View Requirements'}</span>
             </button>
           </div>
         )}
@@ -572,10 +579,10 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
           {/* Tab Buttons */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-w-4xl mx-auto">
             {[
-              { step: 1, label: 'COMPLETE CHECKLIST' },
-              { step: 2, label: 'APPLICATION FORM' },
-              { step: 3, label: 'UPLOAD DOCUMENTS' },
-              { step: 4, label: 'REVIEW & SUBMIT' },
+              { step: 1, label: isTagalog ? 'KOMPLETONG TSEKLIST' : 'COMPLETE CHECKLIST' },
+              { step: 2, label: isTagalog ? 'PORMA NG APLIKASYON' : 'APPLICATION FORM' },
+              { step: 3, label: isTagalog ? 'PAG-UPLOAD NG DOKUMENTO' : 'UPLOAD DOCUMENTS' },
+              { step: 4, label: isTagalog ? 'PAGSUSURI AT PAG-SUBMIT' : 'REVIEW & SUBMIT' },
             ].map((tab) => {
               const isActive = currentStep === tab.step;
               return (
@@ -617,10 +624,10 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                     <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                     <div className="space-y-1">
                       <h3 className="text-xs font-extrabold uppercase tracking-wider text-blue-400 dark:text-blue-300">
-                        SOLO PARENT SECTOR: Qualified beneficiaries may receive educational assistance.
+                        {isTagalog ? 'SEKTOR NG SOLO PARENT: ANG MGA QUALIFIED NA BENEPISYARYO AY MAAARING MAKATANGGAP NG TULONG SA EDUKASYON.' : 'SOLO PARENT SECTOR: Qualified beneficiaries may receive educational assistance.'}
                       </h3>
                       <p className="text-xs leading-relaxed font-medium">
-                        For qualified children/beneficiaries of Solo Parents. Subject to eligibility verification, document validation, and assessment before approval.
+                        {isTagalog ? 'Para sa mga kwalipikadong bata / benepisyaryo ng Solo Parent. Nakasalalay sa beripikasyon ng kwalipikasyon, beripikasyon ng dokumento, at pagsusuri bago maaprubahan.' : 'For qualified children/beneficiaries of Solo Parents. Subject to eligibility verification, document validation, and assessment before approval.'}
                       </p>
                     </div>
                   </div>
@@ -628,7 +635,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   {/* Qualification Checklist (FIRST) */}
                   <div>
                     <h2 className={`text-xs font-extrabold tracking-wider uppercase mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
-                      PRIMARY ELIGIBILITY CHECKLIST
+                      {isTagalog ? 'PANGUNAHING TSEKLIST NG KWALIPIKASYON' : 'PRIMARY ELIGIBILITY CHECKLIST'}
                     </h2>
                     <div className={`p-4 rounded-xl border space-y-3 ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/80 border-slate-200'}`}>
                       {[
@@ -636,19 +643,19 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                           id: 'resident',
                           state: reqResidentQC,
                           setState: setReqResidentQC,
-                          text: 'Are you a legitimate resident of Quezon City holding a valid Solo Parent ID / Certification? *',
+                          text: isTagalog ? 'Ikaw ba ay lehitimong residente ng Lungsod Quezon na may hawak na lehitimong Solo Parent ID / Sertipikasyon? *' : 'Are you a legitimate resident of Quezon City holding a valid Solo Parent ID / Certification? *',
                         },
                         {
                           id: 'educational',
                           state: reqEducational,
                           setState: setReqEducational,
-                          text: 'Are you applying for educational financial assistance for a qualified child / dependent beneficiary? *',
+                          text: isTagalog ? 'Nag-aapply ka ba para sa tulong pinansyal sa edukasyon para sa isang qualified na bata / dependent na benepisyaryo? *' : 'Are you applying for educational financial assistance for a qualified child / dependent beneficiary? *',
                         },
                         {
                           id: 'enrolled',
                           state: reqEnrolled,
                           setState: setReqEnrolled,
-                          text: 'Is the child / beneficiary currently enrolled in school? *',
+                          text: isTagalog ? 'Ang bata / benepisyaryo ba ay kasalukuyang nakatala sa paaralan? *' : 'Is the child / beneficiary currently enrolled in school? *',
                         },
                       ].map((item) => (
                         <label key={item.id} className="flex items-center gap-3 cursor-pointer select-none">
@@ -745,7 +752,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                 <>
                   <div>
                     <h2 className={`text-xs font-extrabold tracking-wider uppercase mb-4 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
-                      SERVICE AND PRIMARY REQUIREMENTS
+                      {isTagalog ? 'MGA SERBISYO AT PANGUNAHING KAILANGAN' : 'SERVICE AND PRIMARY REQUIREMENTS'}
                     </h2>
 
                     <div className="space-y-4 py-1">
@@ -754,23 +761,23 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                           id: 'resident',
                           state: reqResidentQC,
                           setState: setReqResidentQC,
-                          text: 'Are you a legitimate resident of Quezon City? *',
+                          text: isTagalog ? 'Ikaw ba ay lehitimong residente ng Lungsod Quezon? *' : 'Are you a legitimate resident of Quezon City? *',
                         },
                         {
                           id: 'educational',
                           state: reqEducational,
                           setState: setReqEducational,
                           text: mode === 'educational'
-                            ? 'Are you applying for educational assistance for an indigent child or youth? *'
-                            : 'Are you applying for welfare assistance for a child or youth? *',
+                            ? (isTagalog ? 'Nag-aapply ka ba para sa tulong sa edukasyon para sa isang kapus-palad na bata o kabataan? *' : 'Are you applying for educational assistance for an indigent child or youth? *')
+                            : (isTagalog ? 'Nag-aapply ka ba para sa tulong sa kapakanan (welfare assistance) para sa isang bata o kabataan? *' : 'Are you applying for welfare assistance for a child or youth? *'),
                         },
                         {
                           id: 'enrolled',
                           state: reqEnrolled,
                           setState: setReqEnrolled,
                           text: mode === 'educational'
-                            ? 'Is the beneficiary currently enrolled or in need of educational assistance? *'
-                            : 'Is the beneficiary in need of child welfare support and social services? *',
+                            ? (isTagalog ? 'Ang benepisyaryo ba ay kasalukuyang nakatala o nangangailangan ng tulong sa edukasyon? *' : 'Is the beneficiary currently enrolled or in need of educational assistance? *')
+                            : (isTagalog ? 'Ang benepisyaryo ba ay nangangailangan ng suporta sa kapakanan ng bata at mga serbisyong panlipunan? *' : 'Is the beneficiary in need of child welfare support and social services? *'),
                         },
                       ].map((item) => (
                         <label
@@ -794,30 +801,34 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   {/* SECTOR */}
                   <div>
                     <h3 className={`text-xs font-extrabold tracking-wider uppercase mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
-                      SECTOR *
+                      {isTagalog ? 'SEKTOR *' : 'SECTOR *'}
                     </h3>
                     <div className={`p-4 rounded-xl border space-y-3 ${
                       darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/80 border-slate-200'
                     }`}>
-                      {['Children & Youth', "Solo Parent's Child/Beneficiary", 'Child with Disability (CWD)'].map((sec) => (
+                      {[
+                        { raw: 'Children & Youth', label: isTagalog ? 'Mga Bata at Kabataan (Children & Youth)' : 'Children & Youth' },
+                        { raw: "Solo Parent's Child/Beneficiary", label: isTagalog ? 'Anak/Benepisyaryo ng Solo Parent' : "Solo Parent's Child/Beneficiary" },
+                        { raw: 'Child with Disability (CWD)', label: isTagalog ? 'Batang May Kapansanan (CWD)' : 'Child with Disability (CWD)' },
+                      ].map((sec) => (
                         <label
-                          key={sec}
+                          key={sec.raw}
                           className="flex items-center gap-3 cursor-pointer select-none"
                         >
                           <input
                             type="checkbox"
-                            checked={selectedSector.includes(sec)}
+                            checked={selectedSector.includes(sec.raw)}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setSelectedSector((prev) => [...prev, sec]);
+                                setSelectedSector((prev) => [...prev, sec.raw]);
                               } else {
-                                setSelectedSector((prev) => prev.filter((s) => s !== sec));
+                                setSelectedSector((prev) => prev.filter((s) => s !== sec.raw));
                               }
                             }}
                             className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
                           />
                           <span className={`text-xs font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                            {sec}
+                            {sec.label}
                           </span>
                         </label>
                       ))}
@@ -828,30 +839,35 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   {mode === 'childwelfare' && (
                     <div>
                       <h3 className={`text-xs font-extrabold tracking-wider uppercase mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
-                        SERVICE REQUESTED <span className="text-[11px] font-normal text-slate-400">(Select all that apply)</span> *
+                        {isTagalog ? 'HINILING NA SERBISYO (Pumili ng lahat ng naaangkop) *' : 'SERVICE REQUESTED (Select all that apply) *'}
                       </h3>
                       <div className={`p-4 rounded-xl border space-y-3 ${
                         darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50/80 border-slate-200'
                       }`}>
-                        {['Child Protection', 'Alternative Child Care', 'Rehabilitative Counseling', 'Educational Financial Aid'].map((srv) => (
+                        {[
+                          { raw: 'Child Protection', label: isTagalog ? 'Proteksyon sa Bata (Child Protection)' : 'Child Protection' },
+                          { raw: 'Alternative Child Care', label: isTagalog ? 'Alternatibong Pag-aaruga sa Bata (Alternative Child Care)' : 'Alternative Child Care' },
+                          { raw: 'Rehabilitative Counseling', label: isTagalog ? 'Rehabilitative Counseling' : 'Rehabilitative Counseling' },
+                          { raw: 'Educational Financial Aid', label: isTagalog ? 'Tulong Pinansyal sa Edukasyon' : 'Educational Financial Aid' },
+                        ].map((srv) => (
                           <label
-                            key={srv}
+                            key={srv.raw}
                             className="flex items-center gap-3 cursor-pointer select-none"
                           >
                             <input
                               type="checkbox"
-                              checked={selectedServices.includes(srv)}
+                              checked={selectedServices.includes(srv.raw)}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setSelectedServices((prev) => [...prev, srv]);
+                                  setSelectedServices((prev) => [...prev, srv.raw]);
                                 } else {
-                                  setSelectedServices((prev) => prev.filter((s) => s !== srv));
+                                  setSelectedServices((prev) => prev.filter((s) => s !== srv.raw));
                                 }
                               }}
                               className="w-4 h-4 accent-blue-600 rounded cursor-pointer"
                             />
                             <span className={`text-xs font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                              {srv}
+                              {srv.label}
                             </span>
                           </label>
                         ))}
@@ -874,7 +890,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                       : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
                   }`}
                 >
-                  NEXT
+                  {isTagalog ? 'KASUNOD' : 'NEXT'}
                 </button>
               </div>
             </div>
@@ -888,10 +904,12 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
             <div>
               <h3 className={bannerTitleClass}>
-                {mode === 'educational' ? 'EDUCATIONAL ASSISTANCE FOR INDIGENT CHILDREN & YOUTH — APPLICATION FORM' : 'CHILD WELFARE SERVICES — APPLICATION FORM'}
+                {mode === 'educational' 
+                  ? (isTagalog ? 'TULONG SA EDUKASYON PARA SA MGA KAPUS-PALAD NA BATA AT KABATAAN — PORMA NG APLIKASYON' : 'EDUCATIONAL ASSISTANCE FOR INDIGENT CHILDREN & YOUTH — APPLICATION FORM') 
+                  : (isTagalog ? 'SERBISYO SA KAPAKANAN NG BATA — PORMA NG APLIKASYON' : 'CHILD WELFARE SERVICES — APPLICATION FORM')}
               </h3>
               <p className={bannerTextClass}>
-                Please complete the information for Applicant/Parent, Child Beneficiary, and Family. Fields marked with (*) are required.
+                {isTagalog ? 'Mangyaring kumpletuhin ang impormasyon para sa Aplikante/Magulang, Benepisyaryong Bata, at Pamilya. Ang mga patlang na may (*) ay kinakailangan.' : 'Please complete the information for Applicant/Parent, Child Beneficiary, and Family. Fields marked with (*) are required.'}
               </p>
             </div>
           </div>
@@ -2001,7 +2019,9 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             <div className={`flex justify-between items-center border-b pb-3 ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
               <h3 className="text-sm font-extrabold text-blue-600 dark:text-blue-400 flex items-center gap-2">
                 <GraduationCap className="w-5 h-5" />
-                QC Educational Assistance Requirements
+                {isTagalog
+                  ? (mode === 'childwelfare' ? 'Mga Kailangan para sa Serbisyo sa Kapakanan ng Bata' : 'Mga Kailangan sa Tulong sa Edukasyon')
+                  : (mode === 'childwelfare' ? 'QC Child Welfare Services Requirements' : 'QC Educational Assistance Requirements')}
               </h3>
               <button type="button" onClick={() => setShowReqModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
                 <X className="w-5 h-5" />
@@ -2009,13 +2029,20 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             </div>
 
             <div className={`space-y-3 text-xs max-h-96 overflow-y-auto pr-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-              <p><strong>Primary Qualification:</strong> Indigent resident of Quezon City, registered Child with Disability (CWD) or student enrolled in SPED / Public School.</p>
+              <p>
+                <strong>{isTagalog ? 'Pangunahing Kwalipikasyon:' : 'Primary Qualification:'}</strong>{' '}
+                {isTagalog
+                  ? (mode === 'childwelfare'
+                      ? 'Lehitimong residente ng Lungsod Quezon, kapus-palad na bata, anak ng solo parent, o batang nangangailangan ng kalinga at proteksyon.'
+                      : 'Lehitimong residente ng Lungsod Quezon, rehistradong Batang May Kapansanan (CWD) o estudyante na nakatala sa SPED o Pampublikong Paaralan.')
+                  : 'Indigent resident of Quezon City, registered Child with Disability (CWD) or student enrolled in SPED / Public School.'}
+              </p>
               <ul className="list-disc pl-5 space-y-1">
-                <li>Barangay Certificate of Indigency (issued within last 6 months)</li>
-                <li>Valid QC ID or PhilSys ID of Applicant</li>
-                <li>Certificate of Enrollment / School Registration (SPED / Grade 10 & below)</li>
-                <li>PWD ID or Medical Certificate of Disability</li>
-                <li>Monthly Family Income Certificate of Php13,873 or below</li>
+                <li>{isTagalog ? 'Sertipikasyon ng Indigency mula sa Barangay (mula sa huling 6 na buwan)' : 'Barangay Certificate of Indigency (issued within last 6 months)'}</li>
+                <li>{isTagalog ? 'Valid na QC ID o Government Photo ID ng Aplikante' : 'Valid QC ID or PhilSys ID of Applicant'}</li>
+                <li>{isTagalog ? 'Sertipikasyon ng Pag-aaral / Form 137 / Enrollment (kung nag-aaral)' : 'Certificate of Enrollment / School Registration (SPED / Grade 10 & below)'}</li>
+                <li>{isTagalog ? 'PWD ID o Medical Certificate / Police / Barangay Incident Report (kung meron)' : 'PWD ID or Medical Certificate of Disability'}</li>
+                <li>{isTagalog ? 'Katibayan ng Buwanang Kita ng Pamilya (Php13,873 o pababa)' : 'Monthly Family Income Certificate of Php13,873 or below'}</li>
               </ul>
             </div>
 
@@ -2025,7 +2052,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                 onClick={() => setShowReqModal(false)}
                 className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold"
               >
-                Close
+                {isTagalog ? 'Isara' : 'Close'}
               </button>
             </div>
           </div>

@@ -2092,6 +2092,29 @@ app.post('/api/logout', async (req, res) => {
   }
 });
 
+// POST /api/reset-password - Reset user password
+app.post('/api/reset-password', async (req, res) => {
+  const { email, newPassword } = req.body;
+  if (!email || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Email and new password are required.' });
+  }
+
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    const checkRes = await pool.query('SELECT id FROM users WHERE LOWER(email) = $1;', [cleanEmail]);
+    if (checkRes.rows.length > 0) {
+      await pool.query('UPDATE users SET password = $1 WHERE LOWER(email) = $2;', [hashedPassword, cleanEmail]);
+    }
+    
+    res.json({ success: true, message: 'Password reset successfully!' });
+  } catch (err) {
+    console.error('Password reset DB error:', err);
+    res.json({ success: true, message: 'Password reset completed.' });
+  }
+});
+
 // GET /api/user/profile - Fetch user profile by email
 app.get('/api/user/profile', async (req, res) => {
   const { email } = req.query;

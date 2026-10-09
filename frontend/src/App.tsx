@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useLanguage } from './context/LanguageContext';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { HeroBanner } from './components/user/HeroBanner';
@@ -59,13 +60,56 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  const { language, t } = useLanguage();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [darkMode, setDarkMode] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<string>('landing');
-  const [userRole, setUserRole] = useState<'user' | 'admin'>('user');
-  const [adminTab, setAdminTab] = useState<string>('reports');
+
+  // Tab & role state persisted in sessionStorage (retains on page refresh, resets on new tab/window)
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    try {
+      return sessionStorage.getItem('activeTab') || 'landing';
+    } catch {
+      return 'landing';
+    }
+  });
+
+  const [userRole, setUserRole] = useState<'user' | 'admin'>(() => {
+    try {
+      return (sessionStorage.getItem('userRole') as 'user' | 'admin') || 'user';
+    } catch {
+      return 'user';
+    }
+  });
+
+  const [adminTab, setAdminTab] = useState<string>(() => {
+    try {
+      return sessionStorage.getItem('adminTab') || 'reports';
+    } catch {
+      return 'reports';
+    }
+  });
+
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeFilter, setActiveFilter] = useState<string>('all');
+
+  // Sync tab and role states to sessionStorage
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('activeTab', activeTab);
+    } catch (e) {}
+  }, [activeTab]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('userRole', userRole);
+    } catch (e) {}
+  }, [userRole]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('adminTab', adminTab);
+    } catch (e) {}
+  }, [adminTab]);
 
   // Modals
   const [isTrackModalOpen, setIsTrackModalOpen] = useState<boolean>(false);
@@ -437,26 +481,26 @@ export default function App() {
 
   // Dynamic Header Section Name (Matching Screenshots)
   const sectionTitleMap: Record<string, string> = {
-    'help-guide': 'Help & Service Guide',
-    'aics': 'AICS Assistance',
-    'aics-medical': 'AICS Assistance',
-    'aics-funeral': 'AICS Assistance',
-    'aics-educational': 'Child Welfare Services',
-    'pwd': 'PWD Services',
-    'pwd-form': 'PWD Services',
-    'senior': 'Senior Citizen Services',
-    'senior-form': 'Senior Citizen Services',
-    'soloparent': 'Solo Parent Services',
-    'soloparent-form': 'Solo Parent Services',
-    'soloparent-financial-form': 'Solo Parent Services',
-    'soloparent-edu-form': 'Solo Parent Services',
-    'childwelfare': 'Child Welfare Services',
-    'livelihood': 'Livelihood & Training — Livelihood Program',
-    'livelihood-grants': 'Livelihood & Training — Livelihood Program',
-    'skills-training': 'Livelihood & Training — Training Program',
-    'payout': 'Financial Aid Disbursement',
-    'history': 'Application History',
-    'profile': 'User Profile',
+    'help-guide': t('nav.guide'),
+    'aics': t('nav.aics'),
+    'aics-medical': t('nav.aics'),
+    'aics-funeral': t('nav.aics'),
+    'aics-educational': t('nav.child_welfare'),
+    'pwd': t('nav.pwd'),
+    'pwd-form': t('nav.pwd'),
+    'senior': t('nav.senior'),
+    'senior-form': t('nav.senior'),
+    'soloparent': t('nav.solo_parent'),
+    'soloparent-form': t('nav.solo_parent'),
+    'soloparent-financial-form': t('nav.solo_parent'),
+    'soloparent-edu-form': t('nav.solo_parent'),
+    'childwelfare': t('nav.child_welfare'),
+    'livelihood': `${t('nav.livelihood')} — ${language === 'Tagalog' ? 'Programa sa Pangkabuhayan' : 'Livelihood Program'}`,
+    'livelihood-grants': `${t('nav.livelihood')} — ${language === 'Tagalog' ? 'Programa sa Pangkabuhayan' : 'Livelihood Program'}`,
+    'skills-training': `${t('nav.livelihood')} — ${language === 'Tagalog' ? 'Programa sa Pagsasanay' : 'Training Program'}`,
+    'payout': t('nav.disbursement'),
+    'history': t('nav.history'),
+    'profile': t('nav.profile'),
   };
 
   if (activeTab === 'landing') {

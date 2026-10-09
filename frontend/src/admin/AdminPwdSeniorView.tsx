@@ -143,7 +143,7 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
         seenRefs.add(app.referenceNo);
         list.push({
           referenceNo: app.referenceNo,
-          applicantName: (app as any).applicantName || app.details?.applicantName || 'Applicant',
+          applicantName: (app as any).applicantName || app.details?.applicantName || 'Jefferson Fernando Lee',
           serviceName: app.serviceName,
           category: app.category || 'Senior Assistance',
           status: app.status,

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, FileText, Sparkles, HeartHandshake } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface HeroBannerProps {
   searchQuery: string;
@@ -20,12 +21,15 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   onOpenEligibilityModal,
   darkMode = true,
 }) => {
+  const { language } = useLanguage();
+  const isTagalog = language === 'Tagalog';
+
   const filterPills = [
-    { id: 'all', label: 'All Services' },
-    { id: 'aics', label: 'AICS Crisis Aid (6 Types)' },
-    { id: 'pwd_senior', label: 'PWD & Senior Citizens' },
-    { id: 'solo_child', label: 'Solo Parent & Child Welfare' },
-    { id: 'livelihood_payout', label: 'Livelihood & Training' },
+    { id: 'all', label: isTagalog ? 'Lahat ng Serbisyo' : 'All Services' },
+    { id: 'aics', label: isTagalog ? 'Tulong sa Kapus-Palad (AICS)' : 'AICS Crisis Aid (6 Types)' },
+    { id: 'pwd_senior', label: isTagalog ? 'PWD at Senior Citizen' : 'PWD & Senior Citizens' },
+    { id: 'solo_child', label: isTagalog ? 'Solo Parent at Kalinga sa Bata' : 'Solo Parent & Child Welfare' },
+    { id: 'livelihood_payout', label: isTagalog ? 'Pangkabuhayan at Pagsasanay' : 'Livelihood & Training' },
   ];
 
   return (
@@ -48,7 +52,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         {/* Badge Pill */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/80 border border-blue-400/30 text-blue-200 text-xs font-semibold">
           <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-          <span>Gov Serves Social Services Portal • Help & Service Guide</span>
+          <span>{isTagalog ? 'GovServe Portal ng Mamamayan • Gabay sa Serbisyo at Tulong' : 'Gov Serves Social Services Portal • Help & Service Guide'}</span>
         </div>
 
         {/* Track My Applications Button */}
@@ -57,18 +61,19 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-white font-medium text-xs border border-slate-600/60 shadow-lg transition-colors cursor-pointer"
         >
           <FileText className="w-4 h-4 text-blue-400" />
-          <span>Track My Applications</span>
+          <span>{isTagalog ? 'Suriin ang Aking Aplikasyon' : 'Track My Applications'}</span>
         </button>
       </div>
 
       {/* Headline & Subtitle */}
       <div className="relative z-10 max-w-3xl mb-6">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight mb-2">
-          Welcome, JEFFERSON LEE!
+          {isTagalog ? 'Maligayang Pagdating, JEFFERSON LEE!' : 'Welcome, JEFFERSON LEE!'}
         </h2>
         <p className="text-slate-200 text-xs sm:text-sm leading-relaxed font-normal">
-          Explore available financial aid programs (AICS Medical, Funeral, Educational), special sector benefits (PWD,
-          Senior Citizen, Solo Parent), child welfare support, and livelihood training grants before filing your digital application.
+          {isTagalog 
+            ? 'Alamin ang mga magagamit na programa ng tulong pampinansyal (AICS Medikal, Libing, Edukasyon), mga benepisyo sa sektor (PWD, Senior Citizen, Solo Parent), kalinga sa bata, at pondo sa pangkabuhayan.'
+            : 'Explore available financial aid programs (AICS Medical, Funeral, Educational), special sector benefits (PWD, Senior Citizen, Solo Parent), child welfare support, and livelihood training grants before filing your digital application.'}
         </p>
       </div>
 
@@ -92,7 +97,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search services, requirements, or benefits (e.g. Medical, Senior Booklet, PWD ID, Funeral, Livelihood)..."
+              placeholder={isTagalog ? "Maghanap ng serbisyo, kailangan, o benepisyo (hal. Medikal, Senior Booklet, PWD ID, Libing, Pangkabuhayan)..." : "Search services, requirements, or benefits (e.g. Medical, Senior Booklet, PWD ID, Funeral, Livelihood)..."}
               className="w-full pl-10 pr-16 py-3 bg-[#0d162a] border border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:border-blue-500 shadow-inner transition-colors"
             />
             {searchQuery && (
@@ -112,7 +117,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             title="Search Services"
           >
             <Search className="w-4 h-4" />
-            <span className="hidden sm:inline">Search</span>
+            <span className="hidden sm:inline">{isTagalog ? 'Hanapin' : 'Search'}</span>
           </button>
         </form>
       </div>
@@ -148,7 +153,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/40 border border-blue-400/50 transition-all cursor-pointer"
         >
           <HeartHandshake className="w-3.5 h-3.5" />
-          <span>Assistance & Eligibility Finder</span>
+          <span>{isTagalog ? 'Tagahanap ng Tulong at Kwalipikasyon' : 'Assistance & Eligibility Finder'}</span>
         </button>
       </div>
     </div>

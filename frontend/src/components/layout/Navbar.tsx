@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Sun, Moon, Bell, User, LogOut, CheckCircle2, Clock, Info, AlertTriangle, XCircle, Trash2 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import type { ApplicationRecord } from '../../types';
 
 interface NavbarProps {
@@ -57,6 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
+  const { t } = useLanguage();
 
   // Persistent dismissed notification IDs from localStorage
   const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
@@ -99,9 +101,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  const displayName = userName || (userRole === 'admin' ? 'System Admin' : 'Jefferson Lee');
-  const displaySubtitle = userSubtitle || (userRole === 'admin' ? 'Administrator' : 'Citizen Resident');
+  const displayName = userName || (userRole === 'admin' ? t('header.system_admin') : 'Jefferson Lee');
+  const displaySubtitle = userSubtitle || (userRole === 'admin' ? 'Administrator' : t('header.citizen_resident'));
   const displayInitials = userInitials || (userRole === 'admin' ? 'AD' : 'JL');
+
 
   // Generate Notifications derived from application lifecycle (Citizen & Admin)
   const rawNotifications = useMemo(() => {
@@ -113,7 +116,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         const ref = app.referenceNo;
         const serv = app.serviceName || 'Social Service Application';
         const st = (app.status || '').toUpperCase();
-        const name = (app as any).applicantName || app.details?.applicantName || 'Applicant';
+        const name = (app as any).applicantName || app.details?.applicantName || 'Jefferson Fernando Lee';
 
         if (st.includes('PENDING') || st === 'SUBMITTED' || st.includes('EVALUATION')) {
           list.unshift({
@@ -464,7 +467,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <User className="w-3.5 h-3.5 text-slate-400" />
-                <span>Profile</span>
+                <span>{t('nav.profile')}</span>
               </button>
 
               <button
@@ -496,7 +499,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <LogOut className="w-3.5 h-3.5 text-red-500" />
-                <span>Log Out</span>
+                <span>{t('nav.logout')}</span>
               </button>
             </div>
           )}

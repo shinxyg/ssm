@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { 
   ArrowLeft, 
   FileText, 
@@ -42,6 +43,9 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
   onAddApplication,
   darkMode = true,
 }) => {
+  const { language, t } = useLanguage();
+  const isTagalog = language === 'Tagalog';
+
   // Stepper state (1: COMPLETE CHECKLIST, 2: PERSONAL INFORMATION, 3: UPLOAD DOCUMENTS, 4: REVIEW & SUBMIT)
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isEditingFromStep4, setIsEditingFromStep4] = useState<boolean>(false);
@@ -307,7 +311,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
       {/* Top Header & Navigation */}
       <div className="space-y-4">
         <h1 className={`text-xl font-extrabold tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-          PWD Services
+          {isTagalog ? 'Serbisyo para sa PWD' : 'PWD Services'}
         </h1>
 
         <div className="flex items-center">
@@ -321,7 +325,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
             }`}
           >
             <ChevronRight className="w-4 h-4 rotate-180" />
-            <span>BACK TO PWD SERVICES</span>
+            <span>{isTagalog ? 'BUMALIK SA MGA SERBISYO NG PWD' : 'BACK TO PWD SERVICES'}</span>
           </button>
         </div>
       </div>
@@ -368,10 +372,10 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
           {/* Tab Buttons matching reference screenshot */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {[
-              { step: 1, label: 'COMPLETE CHECKLIST' },
-              { step: 2, label: 'PERSONAL INFORMATION' },
-              { step: 3, label: 'UPLOAD DOCUMENTS' },
-              { step: 4, label: 'REVIEW & SUBMIT' },
+              { step: 1, label: isTagalog ? 'KOMPLETONG TSEKLIST' : 'COMPLETE CHECKLIST' },
+              { step: 2, label: isTagalog ? 'PERSONAL NA IMPORMASYON' : 'PERSONAL INFORMATION' },
+              { step: 3, label: isTagalog ? 'PAG-UPLOAD NG DOKUMENTO' : 'UPLOAD DOCUMENTS' },
+              { step: 4, label: isTagalog ? 'PAGSUSURI AT PAG-SUBMIT' : 'REVIEW & SUBMIT' },
             ].map((tab) => {
               const isActive = currentStep === tab.step;
               return (
@@ -403,7 +407,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
           <div className="space-y-6 pt-2">
           <div>
             <h2 className={`text-xs font-extrabold tracking-wider uppercase mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
-              SERVICE AND PRIMARY REQUIREMENTS
+              {isTagalog ? 'SERBISYO AT MGA UTANG NA KAILANGAN' : 'SERVICE AND PRIMARY REQUIREMENTS'}
             </h2>
 
             {/* Alert Banner */}
@@ -411,10 +415,12 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
               <div>
                 <h3 className={bannerTitleClass}>
-                  PWD Sector: Qualified beneficiaries may receive the assistance provided.
+                  {isTagalog ? 'Sektor ng PWD: Ang mga kwalipikadong benepisyaryo ay makatatanggap ng tulong.' : 'PWD Sector: Qualified beneficiaries may receive the assistance provided.'}
                 </h3>
                 <p className={bannerTextClass}>
-                  Exclusively for indigent Persons with Disabilities (PWD) who qualify under specific vulnerability categories (e.g., bedridden, severe medical condition, solo parent, jobless with 2+ minor dependents, living alone, or living with a Senior Citizen parent). Subject to official assessment and Social Case Study before approval.
+                  {isTagalog
+                    ? 'Eksklusibo para sa mga kapus-palad na Persons with Disabilities (PWD) na nakatutugon sa mga pamantayan sa kahinaan (hal. bedridden, malubhang kondisyon, solo parent, walang trabaho na may 2+ na dependents). Sakop ng opisyal na pagsusuri at Social Case Study bago aprubahan.'
+                    : 'Exclusively for indigent Persons with Disabilities (PWD) who qualify under specific vulnerability categories (e.g., bedridden, severe medical condition, solo parent, jobless with 2+ minor dependents, living alone, or living with a Senior Citizen parent). Subject to official assessment and Social Case Study before approval.'}
                 </p>
               </div>
             </div>
@@ -424,7 +430,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
             {/* PWD ID NUMBER with Prefix Box & Verify Button (Matching Screenshot 1 & 2) */}
             <div>
               <label className={labelClass}>
-                PWD ID NUMBER <span className="text-red-500">*</span>
+                {isTagalog ? 'NUMERO NG PWD ID' : 'PWD ID NUMBER'} <span className="text-red-500">*</span>
               </label>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <div className={`flex flex-1 items-center rounded-xl border overflow-hidden shadow-sm transition-all focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:border-blue-600 ${
@@ -448,9 +454,9 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 <button
                   type="button"
                   onClick={handleVerifyPwdId}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold tracking-wider uppercase border border-blue-500/40 shadow-sm transition-all shrink-0"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold tracking-wider uppercase border border-blue-500/40 shadow-sm transition-all shrink-0 cursor-pointer"
                 >
-                  VERIFY PWD ID
+                  {isTagalog ? 'I-VERIFY ANG PWD ID' : 'VERIFY PWD ID'}
                 </button>
               </div>
             </div>
@@ -458,13 +464,13 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
             {/* TYPE OF DISABILITY (Auto-filled upon PWD ID verification) */}
             <div>
               <label className={labelClass}>
-                TYPE OF DISABILITY <span className="text-red-500">**</span>
+                {isTagalog ? 'URI NG KAPANSANAN' : 'TYPE OF DISABILITY'} <span className="text-red-500">**</span>
               </label>
               <input
                 type="text"
                 value={typeOfDisability}
                 readOnly
-                placeholder="Auto-filled upon PWD ID verification"
+                placeholder={isTagalog ? "Kusang lalabas pagkatapos ma-verify ang PWD ID" : "Auto-filled upon PWD ID verification"}
                 className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold border ${
                   darkMode ? 'bg-slate-900/60 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-300 text-slate-800 shadow-sm'
                 }`}
@@ -474,20 +480,20 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
             {/* TYPE OF ASSISTANCE REQUESTED (SWA CATEGORY) (Matching Screenshot 3) */}
             <div>
               <label className={labelClass}>
-                TYPE OF ASSISTANCE REQUESTED (SWA CATEGORY) <span className="text-red-500">**</span>
+                {isTagalog ? 'URI NG HINIHINGING TULONG (KATEGORYA NG SWA)' : 'TYPE OF ASSISTANCE REQUESTED (SWA CATEGORY)'} <span className="text-red-500">**</span>
               </label>
               <select
                 value={swaCategory}
                 onChange={(e) => setSwaCategory(e.target.value)}
                 className={inputClass}
               >
-                <option value="">Select...</option>
-                <option value="Bedridden">Bedridden</option>
-                <option value="Severe Health Condition">Severe Health Condition</option>
+                <option value="">{isTagalog ? 'Pumili...' : 'Select...'}</option>
+                <option value="Bedridden">{isTagalog ? 'Nakatali sa Higaan (Bedridden)' : 'Bedridden'}</option>
+                <option value="Severe Health Condition">{isTagalog ? 'Malubhang Kondisyon sa Kalusugan' : 'Severe Health Condition'}</option>
                 <option value="Solo Parent">Solo Parent</option>
-                <option value="Jobless with 2+ Minor Dependents">Jobless with 2+ Minor Dependents</option>
-                <option value="Living Alone">Living Alone</option>
-                <option value="Living with Senior Citizen Parent">Living with Senior Citizen Parent</option>
+                <option value="Jobless with 2+ Minor Dependents">{isTagalog ? 'Walang Trabaho na may 2+ na Anak na Depende' : 'Jobless with 2+ Minor Dependents'}</option>
+                <option value="Living Alone">{isTagalog ? 'Nang-iisang Namumuhay' : 'Living Alone'}</option>
+                <option value="Living with Senior Citizen Parent">{isTagalog ? 'Kasama ang Magulang na Senior Citizen' : 'Living with Senior Citizen Parent'}</option>
               </select>
             </div>
           </div>
@@ -505,7 +511,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                   : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
               }`}
             >
-              NEXT
+              {isTagalog ? 'KASUNOD' : 'NEXT'}
             </button>
           </div>
         </div>
@@ -519,10 +525,12 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
             <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
             <div>
               <h3 className={bannerTitleClass}>
-                IMPORTANT REMINDER
+                {isTagalog ? 'MAHALAGANG PAALALA' : 'IMPORTANT REMINDER'}
               </h3>
               <p className={bannerTextClass}>
-                Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service.
+                {isTagalog
+                  ? 'Mangyaring siguraduhin na ang impormasyon sa inyong QCID ay tama at kumpleto. Kung may kulang o maling detalye, makipag-ugnayan sa QCID Team bago magpatuloy.'
+                  : 'Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service.'}
               </p>
             </div>
           </div>
@@ -531,16 +539,18 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
           <div className="space-y-4">
             <div>
               <h3 className={subHeaderClass}>
-                1. APPLICANT INFORMATION
+                {isTagalog ? '1. IMPORMASYON NG APLIKANTE' : '1. APPLICANT INFORMATION'}
               </h3>
               <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                All Applicant Information fields are disabled / read-only because they have been verified from your Citizen Profile.
+                {isTagalog
+                  ? 'Ang lahat ng patlang sa Impormasyon ng Aplikante ay read-only dahil napatunayan na ang mga ito mula sa inyong Profile.'
+                  : 'All Applicant Information fields are disabled / read-only because they have been verified from your Citizen Profile.'}
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
               <div>
-                <label className={labelClass}>First name *</label>
+                <label className={labelClass}>{isTagalog ? 'Unang pangalan *' : 'First name *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -551,7 +561,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               </div>
 
               <div>
-                <label className={labelClass}>Middle name</label>
+                <label className={labelClass}>{isTagalog ? 'Gitnang pangalan' : 'Middle name'}</label>
                 <input
                   type="text"
                   readOnly
@@ -562,7 +572,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               </div>
 
               <div>
-                <label className={labelClass}>Last name *</label>
+                <label className={labelClass}>{isTagalog ? 'Apelyido *' : 'Last name *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -573,19 +583,19 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               </div>
 
               <div>
-                <label className={labelClass}>Suffix (Jr., Sr., III, etc.)</label>
+                <label className={labelClass}>{isTagalog ? 'Sufiks (Jr., Sr., III, atbp.)' : 'Suffix (Jr., Sr., III, etc.)'}</label>
                 <input
                   type="text"
                   readOnly
                   disabled
-                  placeholder="Suffix (Jr., Sr., III, etc.)"
+                  placeholder={isTagalog ? 'Sufiks (Jr., Sr., III, atbp.)' : 'Suffix (Jr., Sr., III, etc.)'}
                   value={suffix}
                   className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
                 />
               </div>
 
               <div>
-                <label className={labelClass}>Nationality *</label>
+                <label className={labelClass}>{isTagalog ? 'Nasyonalidad *' : 'Nationality *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -596,7 +606,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               </div>
 
               <div>
-                <label className={labelClass}>Date of birth *</label>
+                <label className={labelClass}>{isTagalog ? 'Petsa ng kapanganakan *' : 'Date of birth *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -607,7 +617,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               </div>
 
               <div>
-                <label className={labelClass}>Age *</label>
+                <label className={labelClass}>{isTagalog ? 'Edad *' : 'Age *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -618,33 +628,33 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               </div>
 
               <div>
-                <label className={labelClass}>Gender *</label>
+                <label className={labelClass}>{isTagalog ? 'Kasarian *' : 'Gender *'}</label>
                 <select
                   disabled
                   value={gender || 'Male'}
                   className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
                 >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
+                  <option value="Male">{isTagalog ? 'Lalaki' : 'Male'}</option>
+                  <option value="Female">{isTagalog ? 'Babae' : 'Female'}</option>
                 </select>
               </div>
 
               <div>
-                <label className={labelClass}>Civil status *</label>
+                <label className={labelClass}>{isTagalog ? 'Katayuang sibil *' : 'Civil status *'}</label>
                 <select
                   disabled
                   value={civilStatus || 'Single'}
                   className={`${inputClass} cursor-not-allowed select-none border-slate-700/50 opacity-90`}
                 >
-                  <option value="Single">Single</option>
-                  <option value="Married">Married</option>
-                  <option value="Widowed">Widowed</option>
-                  <option value="Separated">Separated</option>
+                  <option value="Single">{isTagalog ? 'Walang asawa (Single)' : 'Single'}</option>
+                  <option value="Married">{isTagalog ? 'May asawa (Married)' : 'Married'}</option>
+                  <option value="Widowed">{isTagalog ? 'Biyudo / Biyuda (Widowed)' : 'Widowed'}</option>
+                  <option value="Separated">{isTagalog ? 'Hiwalay (Separated)' : 'Separated'}</option>
                 </select>
               </div>
 
               <div>
-                <label className={labelClass}>House/Building number *</label>
+                <label className={labelClass}>{isTagalog ? 'Numero ng Bahay/Gusali *' : 'House/Building number *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -655,7 +665,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               </div>
 
               <div>
-                <label className={labelClass}>Street name *</label>
+                <label className={labelClass}>{isTagalog ? 'Pangalan ng Kalsada *' : 'Street name *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -666,7 +676,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               </div>
 
               <div>
-                <label className={labelClass}>Barangay *</label>
+                <label className={labelClass}>{isTagalog ? 'Barangay *' : 'Barangay *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -677,7 +687,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               </div>
 
               <div>
-                <label className={labelClass}>Phone number *</label>
+                <label className={labelClass}>{isTagalog ? 'Numero ng Telepono *' : 'Phone number *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -688,7 +698,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               </div>
 
               <div>
-                <label className={labelClass}>Existing PWD ID Number *</label>
+                <label className={labelClass}>{isTagalog ? 'Umiiral na Numero ng PWD ID *' : 'Existing PWD ID Number *'}</label>
                 <input
                   type="text"
                   readOnly
@@ -704,64 +714,64 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
           <div className="space-y-4 pt-4 border-t border-slate-700/40">
             <div>
               <h3 className={subHeaderClass}>
-                2. OCCUPATION / EMPLOYMENT
+                {isTagalog ? '2. TRABAHO / EMPLEYO' : '2. OCCUPATION / EMPLOYMENT'}
               </h3>
               <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Information regarding current employment status and household income
+                {isTagalog ? 'Impormasyon sa kasalukuyang katayuan sa trabaho at kita ng sambahayan' : 'Information regarding current employment status and household income'}
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Employment Status *</label>
+                <label className={labelClass}>{isTagalog ? 'Katayuan sa Trabaho *' : 'Employment Status *'}</label>
                 <select
                   value={employmentStatus}
                   onChange={(e) => setEmploymentStatus(e.target.value)}
                   className={inputClass}
                 >
-                  <option value="Unemployed / Jobless">Unemployed / Jobless</option>
-                  <option value="Employed (Private)">Employed (Private)</option>
-                  <option value="Employed (Government)">Employed (Government)</option>
-                  <option value="Self-Employed / Freelance">Self-Employed / Freelance</option>
-                  <option value="Student">Student</option>
-                  <option value="Retired">Retired</option>
+                  <option value="Unemployed / Jobless">{isTagalog ? 'Walang Trabaho (Unemployed)' : 'Unemployed / Jobless'}</option>
+                  <option value="Employed (Private)">{isTagalog ? 'Nagtatrabaho (Pribado)' : 'Employed (Private)'}</option>
+                  <option value="Employed (Government)">{isTagalog ? 'Nagtatrabaho (Gobyerno)' : 'Employed (Government)'}</option>
+                  <option value="Self-Employed / Freelance">{isTagalog ? 'Sariling Sikap / Freelance' : 'Self-Employed / Freelance'}</option>
+                  <option value="Student">{isTagalog ? 'Estudyante' : 'Student'}</option>
+                  <option value="Retired">{isTagalog ? 'Pansiyonado / Retired' : 'Retired'}</option>
                 </select>
               </div>
 
               <div>
-                <label className={labelClass}>Occupation</label>
+                <label className={labelClass}>{isTagalog ? 'Trabaho / Propesyon' : 'Occupation'}</label>
                 <input
                   type="text"
                   value={occupation}
                   onChange={(e) => setOccupation(e.target.value)}
-                  placeholder="e.g. Helper, Vendor, N/A"
+                  placeholder={isTagalog ? "hal. Tindero, Kasambahay, N/A" : "e.g. Helper, Vendor, N/A"}
                   className={inputClass}
                 />
               </div>
 
               <div>
-                <label className={labelClass}>Source of Income</label>
+                <label className={labelClass}>{isTagalog ? 'Pinagmumulan ng Kita' : 'Source of Income'}</label>
                 <input
                   type="text"
                   value={sourceOfIncome}
                   onChange={(e) => setSourceOfIncome(e.target.value)}
-                  placeholder="e.g. Family Support, Remittance, Allowance, None"
+                  placeholder={isTagalog ? "hal. Tulong ng Pamilya, Remittance, Allowance, Wala" : "e.g. Family Support, Remittance, Allowance, None"}
                   className={inputClass}
                 />
               </div>
 
               <div>
-                <label className={labelClass}>Approximate Monthly Income *</label>
+                <label className={labelClass}>{isTagalog ? 'Tinatayang Buwanang Kita *' : 'Approximate Monthly Income *'}</label>
                 <select
                   value={approxMonthlyIncome}
                   onChange={(e) => setApproxMonthlyIncome(e.target.value)}
                   className={inputClass}
                 >
-                  <option value="No Regular Income">No Regular Income</option>
-                  <option value="Below ₱10,000">Below ₱10,000</option>
+                  <option value="No Regular Income">{isTagalog ? 'Walang Regular na Kita' : 'No Regular Income'}</option>
+                  <option value="Below ₱10,000">{isTagalog ? 'Mabababa sa ₱10,000' : 'Below ₱10,000'}</option>
                   <option value="₱10,000 - ₱15,000">₱10,000 - ₱15,000</option>
                   <option value="₱15,000 - ₱20,000">₱15,000 - ₱20,000</option>
-                  <option value="Above ₱20,000">Above ₱20,000</option>
+                  <option value="Above ₱20,000">{isTagalog ? 'Higit sa ₱20,000' : 'Above ₱20,000'}</option>
                 </select>
               </div>
             </div>
@@ -771,40 +781,40 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
           <div className="space-y-4 pt-4 border-t border-slate-700/40">
             <div>
               <h3 className={subHeaderClass}>
-                3. EDUCATIONAL BACKGROUND
+                {isTagalog ? '3. PINAG-ARALAN' : '3. EDUCATIONAL BACKGROUND'}
               </h3>
               <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Educational attainment of the applicant
+                {isTagalog ? 'Antas ng pinag-aralan ng aplikante' : 'Educational attainment of the applicant'}
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Highest Educational Attainment *</label>
+                <label className={labelClass}>{isTagalog ? 'Pinakamataas na Pinag-aralan *' : 'Highest Educational Attainment *'}</label>
                 <select
                   value={highestEducation}
                   onChange={(e) => setHighestEducation(e.target.value)}
                   className={inputClass}
                 >
-                  <option value="">Select...</option>
-                  <option value="Elementary Level">Elementary Level</option>
-                  <option value="Elementary Graduate">Elementary Graduate</option>
-                  <option value="High School Level">High School Level</option>
-                  <option value="High School Graduate">High School Graduate</option>
-                  <option value="Vocational / SPED">Vocational / SPED</option>
-                  <option value="College Level">College Level</option>
-                  <option value="College Graduate">College Graduate</option>
-                  <option value="Post Graduate">Post Graduate</option>
+                  <option value="">{isTagalog ? 'Pumili...' : 'Select...'}</option>
+                  <option value="Elementary Level">{isTagalog ? 'Naka-elementarya' : 'Elementary Level'}</option>
+                  <option value="Elementary Graduate">{isTagalog ? 'Nagtapos ng Elementarya' : 'Elementary Graduate'}</option>
+                  <option value="High School Level">{isTagalog ? 'Naka-High School' : 'High School Level'}</option>
+                  <option value="High School Graduate">{isTagalog ? 'Nagtapos ng High School' : 'High School Graduate'}</option>
+                  <option value="Vocational / SPED">{isTagalog ? 'Bokasyonal / SPED' : 'Vocational / SPED'}</option>
+                  <option value="College Level">{isTagalog ? 'Naka-Kolehiyo' : 'College Level'}</option>
+                  <option value="College Graduate">{isTagalog ? 'Nagtapos ng Kolehiyo' : 'College Graduate'}</option>
+                  <option value="Post Graduate">{isTagalog ? 'Post Graduate' : 'Post Graduate'}</option>
                 </select>
               </div>
 
               <div>
-                <label className={labelClass}>Other Relevant Education Information</label>
+                <label className={labelClass}>{isTagalog ? 'Iba pang Impormasyon sa Pag-aaral' : 'Other Relevant Education Information'}</label>
                 <input
                   type="text"
                   value={otherEducationInfo}
                   onChange={(e) => setOtherEducationInfo(e.target.value)}
-                  placeholder="e.g. SPED, Vocational Training, or None"
+                  placeholder={isTagalog ? "hal. SPED, Vocational Training, o Wala" : "e.g. SPED, Vocational Training, or None"}
                   className={inputClass}
                 />
               </div>
@@ -816,10 +826,10 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
             <div className="flex justify-between items-center">
               <div>
                 <h3 className={subHeaderClass}>
-                  4. FAMILY COMPOSITION
+                  {isTagalog ? '4. MGA KASAMA SA PAMILYA' : '4. FAMILY COMPOSITION'}
                 </h3>
                 <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  To identify family members living with and dependent on the applicant
+                  {isTagalog ? 'Upang matukoy ang mga miyembro ng pamilya na kasama at nakadepende sa aplikante' : 'To identify family members living with and dependent on the applicant'}
                 </p>
               </div>
 
@@ -828,7 +838,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 onClick={handleAddFamilyMember}
                 className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer"
               >
-                <span>+ Add Family Member</span>
+                <span>{isTagalog ? '+ Magdagdag ng Miyembro' : '+ Add Family Member'}</span>
               </button>
             </div>
 
@@ -837,14 +847,14 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'
               }`}>
                 <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  No family members listed. If living alone, you may leave this blank or click the button below to add family members.
+                  {isTagalog ? 'Walang nakalaang miyembro ng pamilya. Kung nag-iisa sa buhay, maaari itong iwang bakante o i-click ang button sa ibaba.' : 'No family members listed. If living alone, you may leave this blank or click the button below to add family members.'}
                 </p>
                 <button
                   type="button"
                   onClick={handleAddFamilyMember}
                   className="px-4 py-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-500/30 transition-all inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  <span>+ Add Family Member</span>
+                  <span>{isTagalog ? '+ Magdagdag ng Miyembro' : '+ Add Family Member'}</span>
                 </button>
               </div>
             ) : (
@@ -854,11 +864,11 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                     <tr className={`border-b font-bold ${
                       darkMode ? 'border-slate-800 text-slate-400 bg-slate-900/80' : 'border-slate-200 text-slate-600 bg-slate-100'
                     }`}>
-                      <th className="py-2.5 px-3 min-w-[150px]">Name *</th>
-                      <th className="py-2.5 px-3 min-w-[120px]">Relationship</th>
-                      <th className="py-2.5 px-3 w-[80px]">Age</th>
-                      <th className="py-2.5 px-3 min-w-[130px]">Occupation / Status</th>
-                      <th className="py-2.5 px-3 text-right w-[60px]">Action</th>
+                      <th className="py-2.5 px-3 min-w-[150px]">{isTagalog ? 'Pangalan *' : 'Name *'}</th>
+                      <th className="py-2.5 px-3 min-w-[120px]">{isTagalog ? 'Relasyon' : 'Relationship'}</th>
+                      <th className="py-2.5 px-3 w-[80px]">{isTagalog ? 'Edad' : 'Age'}</th>
+                      <th className="py-2.5 px-3 min-w-[130px]">{isTagalog ? 'Trabaho / Katayuan' : 'Occupation / Status'}</th>
+                      <th className="py-2.5 px-3 text-right w-[60px]">{isTagalog ? 'Aksyon' : 'Action'}</th>
                     </tr>
                   </thead>
                   <tbody className={`divide-y ${darkMode ? 'divide-slate-800' : 'divide-slate-200'}`}>
@@ -869,7 +879,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                             type="text"
                             value={m.name}
                             onChange={(e) => updateFamilyMember(m.id, 'name', e.target.value)}
-                            placeholder="Full name"
+                            placeholder={isTagalog ? "Buong pangalan" : "Full name"}
                             className={inputClass}
                           />
                         </td>
@@ -878,7 +888,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                             type="text"
                             value={m.rel}
                             onChange={(e) => updateFamilyMember(m.id, 'rel', e.target.value)}
-                            placeholder="Son / Daughter / Spouse"
+                            placeholder={isTagalog ? "Anak / Asawa" : "Son / Daughter / Spouse"}
                             className={inputClass}
                           />
                         </td>
@@ -888,7 +898,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                             value={m.age}
                             onChange={(e) => updateFamilyMember(m.id, 'age', e.target.value.replace(/\D/g, '').slice(0, 2))}
                             maxLength={2}
-                            placeholder="Age"
+                            placeholder={isTagalog ? "Edad" : "Age"}
                             className={inputClass}
                           />
                         </td>
@@ -905,22 +915,22 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                             }}
                             className={inputClass}
                           >
-                            <option value="">Select Occupation / Status</option>
-                            <option value="Unemployed">Unemployed</option>
-                            <option value="Employed">Employed</option>
-                            <option value="Self-Employed">Self-Employed</option>
-                            <option value="Student">Student</option>
-                            <option value="Retired">Retired</option>
-                            <option value="Housewife / Househusband">Housewife / Househusband</option>
-                            <option value="None / N/A">None / N/A</option>
-                            <option value="Other">Other (Specify)</option>
+                            <option value="">{isTagalog ? 'Pumili ng Trabaho / Katayuan' : 'Select Occupation / Status'}</option>
+                            <option value="Unemployed">{isTagalog ? 'Walang Trabaho' : 'Unemployed'}</option>
+                            <option value="Employed">{isTagalog ? 'May Trabaho' : 'Employed'}</option>
+                            <option value="Self-Employed">{isTagalog ? 'Sariling Sikap' : 'Self-Employed'}</option>
+                            <option value="Student">{isTagalog ? 'Estudyante' : 'Student'}</option>
+                            <option value="Retired">{isTagalog ? 'Pansiyonado' : 'Retired'}</option>
+                            <option value="Housewife / Househusband">{isTagalog ? 'May-bahay' : 'Housewife / Househusband'}</option>
+                            <option value="None / N/A">{isTagalog ? 'Wala / N/A' : 'None / N/A'}</option>
+                            <option value="Other">{isTagalog ? 'Iba pa (Tukuyin)' : 'Other (Specify)'}</option>
                           </select>
                           {(!['Unemployed', 'Employed', 'Self-Employed', 'Student', 'Retired', 'Housewife / Househusband', 'None / N/A'].includes(m.occ) && m.occ !== '') && (
                             <input
                               type="text"
                               value={m.occ === 'Other' ? '' : m.occ}
                               onChange={(e) => updateFamilyMember(m.id, 'occ', e.target.value || 'Other')}
-                              placeholder="Specify occupation..."
+                              placeholder={isTagalog ? "Tukuyin ang trabaho..." : "Specify occupation..."}
                               className={inputClass}
                             />
                           )}
@@ -930,7 +940,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                             type="button"
                             onClick={() => handleRemoveFamilyMember(m.id)}
                             className="text-rose-500 hover:text-rose-400 p-1.5 rounded-lg border border-rose-500/20 hover:bg-rose-500/10 transition-colors"
-                            title="Remove Member"
+                            title={isTagalog ? "Alisin ang Miyembro" : "Remove Member"}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -947,15 +957,15 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
           <div className="space-y-4 pt-4 border-t border-slate-700/40">
             <div>
               <h3 className={subHeaderClass}>
-                5. ESTIMATE MONTHLY EXPENSES
+                {isTagalog ? '5. TINATAYANG BUWANANG GASTUSIN' : '5. ESTIMATE MONTHLY EXPENSES'}
               </h3>
               <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Estimated total monthly household expenses
+                {isTagalog ? 'Tinatayang kabuuang buwanang gastusin sa bahay' : 'Estimated total monthly household expenses'}
               </p>
             </div>
 
             <div className="max-w-md">
-              <label className={labelClass}>Estimated Monthly Expenses (P) *</label>
+              <label className={labelClass}>{isTagalog ? 'Tinatayang Buwanang Gastusin (₱) *' : 'Estimated Monthly Expenses (P) *'}</label>
               <div className={`flex items-center rounded-xl border overflow-hidden shadow-sm ${
                 darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'
               }`}>
@@ -975,7 +985,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 />
               </div>
               <p className={`text-[11px] mt-1.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Total monthly expenses for utilities, food, medicine, etc. (Number only, up to 5 digits only)
+                {isTagalog ? 'Kabuuang gastos sa kuryente, tubig, pagkain, gamot, atbp. (Numero lamang)' : 'Total monthly expenses for utilities, food, medicine, etc. (Number only, up to 5 digits only)'}
               </p>
             </div>
           </div>
@@ -984,24 +994,24 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
           <div className="space-y-4 pt-4 border-t border-slate-700/40">
             <div>
               <h3 className={subHeaderClass}>
-                6. ADDITIONAL INFORMATION & SWA CATEGORY
+                {isTagalog ? '6. KARAGDAGANG IMPORMASYON AT KATEGORYA NG SWA' : '6. ADDITIONAL INFORMATION & SWA CATEGORY'}
               </h3>
               <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Information needed to assess the applicant and reason for requesting assistance
+                {isTagalog ? 'Impormasyon para sa pagsusuri ng Social Worker at dahilan ng paghingi ng tulong' : 'Information needed to assess the applicant and reason for requesting assistance'}
               </p>
             </div>
 
             {/* QUALIFYING CATEGORY (PWD SWA) - AUTO-FILLED INPUT FROM STEP 1 */}
             <div className="space-y-2">
               <label className={labelClass}>
-                QUALIFYING CATEGORY (PWD SWA) *
+                {isTagalog ? 'KWALIPIKADONG KATEGORYA (PWD SWA) *' : 'QUALIFYING CATEGORY (PWD SWA) *'}
               </label>
 
               <input
                 type="text"
                 value={swaCategory || ''}
                 readOnly
-                placeholder="Auto-filled upon selecting SWA Category in Step 1"
+                placeholder={isTagalog ? "Kusang lalabas mula sa Hakbang 1" : "Auto-filled upon selecting SWA Category in Step 1"}
                 className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold border select-none ${
                   darkMode 
                     ? 'bg-slate-900/90 border-slate-700 text-blue-400 cursor-not-allowed' 
@@ -1013,13 +1023,13 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
             {/* Reason for Assistance / Assessment Details */}
             <div className="space-y-2 pt-2">
               <label className={labelClass}>
-                Reason for Assistance / Assessment Details *
+                {isTagalog ? 'Dahilan ng Paghingi ng Tulong / Detalye ng Pagsusuri *' : 'Reason for Assistance / Assessment Details *'}
               </label>
               <textarea
                 rows={3}
                 value={reasonForAssistance}
                 onChange={(e) => setReasonForAssistance(e.target.value)}
-                placeholder="e.g. In need of monthly assistance for medicine and basic living expenses due to lack of steady income..."
+                placeholder={isTagalog ? "hal. Nangangailangan ng tulong pambili ng gamot at pang-araw-araw na gastusin dahil sa kawalan ng regular na kita..." : "e.g. In need of monthly assistance for medicine and basic living expenses due to lack of steady income..."}
                 className={`w-full p-3.5 rounded-xl text-xs font-medium border outline-none transition-all ${
                   darkMode
                     ? 'bg-slate-900/90 border-slate-700 text-white placeholder-slate-500 focus:border-blue-500'
@@ -1027,7 +1037,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 }`}
               />
               <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Explain why the applicant needs assistance and any other relevant case details for the Social Worker's assessment.
+                {isTagalog ? 'Ipaliwanag kung bakit nangangailangan ng tulong ang aplikante para sa pagsusuri ng Social Worker.' : 'Explain why the applicant needs assistance and any other relevant case details for the Social Worker\'s assessment.'}
               </p>
             </div>
           </div>
@@ -1039,7 +1049,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               onClick={() => setCurrentStep(1)}
               className={backBtnClass}
             >
-              BACK
+              {isTagalog ? 'BUMALIK' : 'BACK'}
             </button>
 
             <button
@@ -1047,7 +1057,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               onClick={() => handleNextStep(3)}
               className="px-8 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold tracking-wider uppercase shadow-lg transition-all"
             >
-              NEXT
+              {isTagalog ? 'KASUNOD' : 'NEXT'}
             </button>
           </div>
         </div>
@@ -1060,30 +1070,30 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
             {[
               {
                 key: 'indigency',
-                title: 'BARANGAY CERTIFICATE OF INDIGENCY *',
-                desc: 'Issued within 6 months, with purpose: "For Social Welfare Assistance."',
+                title: isTagalog ? 'SERTIPIKASYON NG INDIGENCY MULA SA BARANGAY *' : 'BARANGAY CERTIFICATE OF INDIGENCY *',
+                desc: isTagalog ? 'Ibinigay sa loob ng huling 6 na buwan, na may layuning "Para sa Social Welfare Assistance."' : 'Issued within 6 months, with purpose: "For Social Welfare Assistance."',
                 doc: docIndigency,
                 setDoc: setDocIndigency,
               },
               {
                 key: 'medical',
-                title: 'MEDICAL CERTIFICATE *',
-                desc: 'Medical Certificate / Clinical Abstract from a licensed physician or hospital certifying the medical condition or disability.',
+                title: isTagalog ? 'SERTIPIKADONG MEDIKAL *' : 'MEDICAL CERTIFICATE *',
+                desc: isTagalog ? 'Sertipikadong Medikal / Clinical Abstract mula sa lisensyadong doktor o ospital na nagpapatunay ng kondisyon.' : 'Medical Certificate / Clinical Abstract from a licensed physician or hospital certifying the medical condition or disability.',
                 doc: docMedical,
                 setDoc: setDocMedical,
               },
               {
                 key: 'pwd',
-                title: 'QC PWD ID / APPLICABLE IDENTIFICATION *',
-                desc: 'Clear photo of your QCitizen PWD ID or any applicable identification card (front and back).',
+                title: isTagalog ? 'QC PWD ID / ANUMANG KILALANG IDENTIPIKASYON *' : 'QC PWD ID / APPLICABLE IDENTIFICATION *',
+                desc: isTagalog ? 'Malinaw na larawan ng iyong QCitizen PWD ID o anumang valid ID (harap at likod).' : 'Clear photo of your QCitizen PWD ID or any applicable identification card (front and back).',
                 doc: docPwdId,
                 setDoc: setDocPwdId,
               },
               {
                 key: 'residency',
-                title: 'REQUIRED PHOTO / DOCUMENTATION DEPENDING ON DISABILITY *',
-                desc: 'Litrato/Dokumento depende sa disability (e.g., whole-body photo with calendar for bedridden beneficiaries, Solo Parent ID/Cert, or proof of vulnerability).',
-                alert: 'If bedridden: Whole-body photo with a calendar showing the current date.',
+                title: isTagalog ? 'KAILANGANG LITRATO / DOKUMENTASYON DIPENDE SA KAPANSANAN *' : 'REQUIRED PHOTO / DOCUMENTATION DEPENDING ON DISABILITY *',
+                desc: isTagalog ? 'Litrato/Dokumento depende sa disability (e.g., buong katawan na may kalendaryo para sa bedridden, Solo Parent ID/Cert, o patunay ng kahinaan).' : 'Litrato/Dokumento depende sa disability (e.g., whole-body photo with calendar for bedridden beneficiaries, Solo Parent ID/Cert, or proof of vulnerability).',
+                alert: isTagalog ? 'Kung bedridden: Buong larawan ng katawan na may kalendaryo na nagpapakita ng kasalukuyang petsa.' : 'If bedridden: Whole-body photo with a calendar showing the current date.',
                 doc: docResidency,
                 setDoc: setDocResidency,
               },
@@ -1109,7 +1119,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                   )}
 
                   <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-3">
-                    Allowed file types: JPG, JPEG, PNG, WEBP (or capture using Camera)
+                    {isTagalog ? 'Pinapayagang uri ng file: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Kamera)' : 'Allowed file types: JPG, JPEG, PNG, WEBP (or capture using Camera)'}
                   </p>
 
                   {item.doc && (
@@ -1127,7 +1137,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                             item.setDoc(null);
                           }}
                           className="absolute -top-2 -right-2 w-6 h-6 bg-slate-700 hover:bg-red-600 text-white rounded-full flex items-center justify-center border border-slate-600 shadow-md transition-all cursor-pointer z-10"
-                          title="Remove photo"
+                          title={isTagalog ? "Alisin ang larawan" : "Remove photo"}
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -1157,7 +1167,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 <div className="flex items-center gap-3 pt-4">
                   <label className="py-2.5 px-5 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-xs font-extrabold flex items-center gap-2 cursor-pointer transition-all shadow-sm uppercase tracking-wider">
                     <Upload className="w-4 h-4" />
-                    <span>UPLOAD PHOTO</span>
+                    <span>{isTagalog ? 'MAG-UPLOAD NG LITRATO' : 'UPLOAD PHOTO'}</span>
                     <input
                       type="file"
                       accept="image/*,.pdf"
@@ -1182,7 +1192,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                     className="py-2.5 px-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full text-xs font-extrabold flex items-center gap-2 transition-all shadow-sm uppercase tracking-wider"
                   >
                     <Camera className="w-4 h-4" />
-                    <span>TAKE PHOTO (CAMERA)</span>
+                    <span>{isTagalog ? 'KUMUHA NG LITRATO (KAMERA)' : 'TAKE PHOTO (CAMERA)'}</span>
                   </button>
                 </div>
               </div>
@@ -1195,7 +1205,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               onClick={() => setCurrentStep(2)}
               className={backBtnClass}
             >
-              BACK
+              {isTagalog ? 'BUMALIK' : 'BACK'}
             </button>
 
             <button
@@ -1203,7 +1213,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               onClick={() => handleNextStep(4)}
               className="px-8 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold tracking-wider uppercase shadow-lg transition-all"
             >
-              NEXT
+              {isTagalog ? 'KASUNOD' : 'NEXT'}
             </button>
           </div>
         </div>
@@ -1214,10 +1224,10 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
         <div className="space-y-6 pt-2">
           <div className="space-y-1 mb-4">
             <h3 className={`text-base sm:text-lg font-extrabold tracking-wide uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-              REVIEW YOUR APPLICATION
+              {isTagalog ? 'SURIIN ANG IYONG APLIKASYON' : 'REVIEW YOUR APPLICATION'}
             </h3>
             <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Please review all information carefully before submitting your application. You can edit any section by clicking the edit button.
+              {isTagalog ? 'Mangyaring suriin nang mabuti ang lahat ng impormasyon bago ipasa ang aplikasyon. Maaari mong baguhin ang anumang bahagi sa pag-click ng "Baguhin".' : 'Please review all information carefully before submitting your application. You can edit any section by clicking the edit button.'}
             </p>
           </div>
 
@@ -1227,7 +1237,9 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               <div className={`p-4 flex items-center justify-between border-b ${darkMode ? 'bg-[#101c38] border-slate-800/80' : 'bg-slate-100 border-slate-200'}`}>
                 <div className="flex items-center gap-2">
                   <ChevronUp className={`w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>PWD & Assistance Category</h4>
+                  <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                    {isTagalog ? 'Kategorya ng PWD at Tulong' : 'PWD & Assistance Category'}
+                  </h4>
                 </div>
                 <button
                   type="button"
@@ -1235,21 +1247,27 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                   className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
                 >
                   <Pencil className="w-3.5 h-3.5" />
-                  <span>EDIT</span>
+                  <span>{isTagalog ? 'BAGUHIN' : 'EDIT'}</span>
                 </button>
               </div>
               <div className="p-5 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-6">
                   <div>
-                    <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>PWD ID NUMBER</span>
+                    <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {isTagalog ? 'NUMERO NG PWD ID' : 'PWD ID NUMBER'}
+                    </span>
                     <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{pwdIdNumber ? `PWD-${pwdIdNumber}` : 'N/A'}</span>
                   </div>
                   <div>
-                    <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>TYPE OF DISABILITY</span>
-                    <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{typeOfDisability || 'Auto-filled upon PWD ID verification'}</span>
+                    <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {isTagalog ? 'URI NG KAPANSANAN' : 'TYPE OF DISABILITY'}
+                    </span>
+                    <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{typeOfDisability || (isTagalog ? 'Kusang lalabas' : 'Auto-filled upon PWD ID verification')}</span>
                   </div>
                   <div>
-                    <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CATEGORY REQUESTED</span>
+                    <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {isTagalog ? 'HINIHINGING KATEGORYA' : 'CATEGORY REQUESTED'}
+                    </span>
                     <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{swaCategory || 'Bedridden'}</span>
                   </div>
                 </div>
@@ -1261,7 +1279,9 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               <div className={`p-4 flex items-center justify-between border-b ${darkMode ? 'bg-[#101c38] border-slate-800/80' : 'bg-slate-100 border-slate-200'}`}>
                 <div className="flex items-center gap-2">
                   <ChevronUp className={`w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Personal information</h4>
+                  <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                    {isTagalog ? 'Personal na Impormasyon' : 'Personal information'}
+                  </h4>
                 </div>
                 <button
                   type="button"
@@ -1269,62 +1289,62 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                   className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
                 >
                   <Pencil className="w-3.5 h-3.5" />
-                  <span>EDIT</span>
+                  <span>{isTagalog ? 'BAGUHIN' : 'EDIT'}</span>
                 </button>
               </div>
               <div className="p-5 space-y-6">
                 {/* Section 1: Primary Personal Information */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    PERSONAL INFORMATION
+                    {isTagalog ? 'PERSONAL NA IMPORMASYON' : 'PERSONAL INFORMATION'}
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>FIRST NAME</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'UNANG PANGALAN' : 'FIRST NAME'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{firstName || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>MIDDLE NAME</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'GITNANG PANGALAN' : 'MIDDLE NAME'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{middleName || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>LAST NAME</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'APELYIDO' : 'LAST NAME'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{lastName || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SUFFIX</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{suffix || 'None'}</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'SUFIKS' : 'SUFFIX'}</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{suffix || (isTagalog ? 'Wala' : 'None')}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>NATIONALITY</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'NASYONALIDAD' : 'NATIONALITY'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{nationality || 'FILIPINO'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>DATE OF BIRTH / AGE</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{dob || 'N/A'} ({age ? `${age} yrs` : 'N/A'})</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PETSA NG KAPANGANAKAN / EDAD' : 'DATE OF BIRTH / AGE'}</span>
+                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{dob || 'N/A'} ({age ? `${age} ${isTagalog ? 'taon' : 'yrs'}` : 'N/A'})</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>GENDER / SEX</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'KASARIAN' : 'GENDER / SEX'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{gender || 'Male'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CIVIL STATUS</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'KATAYUANG SIBIL' : 'CIVIL STATUS'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{civilStatus || 'Single'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>HOUSE / BUILDING NO. & STREET</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'NUMERO NG BAHAY AT KALSADA' : 'HOUSE / BUILDING NO. & STREET'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{houseNo || 'N/A'} {street}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>BARANGAY</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'BARANGAY' : 'BARANGAY'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{barangay || 'N/A'}, Quezon City</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>CONTACT / PHONE NUMBER</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'NUMERO NG TELEPONO' : 'CONTACT / PHONE NUMBER'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{phone || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>REGISTERED EMAIL ADDRESS</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'NAKATALA NA EMAIL ADDRESS' : 'REGISTERED EMAIL ADDRESS'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{email || 'N/A'}</span>
                     </div>
                   </div>
@@ -1333,23 +1353,23 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 {/* Section 2: Occupation / Employment */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    OCCUPATION / EMPLOYMENT
+                    {isTagalog ? 'TRABAHO / EMPLEYO' : 'OCCUPATION / EMPLOYMENT'}
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>EMPLOYMENT STATUS</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'KATAYUAN SA TRABAHO' : 'EMPLOYMENT STATUS'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{employmentStatus || 'Unemployed / Jobless'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>OCCUPATION</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'TRABAHO / PROPESYON' : 'OCCUPATION'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{occupation || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>SOURCE OF INCOME</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PINAGMUMULAN NG KITA' : 'SOURCE OF INCOME'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{sourceOfIncome || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>APPROXIMATE MONTHLY INCOME</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'TINATAYANG BUWANANG KITA' : 'APPROXIMATE MONTHLY INCOME'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{approxMonthlyIncome || 'No Regular Income'}</span>
                     </div>
                   </div>
@@ -1358,15 +1378,15 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 {/* Section 3: Educational Background */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    EDUCATIONAL BACKGROUND
+                    {isTagalog ? 'PINAG-ARALAN' : 'EDUCATIONAL BACKGROUND'}
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>HIGHEST EDUCATIONAL ATTAINMENT</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PINAKAMATAAS NA PINAG-ARALAN' : 'HIGHEST EDUCATIONAL ATTAINMENT'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{highestEducation || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>OTHER EDUCATION INFO</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'IBA PANG IMPORMASYON SA PAG-AARAL' : 'OTHER EDUCATION INFO'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{otherEducationInfo || 'N/A'}</span>
                     </div>
                   </div>
@@ -1375,7 +1395,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 {/* Section 4: Family Composition */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    FAMILY COMPOSITION
+                    {isTagalog ? 'MGA KASAMA SA PAMILYA' : 'FAMILY COMPOSITION'}
                   </h5>
                   {familyMembers.length > 0 ? (
                     <div className="space-y-2">
@@ -1386,26 +1406,26 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                           <div>
                             <span className={`font-bold block ${darkMode ? 'text-white' : 'text-slate-900'}`}>{m.name}</span>
                             <span className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                              Rel: {m.rel} | Age: {m.age} yrs | Occ: {m.occ}
+                              Rel: {m.rel} | {isTagalog ? 'Edad' : 'Age'}: {m.age} {isTagalog ? 'taon' : 'yrs'} | Trabaho: {m.occ}
                             </span>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className={`text-xs italic ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>No family members listed.</p>
+                    <p className={`text-xs italic ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'Walang nakatalang miyembro ng pamilya.' : 'No family members listed.'}</p>
                   )}
                 </div>
 
                 {/* Section 5: Monthly Expenses */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    MONTHLY EXPENSES
+                    {isTagalog ? 'BUWANANG GASTUSIN' : 'MONTHLY EXPENSES'}
                   </h5>
                   <div className="text-xs">
-                    <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>ESTIMATED MONTHLY EXPENSES</span>
+                    <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'TINATAYANG BUWANANG GASTUSIN' : 'ESTIMATED MONTHLY EXPENSES'}</span>
                     <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                      {monthlyExpenses ? (monthlyExpenses.startsWith('₱') ? monthlyExpenses : `₱${!isNaN(Number(monthlyExpenses)) ? Number(monthlyExpenses).toLocaleString('en-US') : monthlyExpenses}`) : 'Not Specified'}
+                      {monthlyExpenses ? (monthlyExpenses.startsWith('₱') ? monthlyExpenses : `₱${!isNaN(Number(monthlyExpenses)) ? Number(monthlyExpenses).toLocaleString('en-US') : monthlyExpenses}`) : (isTagalog ? 'Hindi Tinukoy' : 'Not Specified')}
                     </span>
                   </div>
                 </div>
@@ -1413,15 +1433,15 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                 {/* Section 6: Additional Information & SWA Category */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    ADDITIONAL INFORMATION & SWA CATEGORY
+                    {isTagalog ? 'KARAGDAGANG IMPORMASYON AT KATEGORYA NG SWA' : 'ADDITIONAL INFORMATION & SWA CATEGORY'}
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>QUALIFYING CATEGORY (PWD SWA)</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'KWALIPIKADONG KATEGORYA (PWD SWA)' : 'QUALIFYING CATEGORY (PWD SWA)'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{swaCategory || 'N/A'}</span>
                     </div>
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>REASON FOR ASSISTANCE / ASSESSMENT</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'DAHILAN NG PAGHINGI NG TULONG' : 'REASON FOR ASSISTANCE / ASSESSMENT'}</span>
                       <span className={`font-bold leading-relaxed ${darkMode ? 'text-white' : 'text-slate-900'}`}>{reasonForAssistance || 'N/A'}</span>
                     </div>
                   </div>
@@ -1434,7 +1454,9 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               <div className={`p-4 flex items-center justify-between border-b ${darkMode ? 'bg-[#101c38] border-slate-800/80' : 'bg-slate-100 border-slate-200'}`}>
                 <div className="flex items-center gap-2">
                   <ChevronUp className={`w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                  <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Required documents</h4>
+                  <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                    {isTagalog ? 'Mga kailangang dokumento' : 'Required documents'}
+                  </h4>
                 </div>
                 <button
                   type="button"
@@ -1442,15 +1464,15 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                   className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
                 >
                   <Pencil className="w-3.5 h-3.5" />
-                  <span>EDIT</span>
+                  <span>{isTagalog ? 'BAGUHIN' : 'EDIT'}</span>
                 </button>
               </div>
               <div className="p-5 space-y-4">
                 {[
-                  { key: 'indigency', title: 'BARANGAY CERTIFICATE OF INDIGENCY *', doc: docIndigency },
-                  { key: 'medical', title: 'MEDICAL CERTIFICATE *', doc: docMedical },
-                  { key: 'pwd', title: 'QC PWD ID / APPLICABLE IDENTIFICATION *', doc: docPwdId },
-                  { key: 'residency', title: 'REQUIRED PHOTO / DOCUMENTATION DEPENDING ON DISABILITY *', doc: docResidency },
+                  { key: 'indigency', title: isTagalog ? 'SERTIPIKASYON NG INDIGENCY MULA SA BARANGAY *' : 'BARANGAY CERTIFICATE OF INDIGENCY *', doc: docIndigency },
+                  { key: 'medical', title: isTagalog ? 'SERTIPIKADONG MEDIKAL *' : 'MEDICAL CERTIFICATE *', doc: docMedical },
+                  { key: 'pwd', title: isTagalog ? 'QC PWD ID / ANUMANG KILALANG IDENTIPIKASYON *' : 'QC PWD ID / APPLICABLE IDENTIFICATION *', doc: docPwdId },
+                  { key: 'residency', title: isTagalog ? 'KAILANGANG LITRATO / DOKUMENTASYON DIPENDE SA KAPANSANAN *' : 'REQUIRED PHOTO / DOCUMENTATION DEPENDING ON DISABILITY *', doc: docResidency },
                 ].map((item) => {
                   return (
                     <div key={item.key} className="space-y-2">
@@ -1485,7 +1507,9 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
                         </div>
                       ) : (
                         <div className="pt-0.5">
-                          <span className={`text-xs italic ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No photo uploaded</span>
+                          <span className={`text-xs italic ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {isTagalog ? 'Walang na-upload na larawan' : 'No photo uploaded'}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -1502,7 +1526,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               onClick={() => setCurrentStep(3)}
               className={backBtnClass}
             >
-              BACK
+              {isTagalog ? 'BUMALIK' : 'BACK'}
             </button>
 
             <button
@@ -1510,7 +1534,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
               onClick={handleSubmitApplication}
               className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold tracking-wider uppercase transition-all shadow-lg shadow-blue-600/30"
             >
-              SUBMIT
+              {isTagalog ? 'IPASA' : 'SUBMIT'}
             </button>
           </div>
         </div>

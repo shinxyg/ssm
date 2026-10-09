@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { 
   ArrowLeft, 
   FileText, 
@@ -174,6 +175,8 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
   onAddApplication,
   darkMode = true,
 }) => {
+  const { language } = useLanguage();
+  const isTagalog = language === 'Tagalog';
   // Stepper state (1: COMPLETE CHECKLIST, 2: PERSONAL INFORMATION, 3: UPLOAD DOCUMENTS, 4: REVIEW & SUBMIT)
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isEditingFromStep4, setIsEditingFromStep4] = useState<boolean>(false);
@@ -582,14 +585,14 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className={`text-base sm:text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    Requirements for Application of QC Funeral Assistance
+                    {isTagalog ? 'Mga Kailangan sa Aplikasyon ng QC Funeral Assistance' : 'Requirements for Application of QC Funeral Assistance'}
                   </h2>
                   <span className="px-2.5 py-0.5 bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 text-[11px] font-mono rounded-full font-semibold">
                     newApplication
                   </span>
                 </div>
                 <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Official service for QC AICS Crisis Assistance.
+                  {isTagalog ? 'Opisyal na serbisyo para sa QC AICS Crisis Assistance.' : 'Official service for QC AICS Crisis Assistance.'}
                 </p>
               </div>
             </div>
@@ -600,7 +603,7 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
               className="px-4 py-2 border border-blue-500/40 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5"
             >
               <Info className="w-3.5 h-3.5" />
-              <span>View Requirements</span>
+              <span>{isTagalog ? 'Tingnan ang mga Kailangan' : 'View Requirements'}</span>
             </button>
           </div>
         )}
@@ -647,10 +650,10 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
           {/* Stepper Tabs Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center max-w-4xl mx-auto">
             {[
-              { num: 1, label: 'COMPLETE CHECKLIST' },
-              { num: 2, label: 'PERSONAL INFORMATION' },
-              { num: 3, label: 'UPLOAD DOCUMENTS' },
-              { num: 4, label: 'REVIEW & SUBMIT' },
+              { num: 1, label: isTagalog ? 'KOMPLETONG TSEKLIST' : 'COMPLETE CHECKLIST' },
+              { num: 2, label: isTagalog ? 'PERSONAL NA IMPORMASYON' : 'PERSONAL INFORMATION' },
+              { num: 3, label: isTagalog ? 'PAG-UPLOAD NG DOKUMENTO' : 'UPLOAD DOCUMENTS' },
+              { num: 4, label: isTagalog ? 'PAGSUSURI AT PAG-SUBMIT' : 'REVIEW & SUBMIT' },
             ].map((step) => {
               const isActive = currentStep === step.num;
               return (

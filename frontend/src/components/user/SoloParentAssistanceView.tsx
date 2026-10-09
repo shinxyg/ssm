@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { 
   ArrowLeft, 
   FileText, 
@@ -49,6 +50,8 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
   onNavigateToModule,
   applications = [],
 }) => {
+  const { language, t } = useLanguage();
+  const isTagalog = language === 'Tagalog';
   // Wizard Stepper State: 1 = COMPLETE CHECKLIST / VERIFICATION, 2 = APPLICATION FORM, 3 = UPLOAD DOCUMENTS, 4 = REVIEW & SUBMIT
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isEditingFromStep4, setIsEditingFromStep4] = useState<boolean>(false);
@@ -513,10 +516,10 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
               </div>
               <div>
                 <h2 className={`text-base sm:text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                  Solo Parent Financial Subsidy — Primary Requirements
+                  {isTagalog ? 'Pinansyal na Ayuda para sa Solo Parent — Pangunahing Kailangan' : 'Solo Parent Financial Subsidy — Primary Requirements'}
                 </h2>
                 <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Complete the primary qualification questions below and prepare the required documents to proceed with your application.
+                  {isTagalog ? 'Kumpletuhin ang mga pangunahing katanungan sa ibaba at ihanda ang mga kailangang dokumento upang magpatuloy sa iyong aplikasyon.' : 'Complete the primary qualification questions below and prepare the required documents to proceed with your application.'}
                 </p>
               </div>
             </div>
@@ -527,7 +530,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
               className="px-4 py-2 border border-blue-500/40 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5"
             >
               <Info className="w-3.5 h-3.5" />
-              <span>View Requirements</span>
+              <span>{isTagalog ? 'Tingnan ang mga Kailangan' : 'View Requirements'}</span>
             </button>
           </div>
         )}
@@ -573,10 +576,10 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
           {/* Pill Buttons directly matching reference screenshot */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-w-4xl mx-auto">
             {[
-              { step: 1, label: 'COMPLETE CHECKLIST' },
-              { step: 2, label: 'APPLICATION FORM' },
-              { step: 3, label: 'UPLOAD DOCUMENTS' },
-              { step: 4, label: 'REVIEW & SUBMIT' },
+              { step: 1, label: isTagalog ? 'KOMPLETONG TSEKLIST' : 'COMPLETE CHECKLIST' },
+              { step: 2, label: isTagalog ? 'PORMA NG APLIKASYON' : 'APPLICATION FORM' },
+              { step: 3, label: isTagalog ? 'PAG-UPLOAD NG DOKUMENTO' : 'UPLOAD DOCUMENTS' },
+              { step: 4, label: isTagalog ? 'PAGSUSURI AT PAG-SUBMIT' : 'REVIEW & SUBMIT' },
             ].map((tab) => {
               const isActive = currentStep === tab.step;
               return (
@@ -617,10 +620,10 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                 <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <h3 className="text-xs font-extrabold uppercase tracking-wider text-blue-400 dark:text-blue-300">
-                    SOLO PARENT SECTOR: QUALIFIED APPLICANTS MAY RECEIVE FINANCIAL SUBSIDY.
+                    {isTagalog ? 'SEKTOR NG SOLO PARENT: ANG MGA QUALIFIED NA APLIKANTE AY MAAARING MAKATANGGAP NG PINANSYAL NA AYUDA.' : 'SOLO PARENT SECTOR: QUALIFIED APPLICANTS MAY RECEIVE FINANCIAL SUBSIDY.'}
                   </h3>
                   <p className="text-xs leading-relaxed font-medium">
-                    For qualified Solo Parents who meet the applicable income and program requirements. Eligibility is subject to document verification and assessment before approval.
+                    {isTagalog ? 'Para sa mga qualified na Solo Parent na nakakatugon sa mga kinakailangang pamantayan sa kita at programa. Ang pagiging kwalipikado ay nakasalalay sa beripikasyon ng mga dokumento at pagsusuri bago maaprubahan.' : 'For qualified Solo Parents who meet the applicable income and program requirements. Eligibility is subject to document verification and assessment before approval.'}
                   </p>
                 </div>
               </div>
@@ -628,7 +631,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
               {/* Qualification & Verification Section */}
               <div className="space-y-6 pt-2">
                 <h2 className={`text-xs font-extrabold tracking-wider uppercase mb-3 ${darkMode ? 'text-slate-300' : 'text-slate-800'}`}>
-                  SOLO PARENT ID VERIFICATION & EMPLOYMENT STATUS
+                  {isTagalog ? 'BERIPIKASYON NG SOLO PARENT ID AT ESTADO NG TRABAHO' : 'SOLO PARENT ID VERIFICATION & EMPLOYMENT STATUS'}
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -636,7 +639,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                   {/* Solo Parent ID Number & Verify Button */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold tracking-wide uppercase text-slate-300 flex items-center gap-1">
-                      SOLO PARENT ID NUMBER <span className="text-rose-500">*</span>
+                      {isTagalog ? 'NUMERO NG SOLO PARENT ID' : 'SOLO PARENT ID NUMBER'} <span className="text-rose-500">*</span>
                     </label>
                     <div className="flex items-center gap-2">
                       <input
@@ -659,7 +662,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                         disabled={isVerifyingId}
                         className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold uppercase tracking-wider rounded-xl border border-blue-400/30 transition-all shrink-0 disabled:opacity-50"
                       >
-                        {isVerifyingId ? 'VERIFYING...' : 'VERIFY SOLO PARENT ID'}
+                        {isVerifyingId ? (isTagalog ? 'TINUTUKOY...' : 'VERIFYING...') : (isTagalog ? 'I-VERIFY ANG SOLO PARENT ID' : 'VERIFY SOLO PARENT ID')}
                       </button>
                     </div>
                   </div>
@@ -668,7 +671,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                   {isSoloParentIdVerified ? (
                     <div className="space-y-2 animate-fadeIn">
                       <label className="text-xs font-bold tracking-wide uppercase text-slate-300 flex items-center gap-1">
-                        SOLO PARENT STATUS <span className="text-rose-500">*</span>
+                        {isTagalog ? 'ESTADO NG SOLO PARENT ID' : 'SOLO PARENT STATUS'} <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative">
                         <input
@@ -684,16 +687,16 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 absolute right-3 top-3" />
                       </div>
                       <p className="text-[11px] text-emerald-400 font-medium">
-                        ✓ Verified against official Solo Parent Registry database.
+                        {isTagalog ? '✓ Na-verify kumpara sa opisyal na Solo Parent Registry database.' : '✓ Verified against official Solo Parent Registry database.'}
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2 opacity-60">
                       <label className="text-xs font-bold tracking-wide uppercase text-slate-400 flex items-center gap-1">
-                        SOLO PARENT STATUS <span className="text-rose-500">*</span>
+                        {isTagalog ? 'ESTADO NG SOLO PARENT ID' : 'SOLO PARENT STATUS'} <span className="text-rose-500">*</span>
                       </label>
                       <div className="w-full px-4 py-2.5 rounded-xl border border-dashed border-slate-700/80 bg-slate-900/30 text-xs text-slate-500 italic flex items-center justify-between">
-                        <span>Will auto-fill upon Solo Parent ID verification...</span>
+                        <span>{isTagalog ? 'Kusa itong mapupunan pagkatapos i-verify ang Solo Parent ID...' : 'Will auto-fill upon Solo Parent ID verification...'}</span>
                       </div>
                     </div>
                   )}
@@ -703,7 +706,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                 {/* Employment Status Dropdown */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold tracking-wide uppercase text-slate-300 flex items-center gap-1">
-                    EMPLOYMENT STATUS <span className="text-rose-500">*</span>
+                    {isTagalog ? 'ESTADO NG TRABAHO' : 'EMPLOYMENT STATUS'} <span className="text-rose-500">*</span>
                   </label>
                   <select
                     value={employmentStatusStep1}
@@ -714,10 +717,10 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                         : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500'
                     }`}
                   >
-                    <option value="">Select...</option>
-                    <option value="Employed">Employed</option>
-                    <option value="Unemployed">Unemployed</option>
-                    <option value="Informal Economy Worker">Informal Economy Worker</option>
+                    <option value="">{isTagalog ? 'Pumili...' : 'Select...'}</option>
+                    <option value="Employed">{isTagalog ? 'May Trabaho (Employed)' : 'Employed'}</option>
+                    <option value="Unemployed">{isTagalog ? 'Walang Trabaho (Unemployed)' : 'Unemployed'}</option>
+                    <option value="Informal Economy Worker">{isTagalog ? 'Nasa Informal Economy (Self-employed)' : 'Informal Economy Worker'}</option>
                   </select>
                 </div>
 
@@ -735,7 +738,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                       : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                   }`}
                 >
-                  <span>NEXT</span>
+                  <span>{isTagalog ? 'KASUNOD' : 'NEXT'}</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -750,14 +753,14 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
               <div className="border-b border-slate-800 pb-3">
                 <h2 className="text-sm font-extrabold uppercase tracking-wider text-blue-400 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-blue-400" />
-                  Suggested Online Financial Subsidy Application Form
+                  {isTagalog ? 'Iminumungkahing Online Porma ng Aplikasyon sa Financial Subsidy' : 'Suggested Online Financial Subsidy Application Form'}
                 </h2>
               </div>
 
               {/* Applicant Information */}
               <div className="space-y-4">
                 <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-300 border-b border-slate-800 pb-2">
-                  Applicant Information
+                  {isTagalog ? 'Impormasyon ng Aplikante' : 'Applicant Information'}
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1239,20 +1242,22 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
           {currentStep === 3 && (
             <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-200">
               <div className="space-y-1 mb-6">
-                <h3 className={`text-base sm:text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>File upload</h3>
+                <h3 className={`text-base sm:text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                  {isTagalog ? 'Pag-upload ng File' : 'File upload'}
+                </h3>
                 <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Make sure to upload the appropriate documents for each category and verify that all details—such as your full name (first, middle, and last name) and address—match the information on your QC ID.
+                  {isTagalog ? 'Tiyaking i-upload ang angkop na mga dokumento para sa bawat kategorya at beripikahin na ang lahat ng detalye—tulad ng buong pangalan at tirahan—ay tumutugma sa impormasyon sa iyong QC ID.' : 'Make sure to upload the appropriate documents for each category and verify that all details—such as your full name (first, middle, and last name) and address—match the information on your QC ID.'}
                 </p>
                 <p className={`text-xs leading-relaxed mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Upload clear and legible copies of the required documents (JPG, JPEG, PNG, WEBP, or PDF).
+                  {isTagalog ? 'Mag-upload ng malinaw at nababasang kopya ng mga kailangang dokumento (JPG, JPEG, PNG, WEBP, o PDF).' : 'Upload clear and legible copies of the required documents (JPG, JPEG, PNG, WEBP, or PDF).'}
                 </p>
               </div>
 
               <div className="space-y-4">
                 {[
-                  { key: 'proof_income', title: 'ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY *' },
-                  { key: 'qcid', title: 'QCITIZEN ID *' },
-                  { key: 'spic', title: 'SOLO PARENT ID / CERTIFICATION *' },
+                  { key: 'proof_income', title: isTagalog ? 'ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY *' : 'ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY *' },
+                  { key: 'qcid', title: isTagalog ? 'QCITIZEN ID (QC ID) *' : 'QCITIZEN ID *' },
+                  { key: 'spic', title: isTagalog ? 'SOLO PARENT ID / CERTIFICATION *' : 'SOLO PARENT ID / CERTIFICATION *' },
                 ].map((doc) => {
                   const uploaded = uploadedFiles[doc.key];
                   const previewUrl = uploaded ? URL.createObjectURL(uploaded) : null;
@@ -1279,7 +1284,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                           )}
                         </div>
                         <span className={`text-[11px] block mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                          Allowed file types: JPG, JPEG, PNG, WEBP (or capture using Camera)
+                          {isTagalog ? 'Mga pinapahintulutang uri ng file: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Kamera)' : 'Allowed file types: JPG, JPEG, PNG, WEBP (or capture using Camera)'}
                         </span>
                       </div>
 
@@ -1287,7 +1292,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                       <div className="flex flex-wrap items-center gap-3 pt-1">
                         <label className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold cursor-pointer inline-flex items-center gap-2 transition-all shadow-md">
                           <Upload className="w-4 h-4" />
-                          <span>UPLOAD PHOTO</span>
+                          <span>{isTagalog ? 'MAG-UPLOAD NG LARAWAN' : 'UPLOAD PHOTO'}</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -1302,7 +1307,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                           className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold cursor-pointer inline-flex items-center gap-2 transition-all shadow-md"
                         >
                           <Camera className="w-4 h-4" />
-                          <span>TAKE PHOTO (CAMERA)</span>
+                          <span>{isTagalog ? 'KUMUHA NG LARAWAN (KAMERA)' : 'TAKE PHOTO (CAMERA)'}</span>
                         </button>
                       </div>
 
@@ -1366,14 +1371,14 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                   onClick={() => setCurrentStep(2)}
                   className="px-6 py-2.5 rounded-xl border border-slate-700 text-xs font-bold uppercase text-slate-300 hover:bg-slate-800"
                 >
-                  BACK
+                  {isTagalog ? 'BUMALIK' : 'BACK'}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleNextStep(4)}
                   className="px-8 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white shadow-none transition-all"
                 >
-                  <span>NEXT</span>
+                  <span>{isTagalog ? 'KASUNOD' : 'NEXT'}</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -1388,7 +1393,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
               <div className="border-b border-slate-800 pb-3">
                 <h2 className="text-sm font-extrabold uppercase tracking-wider text-blue-400 flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-blue-400" />
-                  Step 4: Review & Submit Application
+                  {isTagalog ? 'Hakbang 4: Pagsusuri at Pag-submit ng Aplikasyon' : 'Step 4: Review & Submit Application'}
                 </h2>
               </div>
 
@@ -1396,21 +1401,23 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                 {/* 1. Personal & Application Information Section Card (Step 2) */}
                 <div className={`border rounded-2xl overflow-hidden ${darkMode ? 'bg-[#0e1933]/60 border-slate-800' : 'bg-slate-50/80 border-slate-200 shadow-sm'}`}>
                   <div className={`p-4 flex items-center justify-between border-b ${darkMode ? 'bg-[#101c38] border-slate-800/80' : 'bg-slate-100 border-slate-200'}`}>
-                    <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Personal & Application Information</h4>
+                    <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                      {isTagalog ? 'Personal na Impormasyon at Aplikasyon' : 'Personal & Application Information'}
+                    </h4>
                     <button
                       type="button"
                       onClick={() => handleEditStepFromReview(2)}
                       className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
                     >
                       <Pencil className="w-3.5 h-3.5" />
-                      <span>EDIT</span>
+                      <span>{isTagalog ? 'BAGUHIN' : 'EDIT'}</span>
                     </button>
                   </div>
                   <div className="p-5 space-y-6">
                     {/* 1. Applicant Information Grid */}
                     <div>
                       <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                        1. APPLICANT INFORMATION
+                        {isTagalog ? '1. IMPORMASYON NG APLIKANTE' : '1. APPLICANT INFORMATION'}
                       </h5>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
                         <div>
@@ -1479,7 +1486,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                     {/* 2. Solo Parent Information */}
                     <div className={`pt-4 border-t ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
                       <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                        2. SOLO PARENT INFORMATION
+                        {isTagalog ? '2. IMPORMASYON BILANG SOLO PARENT' : '2. SOLO PARENT INFORMATION'}
                       </h5>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs">
                         <div>
@@ -1500,7 +1507,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                     {/* 3. Employment & Income Information */}
                     <div className={`pt-4 border-t ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
                       <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                        3. EMPLOYMENT & INCOME INFORMATION
+                        {isTagalog ? '3. IMPORMASYON SA TRABAHO AT KITA' : '3. EMPLOYMENT & INCOME INFORMATION'}
                       </h5>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs">
                         <div>
@@ -1525,7 +1532,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                     {/* 4. Other Government Assistance */}
                     <div className={`pt-4 border-t ${darkMode ? 'border-slate-800/80' : 'border-slate-200'}`}>
                       <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                        4. OTHER GOVERNMENT ASSISTANCE
+                        {isTagalog ? '4. IBA PANG TULONG MULA SA GOBYERNO' : '4. OTHER GOVERNMENT ASSISTANCE'}
                       </h5>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs">
                         <div>
@@ -1548,21 +1555,23 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                 {/* 2. Required Documents Section Card (Step 3) */}
                 <div className={`border rounded-2xl overflow-hidden ${darkMode ? 'bg-[#0e1933]/60 border-slate-800' : 'bg-slate-50/80 border-slate-200 shadow-sm'}`}>
                   <div className={`p-4 flex items-center justify-between border-b ${darkMode ? 'bg-[#101c38] border-slate-800/80' : 'bg-slate-100 border-slate-200'}`}>
-                    <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Required documents</h4>
+                    <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                      {isTagalog ? 'Kailangang mga Dokumento' : 'Required documents'}
+                    </h4>
                     <button
                       type="button"
                       onClick={() => handleEditStepFromReview(3)}
                       className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
                     >
                       <Pencil className="w-3.5 h-3.5" />
-                      <span>EDIT</span>
+                      <span>{isTagalog ? 'BAGUHIN' : 'EDIT'}</span>
                     </button>
                   </div>
                   <div className="p-5 space-y-4">
                     {[
-                      { key: 'spic', title: 'SOLO PARENT ID (SPIC) *' },
-                      { key: 'qcid', title: 'QCITIZEN ID (QC ID) *' },
-                      { key: 'proof_income', title: 'PROOF OF INCOME / INDIGENCY *' },
+                      { key: 'spic', title: isTagalog ? 'SOLO PARENT ID (SPIC) *' : 'SOLO PARENT ID (SPIC) *' },
+                      { key: 'qcid', title: isTagalog ? 'QCITIZEN ID (QC ID) *' : 'QCITIZEN ID (QC ID) *' },
+                      { key: 'proof_income', title: isTagalog ? 'PATUNAY NG KITA / INDIGENCY *' : 'PROOF OF INCOME / INDIGENCY *' },
                     ].map((doc) => {
                       const file = uploadedFiles[doc.key];
                       const previewUrl = file ? URL.createObjectURL(file) : null;
@@ -1600,7 +1609,9 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                             </div>
                           ) : (
                             <div className="pt-0.5">
-                              <span className={`text-xs italic ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No photo uploaded</span>
+                              <span className={`text-xs italic ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                {isTagalog ? 'Walang larawang na-upload' : 'No photo uploaded'}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -1618,7 +1629,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                   onClick={() => setCurrentStep(3)}
                   className="px-6 py-2.5 rounded-xl border border-slate-700 text-xs font-bold uppercase text-slate-300 hover:bg-slate-800"
                 >
-                  BACK
+                  {isTagalog ? 'BUMALIK' : 'BACK'}
                 </button>
                 <button
                   type="button"
@@ -1631,9 +1642,9 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                   }`}
                 >
                   {isSubmitting ? (
-                    <span>Submitting Application...</span>
+                    <span>{isTagalog ? 'Ipinapasa ang Aplikasyon...' : 'Submitting Application...'}</span>
                   ) : (
-                    <span>SUBMIT</span>
+                    <span>{isTagalog ? 'IPASA' : 'SUBMIT'}</span>
                   )}
                 </button>
               </div>

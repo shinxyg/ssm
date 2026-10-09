@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { 
   BookOpen, 
   ShieldAlert,
@@ -44,16 +45,18 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setIsOpen }) => {
   const [livelihoodOpen, setLivelihoodOpen] = useState<boolean>(true);
+  const { t } = useLanguage();
 
   const mainNavItems = [
-    { id: 'help-guide', label: 'Help & Service Guide', icon: BookOpen },
-    { id: 'aics', label: 'AICS Assistance', icon: ShieldAlert },
-    { id: 'pwd', label: 'PWD Services', icon: WheelchairIcon },
-    { id: 'senior', label: 'Senior Citizen Services', icon: UserCheck },
-    { id: 'soloparent', label: 'Solo Parent Services', icon: Users },
-    { id: 'childwelfare', label: 'Child Welfare Services', icon: Heart },
-    { id: 'livelihood', label: 'Livelihood & Training', icon: GraduationCap },
+    { id: 'help-guide', label: t('nav.guide'), icon: BookOpen },
+    { id: 'aics', label: t('nav.aics'), icon: ShieldAlert },
+    { id: 'pwd', label: t('nav.pwd'), icon: WheelchairIcon },
+    { id: 'senior', label: t('nav.senior'), icon: UserCheck },
+    { id: 'soloparent', label: t('nav.solo_parent'), icon: Users },
+    { id: 'childwelfare', label: t('nav.child_welfare'), icon: Heart },
+    { id: 'livelihood', label: t('nav.livelihood'), icon: GraduationCap },
   ];
+
 
   return (
     <aside
@@ -190,7 +193,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                 ? 'text-blue-400'
                 : 'text-[#94a3b8] group-hover:text-white'
             }`} />
-            {isOpen && <span className="truncate">Financial Aid Disbursement</span>}
+            {isOpen && <span className="truncate">{t('nav.disbursement')}</span>}
           </button>
         </nav>
 
@@ -211,14 +214,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                 ? 'bg-[#152747] text-white border-blue-500/30'
                 : 'bg-transparent text-[#94a3b8] hover:text-white hover:bg-[#101e38] border-transparent'
             }`}
-            title={isOpen ? undefined : "Application History"}
+            title={isOpen ? undefined : t('nav.history')}
           >
             <FileText className={`w-4 h-4 shrink-0 transition-colors ${
               activeTab === 'history'
                 ? 'text-blue-400'
                 : 'text-[#94a3b8] group-hover:text-white'
             }`} />
-            {isOpen && <span className="truncate">Application History</span>}
+            {isOpen && <span className="truncate">{t('nav.history')}</span>}
           </button>
         </div>
       </div>

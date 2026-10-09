@@ -953,7 +953,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                     </div>
                     <div className="text-xs font-bold text-white">{inspectingDoc.title}</div>
                     <div className="p-3 bg-slate-950 rounded-lg font-mono text-[10px] text-slate-300 space-y-1">
-                      <div>APPLICANT: {selectedApp ? selectedApp.applicant_name : 'Applicant'}</div>
+                      <div>APPLICANT: {selectedApp ? selectedApp.applicant_name : 'Jefferson Fernando Lee'}</div>
                       <div>REF CONTROL NO: {selectedApp ? selectedApp.reference_no : 'Ref Control No'}</div>
                       <div>STATUS: VERIFIED & VALIDATED DOCUMENT</div>
                     </div>

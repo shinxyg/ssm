@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { 
   ArrowLeft, 
   FileText, 
@@ -61,6 +62,9 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
   onNavigateToModule,
   applications = [],
 }) => {
+  const { language, t } = useLanguage();
+  const isTagalog = language === 'Tagalog';
+
   // Dynamic light/dark mode helper classes for clean UX
   const labelClass = `text-xs font-bold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`;
   const inputClass = `w-full px-3.5 py-2 rounded-xl text-xs font-semibold border focus:border-blue-500 focus:outline-none transition-colors ${
@@ -535,10 +539,10 @@ export const SeniorCitizenAssistanceView: React.FC<SeniorCitizenAssistanceViewPr
           {/* Tab Buttons Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-w-4xl mx-auto">
             {[
-              { num: 1, label: 'COMPLETE CHECKLIST' },
-              { num: 2, label: 'PERSONAL INFORMATION' },
-              { num: 3, label: 'UPLOAD DOCUMENTS' },
-              { num: 4, label: 'REVIEW & SUBMIT' },
+              { num: 1, label: isTagalog ? 'KOMPLETONG TSEKLIST' : 'COMPLETE CHECKLIST' },
+              { num: 2, label: isTagalog ? 'PERSONAL NA IMPORMASYON' : 'PERSONAL INFORMATION' },
+              { num: 3, label: isTagalog ? 'PAG-UPLOAD NG DOKUMENTO' : 'UPLOAD DOCUMENTS' },
+              { num: 4, label: isTagalog ? 'PAGSUSURI AT PAG-SUBMIT' : 'REVIEW & SUBMIT' },
             ].map((tab) => {
               const isActive = currentStep === tab.num;
               const isPassed = currentStep > tab.num;

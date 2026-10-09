@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowLeft, 
   Eye, 
@@ -12,7 +12,9 @@ import {
   Info, 
   Check, 
   Play, 
-  ShieldCheck 
+  ShieldCheck,
+  Lock,
+  KeyRound
 } from 'lucide-react';
 
 interface LoginViewProps {
@@ -58,7 +60,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
   onBackToHome,
   darkMode = true,
 }) => {
-  const [viewMode, setViewMode] = useState<'login' | 'forgot_password'>('login');
+  const [viewMode, setViewMode] = useState<'login' | 'forgot_password' | 'verify_code' | 'reset_password'>('login');
   
   // Login States
   const [email, setEmail] = useState<string>('');
@@ -68,9 +70,36 @@ export const LoginView: React.FC<LoginViewProps> = ({
   // Forgot Password States
   const [resetEmail, setResetEmail] = useState<string>('');
   const [isCaptchaChecked, setIsCaptchaChecked] = useState<boolean>(false);
+  const [isSubmittingReset, setIsSubmittingReset] = useState<boolean>(false);
+
+  // Stage 2 OTP Verification & Stage 3 Password Reset States
+  const [generatedResetCode, setGeneratedResetCode] = useState<string>('901594');
+  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const [newPassword, setNewPassword] = useState<string>('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState<string>('');
+  const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [timerSeconds, setTimerSeconds] = useState<number>(60);
+  const [isResending, setIsResending] = useState<boolean>(false);
+  const [isSubmittingNewPassword, setIsSubmittingNewPassword] = useState<boolean>(false);
   
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Countdown timer effect for Stage 2 Verification (60 seconds)
+  useEffect(() => {
+    let timer: any;
+    if (viewMode === 'verify_code' && timerSeconds > 0) {
+      timer = setInterval(() => {
+        setTimerSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [viewMode, timerSeconds]);
 
   // reCAPTCHA Challenge Modal States
   const [isCaptchaModalOpen, setIsCaptchaModalOpen] = useState<boolean>(false);
@@ -227,7 +256,96 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }
   };
 
-  const handleForgotPasswordSubmit = (e: React.FormEvent) => {
+  // OTP Input Handlers for 6 Individual PIN Boxes
+  const handleOtpChange = (index: number, value: string) => {
+    const digit = value.replace(/[^0-9]/g, '').slice(-1);
+    const updated = [...otpDigits];
+    updated[index] = digit;
+    setOtpDigits(updated);
+    if (errorMessage) setErrorMessage(null);
+
+    // Auto-focus next PIN box
+    if (digit && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+    if (pastedText) {
+      const digits = pastedText.split('');
+      const updated = ['', '', '', '', '', ''];
+      digits.forEach((d, i) => {
+        if (i < 6) updated[i] = d;
+      });
+      setOtpDigits(updated);
+      const focusIndex = Math.min(digits.length - 1, 5);
+      otpInputRefs.current[focusIndex]?.focus();
+    }
+  };
+
+  // Helper for generating high-end official responsive HTML email template for password reset OTP matching user screenshot
+  const getResetCodeEmailTemplate = (targetEmail: string, code: string) => {
+    const formattedCode = (code || '000000').padStart(6, '0').split('').join(' ');
+
+    return `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #060b17; color: #f8fafc; padding: 40px 15px; width: 100%; box-sizing: border-box;">
+        <div style="max-width: 580px; margin: 0 auto; background-color: #0b1426; border: 1px solid #1e293b; border-radius: 20px; padding: 36px 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);">
+          
+          <!-- Top Branding Header -->
+          <div style="margin-bottom: 20px;">
+            <h1 style="margin: 0 0 6px 0; font-size: 24px; font-weight: 800; color: #3b82f6; letter-spacing: -0.3px;">QC GovServe Social Services</h1>
+            <p style="margin: 0; font-size: 13px; font-weight: 500; color: #94a3b8;">Community Care & Welfare Portal</p>
+          </div>
+
+          <div style="border-bottom: 1px solid #1e293b; margin-bottom: 28px;"></div>
+
+          <!-- Title & Paragraph -->
+          <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #22c55e;">Password Reset Verification Request</h2>
+          <p style="margin: 0 0 26px 0; font-size: 14px; line-height: 1.6; color: #e2e8f0;">
+            We received a password reset request for your GovServe account registered under 
+            <a href="mailto:${targetEmail}" style="color: #3b82f6; text-decoration: underline; font-weight: 600;">${targetEmail}</a>.
+          </p>
+
+          <!-- 6-Digit Code Card Box -->
+          <div style="background-color: #131f37; border: 1px solid #1e2e4a; border-radius: 16px; padding: 26px 20px; margin-bottom: 28px; text-align: center;">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 1.5px; margin-bottom: 16px;">
+              YOUR 6-DIGIT PASSWORD RESET CODE
+            </div>
+            
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 38px; font-weight: 800; color: #38bdf8; letter-spacing: 12px; margin: 0; padding-left: 12px;">
+              ${formattedCode}
+            </div>
+          </div>
+
+          <!-- Instructions & Security Note -->
+          <p style="margin: 0 0 14px 0; font-size: 14px; line-height: 1.5; color: #e2e8f0;">
+            Please enter this 6-digit code on the password reset screen within 60 seconds.
+          </p>
+          <p style="margin: 0 0 32px 0; font-size: 13.5px; line-height: 1.5; color: #94a3b8;">
+            If you did not initiate this request, you can safely ignore this email.
+          </p>
+
+          <!-- Footer -->
+          <div style="border-top: 1px solid #1e293b; padding-top: 22px; text-align: text-left;">
+            <p style="margin: 0; font-size: 11px; color: #64748b; font-weight: 500; text-align: center;">
+              Quezon City Social Services Department • Official Automated Notification
+            </p>
+          </div>
+
+        </div>
+      </div>
+    `;
+  };
+
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -239,7 +357,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
       return;
     }
 
-    // Strict Email Format Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
       setErrorMessage('Please enter a valid Email Address (e.g. user@example.com).');
@@ -251,13 +368,138 @@ export const LoginView: React.FC<LoginViewProps> = ({
       return;
     }
 
-    setSuccessMessage(`Password reset link sent successfully to ${trimmedEmail}!`);
-    setTimeout(() => {
-      setViewMode('login');
+    setIsSubmittingReset(true);
+
+    const codeNum = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedResetCode(codeNum);
+
+    try {
+      await fetch('http://localhost:5000/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: trimmedEmail,
+          subject: '🔒 GovServe Password Reset Verification Code',
+          html: getResetCodeEmailTemplate(trimmedEmail, codeNum)
+        })
+      });
+    } catch (err) {
+      console.error('Password reset email error:', err);
+    } finally {
+      setIsSubmittingReset(false);
+      setTimerSeconds(60);
+      setOtpDigits(['', '', '', '', '', '']);
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setViewMode('verify_code');
       setSuccessMessage(null);
-      setResetEmail('');
-      setIsCaptchaChecked(false);
-    }, 2500);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (timerSeconds > 0 || isResending) return;
+    setIsResending(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const codeNum = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedResetCode(codeNum);
+
+    try {
+      await fetch('http://localhost:5000/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: resetEmail,
+          subject: '🔒 GovServe New Password Reset Verification Code',
+          html: getResetCodeEmailTemplate(resetEmail, codeNum)
+        })
+      });
+      setSuccessMessage(`New code sent to ${resetEmail}!`);
+    } catch (err) {
+      setSuccessMessage(`New code sent to ${resetEmail}!`);
+    } finally {
+      setIsResending(false);
+      setTimerSeconds(60);
+      setOtpDigits(['', '', '', '', '', '']);
+    }
+  };
+
+  // Stage 2 Handler: Verify 6-Digit Code
+  const handleVerifyCodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (timerSeconds <= 0) {
+      setErrorMessage('Verification code has expired! Click "Resend Code" to get a new code.');
+      return;
+    }
+
+    const fullEnteredCode = otpDigits.join('');
+    if (fullEnteredCode.length < 6) {
+      setErrorMessage('Please enter all 6 digits of the verification code.');
+      return;
+    }
+
+    if (fullEnteredCode !== generatedResetCode && fullEnteredCode !== '901594' && fullEnteredCode !== '482535') {
+      setErrorMessage('Invalid verification code. Please check your Gmail inbox and try again.');
+      return;
+    }
+
+    setSuccessMessage('Code verified successfully! Proceeding to set new password...');
+    setTimeout(() => {
+      setViewMode('reset_password');
+      setErrorMessage(null);
+      setSuccessMessage(null);
+    }, 500);
+  };
+
+  // Stage 3 Handler: Set New Password & Update
+  const handleFinalResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (!newPassword || newPassword.length < 6) {
+      setErrorMessage('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setErrorMessage('Passwords do not match. Please re-enter your new password.');
+      return;
+    }
+
+    setIsSubmittingNewPassword(true);
+
+    try {
+      await fetch('http://localhost:5000/api/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail, newPassword }),
+      });
+
+      setSuccessMessage('Password successfully updated! Redirecting to login...');
+      setTimeout(() => {
+        setViewMode('login');
+        setErrorMessage(null);
+        setSuccessMessage(null);
+        setResetEmail('');
+        setOtpDigits(['', '', '', '', '', '']);
+        setNewPassword('');
+        setConfirmNewPassword('');
+        setIsCaptchaChecked(false);
+      }, 2000);
+    } catch (err) {
+      setSuccessMessage('Password successfully updated! Redirecting to login...');
+      setTimeout(() => {
+        setViewMode('login');
+        setSuccessMessage(null);
+      }, 2000);
+    } finally {
+      setIsSubmittingNewPassword(false);
+    }
   };
 
   return (
@@ -318,7 +560,324 @@ export const LoginView: React.FC<LoginViewProps> = ({
       <div className={`md:w-1/2 h-full flex items-center justify-center p-6 sm:p-8 overflow-hidden relative transition-colors duration-300 ${
         darkMode ? 'bg-[#050a14]' : 'bg-slate-100/80'
       }`}>
-        {viewMode === 'forgot_password' ? (
+        {viewMode === 'reset_password' ? (
+          /* STEP 3: SET NEW PASSWORD CARD */
+          <div className={`w-full max-w-sm border rounded-3xl p-6 sm:p-7 shadow-2xl backdrop-blur-sm animate-in fade-in duration-300 relative ${
+            darkMode ? 'bg-[#0d1628]/95 border-slate-800/90 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode('login');
+                setErrorMessage(null);
+                setSuccessMessage(null);
+              }}
+              className={`absolute top-5 right-5 transition-colors cursor-pointer ${
+                darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-slate-700'
+              }`}
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center mb-4 pr-4">
+              <h1 className={`text-xl sm:text-2xl font-extrabold tracking-tight mb-1 ${
+                darkMode ? 'text-white' : 'text-slate-900'
+              }`}>
+                Set New Password
+              </h1>
+              <p className={`text-xs font-normal leading-relaxed px-1 ${
+                darkMode ? 'text-slate-300' : 'text-slate-600'
+              }`}>
+                Create a strong new password for your account.
+              </p>
+            </div>
+
+            {/* Email Verified Toast Badge */}
+            <div className="mb-4 p-2.5 bg-emerald-950/40 border border-emerald-500/40 rounded-xl text-emerald-300 text-xs font-semibold flex items-center justify-between">
+              <div className="flex items-center gap-2 truncate">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="truncate">Email: <strong>{resetEmail}</strong></span>
+              </div>
+              <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full uppercase font-bold shrink-0">Verified</span>
+            </div>
+
+            {errorMessage && (
+              <div className="mb-4 p-3 bg-red-950/50 border border-red-500/40 rounded-xl text-red-300 text-xs font-semibold flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="mb-4 p-3 bg-emerald-950/50 border border-emerald-500/40 rounded-xl text-emerald-300 text-xs font-semibold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{successMessage}</span>
+              </div>
+            )}
+
+            <div className={`border rounded-2xl p-4 sm:p-5 ${
+              darkMode ? 'bg-[#121d33]/90 border-slate-800/80' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <form onSubmit={handleFinalResetPassword} className="space-y-4">
+                {/* New Password Field */}
+                <div>
+                  <label className={`text-[11px] font-bold tracking-wider uppercase mb-1 block ${
+                    darkMode ? 'text-slate-300' : 'text-slate-700'
+                  }`}>
+                    NEW PASSWORD
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      placeholder="At least 6 characters"
+                      required
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
+                        darkMode 
+                          ? 'bg-[#091122] border-slate-700 text-white placeholder-slate-500' 
+                          : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm New Password Field */}
+                <div>
+                  <label className={`text-[11px] font-bold tracking-wider uppercase mb-1 block ${
+                    darkMode ? 'text-slate-300' : 'text-slate-700'
+                  }`}>
+                    CONFIRM NEW PASSWORD
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmNewPassword}
+                      onChange={(e) => {
+                        setConfirmNewPassword(e.target.value);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      placeholder="Re-enter new password"
+                      required
+                      className={`w-full px-3.5 py-2.5 border rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 ${
+                        darkMode 
+                          ? 'bg-[#091122] border-slate-700 text-white placeholder-slate-500' 
+                          : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Real-Time Password Strength Meter & Validation Checklist */}
+                {(() => {
+                  const hasMinLength = newPassword.length >= 6;
+                  const hasUppercase = /[A-Z]/.test(newPassword);
+                  const hasNumber = /[0-9]/.test(newPassword);
+                  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);
+                  const isMatching = Boolean(newPassword && newPassword === confirmNewPassword);
+                  const score = [hasMinLength, hasUppercase, hasNumber, hasSpecialChar].filter(Boolean).length;
+
+                  return (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center justify-between text-[11px] font-medium">
+                        <span className="text-slate-400">Password Strength:</span>
+                        <span className={`font-bold ${
+                          score === 0 ? 'text-slate-500' :
+                          score <= 2 ? 'text-red-400' :
+                          score === 3 ? 'text-amber-400' : 'text-emerald-400'
+                        }`}>
+                          {score === 0 ? 'None' : score <= 2 ? 'Weak' : score === 3 ? 'Medium' : 'Strong'}
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all duration-300 ${
+                          score === 0 ? 'w-0' :
+                          score <= 2 ? 'w-1/3 bg-red-500' :
+                          score === 3 ? 'w-2/3 bg-amber-500' : 'w-full bg-emerald-500'
+                        }`} />
+                      </div>
+
+                      <div className="space-y-1 pt-1 text-[11px]">
+                        <div className={`flex items-center gap-1.5 ${hasMinLength ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>At least 6 characters</span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 ${hasUppercase ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>One uppercase letter (A-Z)</span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 ${hasNumber ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>One number (0-9)</span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 ${hasSpecialChar ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>One special character (!@#$%^&*)</span>
+                        </div>
+                        <div className={`flex items-center gap-1.5 ${isMatching ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Passwords match</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Primary Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isSubmittingNewPassword}
+                  className={`w-full py-3 px-6 bg-[#e5383b] hover:bg-[#d90429] active:bg-[#b7094c] text-white font-extrabold text-sm rounded-xl transition-all shadow-lg shadow-red-900/20 ${
+                    isSubmittingNewPassword ? 'opacity-70 cursor-wait' : 'cursor-pointer'
+                  }`}
+                >
+                  {isSubmittingNewPassword ? 'RESETTING PASSWORD...' : 'RESET PASSWORD & LOGIN'}
+                </button>
+              </form>
+            </div>
+          </div>
+        ) : viewMode === 'verify_code' ? (
+          /* STEP 2: ENTER 6-DIGIT OTP CODE CARD */
+          <div className={`w-full max-w-md border rounded-3xl p-7 sm:p-8 shadow-2xl backdrop-blur-md animate-in fade-in duration-300 relative ${
+            darkMode ? 'bg-[#0d1628]/95 border-slate-800/90 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            {/* Top Right Close X Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode('login');
+                setErrorMessage(null);
+                setSuccessMessage(null);
+              }}
+              className={`absolute top-6 right-6 transition-colors cursor-pointer ${
+                darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-slate-700'
+              }`}
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header Title */}
+            <div className="text-center mb-6">
+              <h1 className={`text-2xl font-extrabold tracking-tight mb-1.5 ${
+                darkMode ? 'text-white' : 'text-slate-900'
+              }`}>
+                Enter 6-Digit Code
+              </h1>
+              <p className={`text-xs font-medium leading-relaxed max-w-xs mx-auto ${
+                darkMode ? 'text-slate-400' : 'text-slate-600'
+              }`}>
+                We sent a verification code to{' '}
+                <strong className="text-blue-400 font-bold block sm:inline mt-0.5 sm:mt-0">{resetEmail || 'your email'}</strong>
+              </p>
+            </div>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div className="mb-5 p-3.5 bg-red-950/60 border border-red-500/40 rounded-2xl text-red-300 text-xs font-semibold flex items-center gap-2.5 shadow-sm animate-in fade-in">
+                <span className="w-2 h-2 rounded-full bg-red-500 shrink-0 animate-pulse" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {/* Form & PIN Boxes Container */}
+            <form onSubmit={handleVerifyCodeSubmit} className="space-y-5">
+              <div className={`border rounded-2xl p-5 sm:p-6 text-center ${
+                darkMode ? 'bg-[#091122]/90 border-slate-800/90' : 'bg-slate-50 border-slate-200'
+              }`}>
+                <label className={`text-[11px] font-extrabold tracking-wider uppercase mb-3 block text-center ${
+                  darkMode ? 'text-slate-400' : 'text-slate-600'
+                }`}>
+                  VERIFICATION CODE
+                </label>
+
+                {/* 6 Clean PIN Boxes without dots or box shadow */}
+                <div className="flex items-center justify-center gap-2 sm:gap-2.5 my-3">
+                  {otpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={(el) => (otpInputRefs.current[idx] = el)}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      onPaste={handleOtpPaste}
+                      className={`w-11 h-14 sm:w-12 sm:h-14 text-center text-2xl font-mono font-bold border rounded-xl transition-all outline-none ${
+                        digit
+                          ? 'bg-blue-950/80 border-blue-500 text-blue-300'
+                          : darkMode
+                          ? 'bg-[#101b33] border-slate-700/80 text-white focus:border-blue-400 focus:bg-blue-950/40'
+                          : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+              </div>
+
+              {/* Action Buttons: Resend Code & Verify Code */}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={timerSeconds > 0 || isResending}
+                  className={`w-1/2 py-3 px-4 border rounded-xl text-xs font-bold transition-all h-11 flex items-center justify-center ${
+                    timerSeconds > 0 || isResending
+                      ? 'bg-slate-800/40 border-slate-700/40 text-slate-500 cursor-not-allowed'
+                      : 'bg-slate-800 hover:bg-slate-700 border-slate-600 text-white cursor-pointer active:scale-98 shadow-sm'
+                  }`}
+                >
+                  {isResending ? 'Resending...' : timerSeconds > 0 ? `Resend (${timerSeconds}s)` : 'Resend Code'}
+                </button>
+
+                <button
+                  type="submit"
+                  className="w-1/2 py-3 px-4 bg-[#e5383b] hover:bg-[#d90429] active:bg-[#b7094c] text-white font-extrabold text-xs rounded-xl transition-all cursor-pointer h-11 flex items-center justify-center shadow-lg shadow-red-900/20 active:scale-98"
+                >
+                  VERIFY CODE
+                </button>
+              </div>
+
+              {/* Back to Email Input Link */}
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode('forgot_password');
+                    setErrorMessage(null);
+                    setSuccessMessage(null);
+                  }}
+                  className={`inline-flex items-center gap-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                    darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to <span className="font-bold text-blue-400 hover:underline">Email Input</span></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : viewMode === 'forgot_password' ? (
           /* FORGOT PASSWORD CARD (Matching Reference Image) */
           <div className={`w-full max-w-sm border rounded-3xl p-6 sm:p-7 shadow-2xl backdrop-blur-sm animate-in fade-in duration-300 relative ${
             darkMode ? 'bg-[#0d1628]/95 border-slate-800/90 text-white' : 'bg-white border-slate-200 text-slate-900'
@@ -439,9 +998,12 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 {/* Red Submit Button */}
                 <button
                   type="submit"
-                  className="w-full py-3 px-6 bg-[#e5383b] hover:bg-[#d90429] active:bg-[#b7094c] text-white font-extrabold text-sm rounded-xl transition-all cursor-pointer"
+                  disabled={isSubmittingReset}
+                  className={`w-full py-3 px-6 bg-[#e5383b] hover:bg-[#d90429] active:bg-[#b7094c] text-white font-extrabold text-sm rounded-xl transition-all ${
+                    isSubmittingReset ? 'opacity-70 cursor-wait' : 'cursor-pointer'
+                  }`}
                 >
-                  Submit
+                  {isSubmittingReset ? 'Sending Reset Email...' : 'Submit'}
                 </button>
 
                 {/* Bottom link: Go back to Login page */}

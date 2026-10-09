@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage, Language } from '../../context/LanguageContext';
 import { 
   User, 
   Key, 
@@ -32,7 +33,8 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
   userRole = 'user' 
 }) => {
   const [activeTab, setActiveTab] = useState<'account' | 'personal' | 'devices' | 'language'>('account');
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('English');
+  const { language, setLanguage, t } = useLanguage();
+
 
   // Account Information States
   const [email, setEmail] = useState<string>(
@@ -138,10 +140,10 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
           {/* Profile Navigation Tabs (Centered) */}
           <div className={`flex justify-center border-b mt-6 overflow-x-auto gap-2 sm:gap-6 ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
             {[
-              { id: 'account', label: 'Account Information' },
-              { id: 'personal', label: 'Personal Information' },
-              { id: 'devices', label: 'Devices & History' },
-              { id: 'language', label: 'Language' },
+              { id: 'account', label: t('profile.tab_account') },
+              { id: 'personal', label: t('profile.tab_personal') },
+              { id: 'devices', label: t('profile.tab_devices') },
+              { id: 'language', label: t('profile.tab_language') },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -836,10 +838,10 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
               <div className={`space-y-1 pb-2 border-b ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
                 <div className={`flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                   <Languages className="w-4 h-4 text-blue-500" />
-                  <h3 className="text-sm font-extrabold">Language</h3>
+                  <h3 className="text-sm font-extrabold">{t('profile.lang_title')}</h3>
                 </div>
                 <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Choose the language used across the portal.
+                  {t('profile.lang_subtitle')}
                 </p>
               </div>
 
@@ -848,13 +850,13 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   { id: 'English', label: 'English' },
                   { id: 'Tagalog', label: 'Tagalog' },
                 ].map((lang) => {
-                  const isSelected = selectedLanguage === lang.id;
+                  const isSelected = language === lang.id;
                   return (
                     <button
                       key={lang.id}
                       type="button"
-                      onClick={() => setSelectedLanguage(lang.id)}
-                      className={`w-full p-4 rounded-xl text-left text-xs font-bold transition-all border flex items-center justify-between ${
+                      onClick={() => setLanguage(lang.id as Language)}
+                      className={`w-full p-4 rounded-xl text-left text-xs font-bold transition-all border flex items-center justify-between cursor-pointer ${
                         isSelected
                           ? darkMode ? 'bg-[#0f1c38] border-blue-500 text-blue-300 ring-1 ring-blue-500/50' : 'bg-blue-50 border-blue-500 text-blue-700 ring-1 ring-blue-500/30'
                           : darkMode ? 'bg-[#091122] border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'

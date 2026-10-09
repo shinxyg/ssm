@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { 
   ArrowLeft, 
   FileText, 
@@ -47,6 +48,9 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
   darkMode = true,
   applications = [],
 }) => {
+  const { language, t } = useLanguage();
+  const isTagalog = language === 'Tagalog';
+
   // Stepper state (1: COMPLETE CHECKLIST, 2: PERSONAL INFORMATION, 3: UPLOAD DOCUMENTS, 4: REVIEW & SUBMIT)
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isEditingFromStep4, setIsEditingFromStep4] = useState<boolean>(false);
@@ -463,14 +467,14 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className={`text-base sm:text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    Requirements for Application of QC Medical Assistance
+                    {isTagalog ? 'Mga Kailangan sa Aplikasyon ng QC Medical Assistance' : 'Requirements for Application of QC Medical Assistance'}
                   </h2>
                   <span className="px-2.5 py-0.5 bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 text-[11px] font-mono rounded-full font-semibold">
                     newApplication
                   </span>
                 </div>
                 <p className={`text-xs mt-0.5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Official service for QC AICS Crisis Assistance.
+                  {isTagalog ? 'Opisyal na serbisyo para sa QC AICS Crisis Assistance.' : 'Official service for QC AICS Crisis Assistance.'}
                 </p>
               </div>
             </div>
@@ -481,7 +485,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
               className="px-4 py-2 border border-blue-500/40 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 hover:text-blue-300 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1.5"
             >
               <Info className="w-3.5 h-3.5" />
-              <span>View Requirements</span>
+              <span>{isTagalog ? 'Tingnan ang mga Kailangan' : 'View Requirements'}</span>
             </button>
           </div>
         )}
@@ -528,10 +532,10 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
           {/* Stepper Tabs Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center max-w-4xl mx-auto">
             {[
-              { num: 1, label: 'COMPLETE CHECKLIST' },
-              { num: 2, label: 'PERSONAL INFORMATION' },
-              { num: 3, label: 'UPLOAD DOCUMENTS' },
-              { num: 4, label: 'REVIEW & SUBMIT' },
+              { num: 1, label: isTagalog ? 'KOMPLETONG TSEKLIST' : 'COMPLETE CHECKLIST' },
+              { num: 2, label: isTagalog ? 'PERSONAL NA IMPORMASYON' : 'PERSONAL INFORMATION' },
+              { num: 3, label: isTagalog ? 'PAG-UPLOAD NG DOKUMENTO' : 'UPLOAD DOCUMENTS' },
+              { num: 4, label: isTagalog ? 'PAGSUSURI AT PAG-SUBMIT' : 'REVIEW & SUBMIT' },
             ].map((step) => {
               const isActive = currentStep === step.num;
               return (
@@ -568,7 +572,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-blue-400 block flex items-center gap-2">
                   <Stethoscope className="w-4 h-4 text-blue-500" />
-                  CLICK THE TYPE OF ASSISTANCE
+                  {isTagalog ? 'I-CLICK ANG URI NG TULONG' : 'CLICK THE TYPE OF ASSISTANCE'}
                 </label>
 
                 {/* Dropdown 1: Assistance Type */}
@@ -581,7 +585,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500'
                   }`}
                 >
-                  <option value="">Select Type of Assistance</option>
+                  <option value="">{isTagalog ? 'Pumili ng Uri ng Tulong' : 'Select Type of Assistance'}</option>
                   {assistanceTypeOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
@@ -596,7 +600,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   {/* Field 1: Accredited Partner Hospital */}
                   <div className="space-y-2">
                     <label className={`text-xs font-bold uppercase tracking-wide block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                      Partner Hospital / Healthcare Facility *
+                      {isTagalog ? 'Kasamang Ospital / Pasilidad sa Kalusugan *' : 'Partner Hospital / Healthcare Facility *'}
                     </label>
                     <select
                       value={hospitalFacility}
@@ -607,7 +611,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                           : 'bg-white border-slate-300 text-slate-900 focus:border-blue-500'
                       }`}
                     >
-                      <option value="">Select Partner Hospital / Healthcare Facility</option>
+                      <option value="">{isTagalog ? 'Pumili ng Kasamang Ospital / Pasilidad' : 'Select Partner Hospital / Healthcare Facility'}</option>
                       {accreditedHospitals.map((hosp) => (
                         <option key={hosp} value={hosp}>
                           {hosp}
@@ -620,7 +624,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   {hospitalFacility === 'Other Health Facility' && (
                     <div className="space-y-2 animate-in fade-in duration-300">
                       <label className={`text-xs font-bold uppercase tracking-wide block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                        Specify Health Facility / Hospital Name *
+                        {isTagalog ? 'Tukuyin ang Pangalan ng Ospital / Pasilidad *' : 'Specify Health Facility / Hospital Name *'}
                       </label>
                       <input
                         type="text"
@@ -639,13 +643,13 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   {/* Field 2: Medical Condition / Diagnosis */}
                   <div className="space-y-2">
                     <label className={`text-xs font-bold uppercase tracking-wide block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                      Medical Condition / Diagnosis *
+                      {isTagalog ? 'Kondisyong Medikal / Sakit (Diagnosis) *' : 'Medical Condition / Diagnosis *'}
                     </label>
                     <input
                       type="text"
                       value={medicalCondition}
                       onChange={(e) => setMedicalCondition(e.target.value)}
-                      placeholder="e.g. Dialysis / Chemotherapy / Confinement / Surgery"
+                      placeholder={isTagalog ? "hal. Dialysis / Chemotherapy / Pagkakaospital / Operasyon" : "e.g. Dialysis / Chemotherapy / Confinement / Surgery"}
                       className={`w-full px-4 py-3.5 rounded-xl border text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
                         darkMode
                           ? 'bg-[#0f1c38] border-slate-700 text-white focus:border-blue-500 placeholder-slate-500'
@@ -670,7 +674,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
                   }`}
                 >
-                  NEXT
+                  {isTagalog ? 'KASUNOD' : 'NEXT'}
                 </button>
               </div>
             </div>
@@ -685,10 +689,12 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                 <Info className={`w-5 h-5 shrink-0 mt-0.5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                 <div>
                   <h4 className={`text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-blue-300' : 'text-blue-900'}`}>
-                    IMPORTANT REMINDER
+                    {isTagalog ? 'MAHALAGANG PAALALA' : 'IMPORTANT REMINDER'}
                   </h4>
                   <p className={`text-xs mt-1 leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                    Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service.
+                    {isTagalog 
+                      ? 'Mangyaring siguraduhin na ang impormasyon sa inyong QCID ay tama at kumpleto. Kung may kulang o maling detalye, makipag-ugnayan sa QCID Team bago magpatuloy.' 
+                      : 'Please make sure the information on your QCID is correct and complete. If any detail is missing or incorrect, contact the QCID Team to update your QCID records before continuing your application. Accurate information is important for fast and smooth processing of your service.'}
                   </p>
                 </div>
               </div>
@@ -696,7 +702,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
               {/* Applicant Fields Grid (Prefilled & Disabled Verified Profile) */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>First name *</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Unang pangalan *' : 'First name *'}</label>
                   <input
                     type="text"
                     readOnly
@@ -708,7 +714,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Middle name</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Gitnang pangalan' : 'Middle name'}</label>
                   <input
                     type="text"
                     readOnly
@@ -721,7 +727,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                 </div>
 
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Last name *</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Apelyido *' : 'Last name *'}</label>
                   <input
                     type="text"
                     readOnly
@@ -733,12 +739,12 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Suffix (Jr., Sr., III, etc.)</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Sufiks (Jr., Sr., III, atbp.)' : 'Suffix (Jr., Sr., III, etc.)'}</label>
                   <input
                     type="text"
                     readOnly
                     disabled
-                    placeholder="Suffix (Jr., Sr., III, etc.)"
+                    placeholder={isTagalog ? "Sufiks (Jr., Sr., III, atbp.)" : "Suffix (Jr., Sr., III, etc.)"}
                     value={suffix}
                     className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed ${
                       darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300 placeholder-slate-600' : 'bg-slate-100 border border-slate-300 text-slate-800 placeholder-slate-400'
@@ -746,7 +752,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Nationality *</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Nasyonalidad *' : 'Nationality *'}</label>
                   <input
                     type="text"
                     readOnly
@@ -759,7 +765,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                 </div>
 
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Date of birth *</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Petsa ng kapanganakan *' : 'Date of birth *'}</label>
                   <input
                     type="text"
                     readOnly
@@ -771,7 +777,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Age *</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Edad *' : 'Age *'}</label>
                   <input
                     type="text"
                     readOnly
@@ -783,7 +789,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Gender *</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Kasarian *' : 'Gender *'}</label>
                   <select
                     disabled
                     value={gender || 'Male'}
@@ -791,13 +797,13 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
+                    <option value="Male">{isTagalog ? 'Lalaki' : 'Male'}</option>
+                    <option value="Female">{isTagalog ? 'Babae' : 'Female'}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Civil status *</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Katayuang sibil *' : 'Civil status *'}</label>
                   <select
                     disabled
                     value={civilStatus || 'Single'}
@@ -805,14 +811,14 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       darkMode ? 'bg-slate-950 border border-slate-800 text-slate-300' : 'bg-slate-100 border border-slate-300 text-slate-800'
                     }`}
                   >
-                    <option value="Single">Single</option>
-                    <option value="Married">Married</option>
-                    <option value="Widowed">Widowed</option>
-                    <option value="Separated">Separated</option>
+                    <option value="Single">{isTagalog ? 'Walang asawa (Single)' : 'Single'}</option>
+                    <option value="Married">{isTagalog ? 'May asawa (Married)' : 'Married'}</option>
+                    <option value="Widowed">{isTagalog ? 'Biyudo / Biyuda (Widowed)' : 'Widowed'}</option>
+                    <option value="Separated">{isTagalog ? 'Hiwalay (Separated)' : 'Separated'}</option>
                   </select>
                 </div>
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>House/Building number *</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Numero ng Bahay/Gusali *' : 'House/Building number *'}</label>
                   <input
                     type="text"
                     readOnly
@@ -824,7 +830,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Street name *</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Pangalan ng Kalsada *' : 'Street name *'}</label>
                   <input
                     type="text"
                     readOnly
@@ -837,7 +843,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                 </div>
 
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Barangay *</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Barangay *' : 'Barangay *'}</label>
                   <input
                     type="text"
                     readOnly
@@ -849,7 +855,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Phone number *</label>
+                  <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Numero ng Telepono *' : 'Phone number *'}</label>
                   <input
                     type="text"
                     readOnly
@@ -873,18 +879,18 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   className={`w-4 h-4 text-blue-600 rounded ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
                 />
                 <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                  I am the patient applying for myself
+                  {isTagalog ? 'Ako ang pasyenteng nag-a-apply para sa aking sarili' : 'I am the patient applying for myself'}
                 </span>
               </label>
 
               {/* Patient Information Section */}
               <div className={`space-y-4 pt-2 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
                 <h3 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                  Patient Information (Medicine Beneficiary)
+                  {isTagalog ? 'Impormasyon ng Pasyente (Benepisyaryo ng Gamot)' : 'Patient Information (Medicine Beneficiary)'}
                 </h3>
 
                 <div className="space-y-2">
-                  <label className={`text-xs font-bold block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Relationship to Patient *</label>
+                  <label className={`text-xs font-bold block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Relasyon sa Pasyente *' : 'Relationship to Patient *'}</label>
                   <select
                     value={patientRelation}
                     onChange={(e) => setPatientRelation(e.target.value)}
@@ -892,48 +898,48 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
                     }`}
                   >
-                    <option value="Select">Select Relationship</option>
-                    <option value="Self">Self (Patient is Applicant)</option>
-                    <option value="Spouse">Spouse</option>
-                    <option value="Child">Child</option>
-                    <option value="Parent">Parent</option>
-                    <option value="Sibling">Sibling</option>
-                    <option value="Other">Other</option>
+                    <option value="Select">{isTagalog ? 'Pumili ng Relasyon' : 'Select Relationship'}</option>
+                    <option value="Self">{isTagalog ? 'Sarili (Aplikante ang Pasyente)' : 'Self (Patient is Applicant)'}</option>
+                    <option value="Spouse">{isTagalog ? 'Asawa' : 'Spouse'}</option>
+                    <option value="Child">{isTagalog ? 'Anak' : 'Child'}</option>
+                    <option value="Parent">{isTagalog ? 'Magulang' : 'Parent'}</option>
+                    <option value="Sibling">{isTagalog ? 'Kapatid' : 'Sibling'}</option>
+                    <option value="Other">{isTagalog ? 'Iba pa' : 'Other'}</option>
                   </select>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                   <div>
-                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>First name *</label>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Unang pangalan *' : 'First name *'}</label>
                     <input
                       type="text"
                       value={patientFirstName}
                       onChange={(e) => setPatientFirstName(e.target.value)}
-                      placeholder="First name"
+                      placeholder={isTagalog ? "Unang pangalan" : "First name"}
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
                       }`}
                     />
                   </div>
                   <div>
-                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Middle name</label>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Gitnang pangalan' : 'Middle name'}</label>
                     <input
                       type="text"
                       value={patientMiddleName}
                       onChange={(e) => setPatientMiddleName(e.target.value)}
-                      placeholder="Middle name"
+                      placeholder={isTagalog ? "Gitnang pangalan" : "Middle name"}
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
                       }`}
                     />
                   </div>
                   <div>
-                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Last name *</label>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Apelyido *' : 'Last name *'}</label>
                     <input
                       type="text"
                       value={patientLastName}
                       onChange={(e) => setPatientLastName(e.target.value)}
-                      placeholder="Last name"
+                      placeholder={isTagalog ? "Apelyido" : "Last name"}
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
                       }`}
@@ -941,19 +947,19 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   </div>
 
                   <div>
-                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Suffix (Jr., Sr., III, etc.)</label>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Sufiks (Jr., Sr., III, atbp.)' : 'Suffix (Jr., Sr., III, etc.)'}</label>
                     <input
                       type="text"
                       value={patientSuffix}
                       onChange={(e) => setPatientSuffix(e.target.value)}
-                      placeholder="Suffix (Jr., Sr., III, etc.)"
+                      placeholder={isTagalog ? "Sufiks (Jr., Sr., III, atbp.)" : "Suffix (Jr., Sr., III, etc.)"}
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
                       }`}
                     />
                   </div>
                   <div>
-                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Gender *</label>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Kasarian *' : 'Gender *'}</label>
                     <select
                       value={patientGender}
                       onChange={(e) => setPatientGender(e.target.value)}
@@ -961,13 +967,13 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white' : 'bg-white border border-slate-300 text-slate-900 shadow-sm'
                       }`}
                     >
-                      <option value="Please choose">Please choose</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
+                      <option value="Please choose">{isTagalog ? 'Pumili ng kasarian' : 'Please choose'}</option>
+                      <option value="Male">{isTagalog ? 'Lalaki' : 'Male'}</option>
+                      <option value="Female">{isTagalog ? 'Babae' : 'Female'}</option>
                     </select>
                   </div>
                   <div>
-                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Date of birth *</label>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Petsa ng kapanganakan *' : 'Date of birth *'}</label>
                     <input
                       type="date"
                       value={patientDob}
@@ -979,12 +985,12 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   </div>
 
                   <div>
-                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Age *</label>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Edad *' : 'Age *'}</label>
                     <input
                       type="text"
                       value={patientAge}
                       readOnly
-                      placeholder="Auto-computed"
+                      placeholder={isTagalog ? "Kusang kompyuted" : "Auto-computed"}
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold select-none cursor-not-allowed ${
                         darkMode ? 'bg-slate-900/80 border border-slate-700 text-slate-400 placeholder-slate-500' : 'bg-slate-100 border border-slate-300 text-slate-500 placeholder-slate-400 shadow-sm'
                       }`}
@@ -1003,38 +1009,38 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     className={`w-4 h-4 text-blue-600 rounded ${darkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-300'}`}
                   />
                   <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                    Same as applicant's address
+                    {isTagalog ? 'Pareho ng tirahan ng aplikante' : "Same as applicant's address"}
                   </span>
                 </label>
 
                 {/* Patient Address Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                   <div>
-                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>House/Building number *</label>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Numero ng Bahay/Gusali *' : 'House/Building number *'}</label>
                     <input
                       type="text"
                       value={patientHouseNo}
                       onChange={(e) => setPatientHouseNo(e.target.value)}
-                      placeholder="House/Building number"
+                      placeholder={isTagalog ? "Numero ng Bahay/Gusali" : "House/Building number"}
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
                       }`}
                     />
                   </div>
                   <div>
-                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Street name *</label>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Pangalan ng Kalsada *' : 'Street name *'}</label>
                     <input
                       type="text"
                       value={patientStreet}
                       onChange={(e) => setPatientStreet(e.target.value)}
-                      placeholder="Street name"
+                      placeholder={isTagalog ? "Pangalan ng Kalsada" : "Street name"}
                       className={`w-full px-3.5 py-2.5 rounded-xl text-xs ${
                         darkMode ? 'bg-[#0f1c38] border border-slate-700 text-white placeholder-slate-500' : 'bg-white border border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
                       }`}
                     />
                   </div>
                   <div>
-                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Barangay *</label>
+                    <label className={`text-xs font-bold block mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>{isTagalog ? 'Barangay *' : 'Barangay *'}</label>
                     <input
                       type="text"
                       value={patientBarangay}
@@ -1057,14 +1063,14 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     darkMode ? 'bg-[#18243c] hover:bg-slate-700 text-slate-300 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
                   }`}
                 >
-                  BACK
+                  {isTagalog ? 'BUMALIK' : 'BACK'}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleNextStep(3)}
                   className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl uppercase"
                 >
-                  NEXT
+                  {isTagalog ? 'KASUNOD' : 'NEXT'}
                 </button>
               </div>
             </div>
@@ -1072,27 +1078,31 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
             /* STEP 3: UPLOAD DOCUMENTS */
             <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-200">
               <div className="space-y-1 mb-6">
-                <h3 className={`text-base sm:text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>File upload</h3>
+                <h3 className={`text-base sm:text-lg font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{isTagalog ? 'Pag-upload ng file' : 'File upload'}</h3>
                 <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Make sure to upload the appropriate documents for each category and verify that all details—such as your full name (first, middle, and last name) and address—match the information on your QC ID.
+                  {isTagalog 
+                    ? 'Siguraduhing i-upload ang naaangkop na dokumento sa bawat kategorya at tiyaking nagtutugma ang iyong pangalan at tirahan sa iyong QC ID.' 
+                    : 'Make sure to upload the appropriate documents for each category and verify that all details—such as your full name (first, middle, and last name) and address—match the information on your QC ID.'}
                 </p>
                 <p className={`text-xs leading-relaxed mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Upload clear and legible copies of the required documents (JPG, JPEG, PNG, WEBP, or PDF).
+                  {isTagalog 
+                    ? 'Mag-upload ng malinaw na kopya ng mga kailangang dokumento (JPG, JPEG, PNG, WEBP, o PDF).' 
+                    : 'Upload clear and legible copies of the required documents (JPG, JPEG, PNG, WEBP, or PDF).'}
                 </p>
               </div>
 
               <div className="space-y-4">
                 {[
-                  { key: 'med_cert', title: 'MEDICAL CERTIFICATE / CLINICAL ABSTRACT *' },
+                  { key: 'med_cert', title: isTagalog ? 'SERTIPIKADONG MEDIKAL / CLINICAL ABSTRACT *' : 'MEDICAL CERTIFICATE / CLINICAL ABSTRACT *' },
                   { 
                     key: 'reseta', 
                     title: (assistanceType.toLowerCase().includes('bill') || assistanceType.toLowerCase().includes('hospital'))
-                      ? 'HOSPITAL BILL / SOA *' 
-                      : 'DOCTOR PRESCRIPTION / MEDICINE PRESCRIPTION *' 
+                      ? (isTagalog ? 'BILL SA OSPITAL / SOA *' : 'HOSPITAL BILL / SOA *') 
+                      : (isTagalog ? 'RESETA NG DOKTOR / RESETA NG GAMOT *' : 'DOCTOR PRESCRIPTION / MEDICINE PRESCRIPTION *') 
                   },
-                  { key: 'indigency', title: 'BARANGAY CERTIFICATE OF INDIGENCY *' },
-                  { key: 'qcid_patient', title: 'PATIENT QC ID *' },
-                  { key: 'authorization', title: 'AUTHORIZATION / PERSONAL LETTER *' },
+                  { key: 'indigency', title: isTagalog ? 'SERTIPIKASYON NG INDIGENCY MULA SA BARANGAY *' : 'BARANGAY CERTIFICATE OF INDIGENCY *' },
+                  { key: 'qcid_patient', title: isTagalog ? 'QC ID NG PASYENTE *' : 'PATIENT QC ID *' },
+                  { key: 'authorization', title: isTagalog ? 'SULAT NG OTORISASYON / PERSONAL NA SULAT *' : 'AUTHORIZATION / PERSONAL LETTER *' },
                 ].map((doc) => {
                   const uploaded = uploadedFiles[doc.key];
                   const previewUrl = uploaded ? URL.createObjectURL(uploaded) : null;
@@ -1119,7 +1129,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                           )}
                         </div>
                         <span className={`text-[11px] block mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                          Allowed file types: JPG, JPEG, PNG, WEBP (or capture using Camera)
+                          {isTagalog ? 'Pinapayagang uri ng file: JPG, JPEG, PNG, WEBP (o kumuha gamit ang Kamera)' : 'Allowed file types: JPG, JPEG, PNG, WEBP (or capture using Camera)'}
                         </span>
                       </div>
 
@@ -1127,7 +1137,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       <div className="flex flex-wrap items-center gap-3 pt-1">
                         <label className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold cursor-pointer inline-flex items-center gap-2 transition-all shadow-md">
                           <Upload className="w-4 h-4" />
-                          <span>UPLOAD PHOTO</span>
+                          <span>{isTagalog ? 'MAG-UPLOAD NG LITRATO' : 'UPLOAD PHOTO'}</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -1142,7 +1152,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                           className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold cursor-pointer inline-flex items-center gap-2 transition-all shadow-md"
                         >
                           <Camera className="w-4 h-4" />
-                          <span>TAKE PHOTO (CAMERA)</span>
+                          <span>{isTagalog ? 'KUMUHA NG LITRATO (KAMERA)' : 'TAKE PHOTO (CAMERA)'}</span>
                         </button>
                       </div>
 
@@ -1162,7 +1172,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                                 handleRemoveFile(doc.key);
                               }}
                               className="absolute -top-2 -right-2 w-6 h-6 bg-slate-700 hover:bg-red-600 text-white rounded-full flex items-center justify-center border border-slate-600 shadow-md transition-all cursor-pointer z-10"
-                              title="Remove photo"
+                              title={isTagalog ? "Alisin ang larawan" : "Remove photo"}
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -1208,14 +1218,14 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     darkMode ? 'bg-[#18243c] hover:bg-slate-700 text-slate-300 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
                   }`}
                 >
-                  BACK
+                  {isTagalog ? 'BUMALIK' : 'BACK'}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleNextStep(4)}
                   className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl uppercase"
                 >
-                  NEXT
+                  {isTagalog ? 'KASUNOD' : 'NEXT'}
                 </button>
               </div>
             </div>
@@ -1224,10 +1234,10 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
             <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-200">
               <div className="space-y-1 mb-4">
                 <h3 className={`text-base sm:text-lg font-extrabold tracking-wide uppercase ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                  REVIEW YOUR APPLICATION
+                  {isTagalog ? 'SURIIN ANG IYONG APLIKASYON' : 'REVIEW YOUR APPLICATION'}
                 </h3>
                 <p className={`text-xs ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Please review all information carefully before submitting your application. You can edit any section by clicking the edit button.
+                  {isTagalog ? 'Mangyaring suriin nang mabuti ang lahat ng impormasyon bago ipasa ang aplikasyon. Maaari mong baguhin ang anumang bahagi sa pag-click ng "Baguhin".' : 'Please review all information carefully before submitting your application. You can edit any section by clicking the edit button.'}
                 </p>
               </div>
 
@@ -1237,7 +1247,9 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <div className={`p-4 flex items-center justify-between border-b ${darkMode ? 'bg-[#101c38] border-slate-800/80' : 'bg-slate-100 border-slate-200'}`}>
                     <div className="flex items-center gap-2">
                       <ChevronUp className={`w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                      <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Requirements</h4>
+                      <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        {isTagalog ? 'Mga Kailangan (Requirements)' : 'Requirements'}
+                      </h4>
                     </div>
                     <button
                       type="button"
@@ -1245,14 +1257,14 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
                     >
                       <Pencil className="w-3.5 h-3.5" />
-                      <span>EDIT</span>
+                      <span>{isTagalog ? 'BAGUHIN' : 'EDIT'}</span>
                     </button>
                   </div>
                   <div className="p-5 space-y-3">
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                        Type of Assistance: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{assistanceType || 'Medicines / Medical Supplies'}</span>
+                        {isTagalog ? 'Uri ng Tulong:' : 'Type of Assistance:'} <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{assistanceType || 'Medicines / Medical Supplies'}</span>
                       </span>
                     </div>
                     {assistanceType === 'Medical Bill Assistance' && (
@@ -1261,7 +1273,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                           <div className="flex items-start gap-3">
                             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                             <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                              Hospital / Health Facility: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                              {isTagalog ? 'Ospital / Pasilidad:' : 'Hospital / Health Facility:'} <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                                 {hospitalFacility === 'Other Health Facility' && otherHospitalFacility ? `${otherHospitalFacility} (Other Health Facility)` : hospitalFacility}
                               </span>
                             </span>
@@ -1271,7 +1283,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                           <div className="flex items-start gap-3">
                             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                             <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                              Medical Condition / Diagnosis: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{medicalCondition}</span>
+                              {isTagalog ? 'Kondisyong Medikal / Diagnosis:' : 'Medical Condition / Diagnosis:'} <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{medicalCondition}</span>
                             </span>
                           </div>
                         )}
@@ -1280,8 +1292,8 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span className={`text-xs font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                        Required Documents: <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                          Medical Certificate / Abstract and {(assistanceType.toLowerCase().includes('bill') || assistanceType.toLowerCase().includes('hospital')) ? 'Hospital Bill / SOA' : 'Doctor Prescription'}
+                        {isTagalog ? 'Kailangang Dokumento:' : 'Required Documents:'} <span className={`font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                          Medical Certificate / Abstract at {(assistanceType.toLowerCase().includes('bill') || assistanceType.toLowerCase().includes('hospital')) ? 'Hospital Bill / SOA' : 'Doctor Prescription'}
                         </span>
                       </span>
                     </div>
@@ -1293,7 +1305,9 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <div className={`p-4 flex items-center justify-between border-b ${darkMode ? 'bg-[#101c38] border-slate-800/80' : 'bg-slate-100 border-slate-200'}`}>
                     <div className="flex items-center gap-2">
                       <ChevronUp className={`w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                      <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Personal information</h4>
+                      <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        {isTagalog ? 'Personal na Impormasyon' : 'Personal information'}
+                      </h4>
                     </div>
                     <button
                       type="button"
@@ -1301,7 +1315,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
                     >
                       <Pencil className="w-3.5 h-3.5" />
-                      <span>EDIT</span>
+                      <span>{isTagalog ? 'BAGUHIN' : 'EDIT'}</span>
                     </button>
                   </div>
                   <div className="p-5 space-y-6">
@@ -1418,7 +1432,9 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                   <div className={`p-4 flex items-center justify-between border-b ${darkMode ? 'bg-[#101c38] border-slate-800/80' : 'bg-slate-100 border-slate-200'}`}>
                     <div className="flex items-center gap-2">
                       <ChevronUp className={`w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`} />
-                      <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Required documents</h4>
+                      <h4 className={`text-sm font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                        {isTagalog ? 'Kailangang mga Dokumento' : 'Required documents'}
+                      </h4>
                     </div>
                     <button
                       type="button"
@@ -1426,21 +1442,21 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                       className="text-xs font-extrabold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 transition-all"
                     >
                       <Pencil className="w-3.5 h-3.5" />
-                      <span>EDIT</span>
+                      <span>{isTagalog ? 'BAGUHIN' : 'EDIT'}</span>
                     </button>
                   </div>
                   <div className="p-5 space-y-4">
                     {[
-                      { key: 'med_cert', title: 'MEDICAL CERTIFICATE / CLINICAL ABSTRACT *' },
+                      { key: 'med_cert', title: isTagalog ? 'MEDICAL CERTIFICATE / CLINICAL ABSTRACT *' : 'MEDICAL CERTIFICATE / CLINICAL ABSTRACT *' },
                       { 
                         key: 'reseta', 
                         title: (assistanceType.toLowerCase().includes('bill') || assistanceType.toLowerCase().includes('hospital'))
-                          ? 'HOSPITAL BILL / SOA *' 
-                          : 'DOCTOR PRESCRIPTION / MEDICINE PRESCRIPTION *' 
+                          ? (isTagalog ? 'HOSPITAL BILL / SOA *' : 'HOSPITAL BILL / SOA *')
+                          : (isTagalog ? 'RESETA NG DOKTOR / RESETA NG GAMOT *' : 'DOCTOR PRESCRIPTION / MEDICINE PRESCRIPTION *')
                       },
-                      { key: 'indigency', title: 'BARANGAY CERTIFICATE OF INDIGENCY *' },
-                      { key: 'qcid_patient', title: 'PATIENT QC ID *' },
-                      { key: 'authorization', title: 'AUTHORIZATION / PERSONAL LETTER *' },
+                      { key: 'indigency', title: isTagalog ? 'BARANGAY CERTIFICATE OF INDIGENCY *' : 'BARANGAY CERTIFICATE OF INDIGENCY *' },
+                      { key: 'qcid_patient', title: isTagalog ? 'QC ID NG PASYENTE *' : 'PATIENT QC ID *' },
+                      { key: 'authorization', title: isTagalog ? 'AUTHORIZATION / LIHAM NG PAHINTULOT *' : 'AUTHORIZATION / PERSONAL LETTER *' },
                     ].map((doc) => {
                       const file = uploadedFiles[doc.key];
                       const previewUrl = file ? URL.createObjectURL(file) : null;
@@ -1478,7 +1494,9 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                             </div>
                           ) : (
                             <div className="pt-0.5">
-                              <span className={`text-xs italic ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No photo uploaded</span>
+                              <span className={`text-xs italic ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                {isTagalog ? 'Walang larawang na-upload' : 'No photo uploaded'}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -1497,13 +1515,13 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
                     darkMode ? 'bg-[#18243c] hover:bg-slate-700 text-slate-300 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
                   }`}
                 >
-                  BACK
+                  {isTagalog ? 'BUMALIK' : 'BACK'}
                 </button>
                 <button
                   type="submit"
                   className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-xl transition-all"
                 >
-                  SUBMIT
+                  {isTagalog ? 'IPASA' : 'SUBMIT'}
                 </button>
               </div>
             </form>
