@@ -110,9 +110,9 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             reference_no: app.reference_no,
             service_name: (app.reference_no || '').startsWith('QC-SP-EDU')
               ? 'Solo Parent Educational Assistance Program'
-              : (app.reference_no || '').startsWith('QC-EDU')
-              ? 'Educational Assistance for Indigent Children & Youth'
-              : (app.service_name || 'Educational Assistance for Indigent Children & Youth'),
+              : (app.reference_no || '').startsWith('QC-CW')
+              ? 'Child Welfare Services'
+              : app.service_name || 'Educational Assistance for Indigent Children & Youth',
             applicant_name: app.applicant_name,
             first_name: app.first_name,
             middle_name: app.middle_name,

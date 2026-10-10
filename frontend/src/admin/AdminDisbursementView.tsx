@@ -110,7 +110,8 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
   const disbursementRecords = useMemo(() => {
     return applications.filter((app) => {
       const isTrn = (app.category || '').toLowerCase() === 'training' || (app.serviceName || '').toLowerCase().includes('training') || (app.referenceNo || '').startsWith('TRN-');
-      if (isTrn) return false; // Skills Training has NO financial grant or payout!
+      const isCwProtection = (app.referenceNo || '').startsWith('QC-CW-') || (app.referenceNo || '').startsWith('CW-PROT-') || (app.serviceName || '').toLowerCase() === 'child welfare services' || (app.serviceName || '').toLowerCase().includes('child protection');
+      if (isTrn || isCwProtection) return false; // Non-financial programs have NO financial grant or payout!
       const st = (app.status || '').toUpperCase();
       // Exclude initial 'APPROVED BY ADMIN' step 2 applications until they complete Step 4 interview approval!
       return (
@@ -118,6 +119,8 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
         st === 'READY FOR PAYOUT' || 
         st === 'PAYOUT SCHEDULED' ||
         st === 'RELEASED / COMPLETED' || 
+        st === 'RELEASED & ARCHIVED' ||
+        st === 'PENDING PAYOUT SCHEDULE' ||
         st === 'COMPLETED'
       );
     });
@@ -174,8 +177,8 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
   }, [disbursementRecords, tabFilter, searchQuery]);
 
   // Summary Metrics
-  const pendingCount = disbursementRecords.filter((a) => a.status === 'Ready for Payout' || a.status === 'Payout Scheduled' || a.status === 'Approved by Admin').length;
-  const releasedCount = disbursementRecords.filter((a) => a.status === 'RELEASED / COMPLETED' || (a.status as string) === 'Completed').length;
+  const pendingCount = disbursementRecords.filter((a) => a.status !== 'RELEASED / COMPLETED' && a.status !== 'RELEASED & ARCHIVED' && (a.status as string) !== 'Completed').length;
+  const releasedCount = disbursementRecords.filter((a) => a.status === 'RELEASED / COMPLETED' || a.status === 'RELEASED & ARCHIVED' || (a.status as string) === 'Completed').length;
 
   const handleConfirmRelease = (immediate = false) => {
     if (releasingRecord && onUpdateStatus) {
@@ -362,6 +365,7 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
 
                   const s = app.serviceName.toLowerCase();
                   const cat = (app.category || '').toLowerCase();
+                  const isEdu = s.includes('educational') || s.includes('indigent') || app.referenceNo.startsWith('QC-SP-EDU') || app.referenceNo.startsWith('QC-EDU') || app.referenceNo.startsWith('CW-');
                   if (s.includes('medicine')) {
                     benefitText = 'Pharmacy Voucher / Reseta Authorization';
                     locationText = 'Accredited Partner Pharmacy';
@@ -377,7 +381,10 @@ export const AdminDisbursementView: React.FC<AdminDisbursementViewProps> = ({
                   } else if (s.includes('livelihood') || cat.includes('livelihood') || app.referenceNo.startsWith('LVH-')) {
                     benefitText = '₱15,000.00 Livelihood Capital Grant';
                     locationText = 'Quezon City Hall Cashier / SSDD Office';
-                  } else if (s.includes('solo') || s.includes('parent') || cat.includes('solo') || cat.includes('edu')) {
+                  } else if (isEdu) {
+                    benefitText = '₱5,000.00 Fixed Educational Grant';
+                    locationText = 'Quezon City Hall Cashier / SSDD Office';
+                  } else if (s.includes('solo') || s.includes('parent') || cat.includes('solo')) {
                     benefitText = '₱3,000.00 Fixed Cash Subsidy';
                     locationText = 'Quezon City Hall Cashier / SSDD Office';
                   }

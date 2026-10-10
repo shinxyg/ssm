@@ -84,14 +84,15 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
       const st = (app.status || '').toUpperCase();
       const isRejected = st === 'REJECTED' || st === 'DISAPPROVED' || st === 'DISQUALIFIED' || st.includes('REJECT') || st.includes('DISAPPROV');
       const isTrn = (app.category || '').toLowerCase() === 'training' || (app.serviceName || '').toLowerCase().includes('training') || app.referenceNo.startsWith('TRN-');
+      const isCwProtection = app.referenceNo.startsWith('QC-CW-') || app.referenceNo.startsWith('CW-PROT-') || (app.serviceName || '').toLowerCase() === 'child welfare services' || (app.serviceName || '').toLowerCase().includes('child protection');
 
       // History tab keeps all records permanently
       if (!historyMap.has(app.referenceNo)) {
         historyMap.set(app.referenceNo, app);
       }
 
-      // Active tab keeps all non-rejected & non-training applications permanently (Training applications have NO financial payout)
-      if (!isRejected && !isTrn && !activeMap.has(app.referenceNo)) {
+      // Active tab keeps all non-rejected & non-training & non-cw-protection applications (Non-financial programs have NO financial payout)
+      if (!isRejected && !isTrn && !isCwProtection && !activeMap.has(app.referenceNo)) {
         activeMap.set(app.referenceNo, app);
       }
     });
@@ -254,7 +255,9 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
             {filteredApps.map((app, idx) => {
               const statusText = (app.status as string) || 'Pending';
               const name = (app as any).applicantName || app.details?.applicantName || 'Juan Dela Cruz';
-              const isSoloParent = (app.category || '').toLowerCase().includes('solo') || (app.serviceName || '').toLowerCase().includes('solo') || app.referenceNo.startsWith('SP-');
+              const isCwProtection = app.referenceNo.startsWith('QC-CW-') || app.referenceNo.startsWith('CW-PROT-') || (app.serviceName || '').toLowerCase() === 'child welfare services' || (app.serviceName || '').toLowerCase().includes('child protection');
+              const isSoloParentEdu = (app.referenceNo.startsWith('QC-SP-EDU') || (app.serviceName || '').toLowerCase().includes('educational assistance')) && !isCwProtection;
+              const isSoloParent = ((app.category || '').toLowerCase().includes('solo') || (app.serviceName || '').toLowerCase().includes('solo') || app.referenceNo.startsWith('SP-')) && !isSoloParentEdu && !isCwProtection;
               const isTrn = (app.category || '').toLowerCase() === 'training' || (app.serviceName || '').toLowerCase().includes('training') || app.referenceNo.startsWith('TRN-');
 
               const appt = (app as any).appointmentDetails;
@@ -362,21 +365,29 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                     APPROVED
                   </span>
                 );
-                processExplanation = "Nakalipas sa Physical Interview! Inisyu na ang Official Solo Parent ID Card at ₱3,000 Cash Subsidy Certificate. Awtomatikong pumasok sa Financial Aid Masterlist na may Fixed Amount: ₱3,000.00.";
+                processExplanation = isSoloParentEdu
+                  ? "Nakalipas sa Physical Interview! Inisyu na ang Official Solo Parent ID Card at ₱5,000 Educational Grant Certificate. Awtomatikong pumasok sa Financial Aid Masterlist na may Fixed Amount: ₱5,000.00."
+                  : "Nakalipas sa Physical Interview! Inisyu na ang Official Solo Parent ID Card at ₱3,000 Cash Subsidy Certificate. Awtomatikong pumasok sa Financial Aid Masterlist na may Fixed Amount: ₱3,000.00.";
               } else if (isPayoutScheduled) {
                 statusBadge = (
                   <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 border border-purple-500/30 text-purple-400 inline-block">
                     PAYOUT SCHEDULED
                   </span>
                 );
-                processExplanation = `Naitakda ang ₱3,000 Solo Parent Payout release date sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`;
+                processExplanation = isSoloParentEdu
+                  ? `Naitakda ang ₱5,000 Solo Parent Educational Grant payout release date sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`
+                  : `Naitakda ang ₱3,000 Solo Parent Payout release date sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`;
               } else if (isReleased) {
                 statusBadge = (
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 border border-purple-500/30 text-purple-300 inline-block">
-                    COMPLETED ({isTrn ? 'Training Completed' : '₱3,000 Cash Subsidy Release Completed'})
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 inline-block">
+                    COMPLETED ({isCwProtection ? 'Child Protection / Case Services Completed' : isSoloParentEdu ? '₱5,000 Educational Grant Release Completed' : isTrn ? 'Training Completed' : '₱3,000 Cash Subsidy Release Completed'})
                   </span>
                 );
-                processExplanation = isTrn
+                processExplanation = isCwProtection
+                  ? "Binabati kita! Aprubado at nakalipas sa Case Assessment ang inyong Child Protection / Case Intake Services. (Non-Financial Program — Walang Financial Payout)."
+                  : isSoloParentEdu
+                  ? "Nailabas na ang inyong ₱5,000 Solo Parent Educational Grant. Maraming salamat!"
+                  : isTrn
                   ? "Nakatapos sa Skills Training Program. Maraming salamat!"
                   : "Nailabas na ang inyong ₱3,000 Solo Parent Subsidy. Maraming salamat!";
               } else if (isRejected) {
@@ -415,7 +426,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                       <div className="font-bold text-white">{name}</div>
                       <div className="text-slate-400 text-[11px] font-mono space-y-0.5">
                         <div>Filed: {app.dateSubmitted}</div>
-                        {isSoloParent && (
+                        {(isSoloParent || isSoloParentEdu) && (
                           <div className="text-blue-400 font-bold">SPIC: SP-2026-88492</div>
                         )}
                       </div>
@@ -427,14 +438,18 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                         {app.assignedSocialWorker || (isTrn ? 'Vocational Training Officer, SSDD' : app.referenceNo.startsWith('LVH-') ? 'Social Worker Officer (Livelihood Division)' : 'Ms. Jocelyn Reyes, RSW')}
                       </div>
                       <div className="text-slate-400 text-[11px]">
-                        {isTrn ? 'QC Skills Development Center (SSDD)' : app.referenceNo.startsWith('LVH-') ? 'QC Hall SSDD Livelihood Division' : isSoloParent ? 'QC Hall SSDD Solo Parent Welfare' : 'QC Hall Social Services Department'}
+                        {isTrn ? 'QC Skills Development Center (SSDD)' : app.referenceNo.startsWith('LVH-') ? 'QC Hall SSDD Livelihood Division' : (isSoloParent || isSoloParentEdu) ? 'QC Hall SSDD Solo Parent Welfare' : 'QC Hall Social Services Department'}
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#080f1e] border border-slate-800 space-y-1">
                       <span className="text-slate-400 text-[10px] font-semibold uppercase block">Benefit Entitlement</span>
                       <div className="font-bold text-amber-400">
-                        {isTrn
+                        {isCwProtection
+                          ? 'Child Protection & Case Intake Services (Non-Financial)'
+                          : isSoloParentEdu
+                          ? '₱5,000.00 FIXED SOLO PARENT EDUCATIONAL GRANT'
+                          : isTrn
                           ? 'Free Vocational Training & Orientation'
                           : isSoloParent 
                           ? '₱3,000.00 FIXED SOLO PARENT CASH SUBSIDY' 
@@ -447,12 +462,12 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                   </div>
 
                   {/* ACTIVE PAYOUT CARD (STEP 5) */}
-                  {isPayoutScheduled && isSoloParent && (
+                  {isPayoutScheduled && (isSoloParent || isSoloParentEdu) && (
                     <div className="p-5 rounded-2xl bg-purple-950/40 border border-purple-500/50 space-y-3 shadow-lg">
                       <div className="flex items-center justify-between border-b border-purple-800/60 pb-2">
                         <span className="text-xs font-black uppercase text-purple-300 tracking-wider flex items-center gap-1.5">
                           <Award className="w-4 h-4 text-purple-400" />
-                          <span>ACTIVE PAYOUT CARD (FIXED SOLO PARENT CASH SUBSIDY)</span>
+                          <span>ACTIVE PAYOUT CARD ({isSoloParentEdu ? 'FIXED SOLO PARENT EDUCATIONAL GRANT' : 'FIXED SOLO PARENT CASH SUBSIDY'})</span>
                         </span>
                         <span className="font-mono text-xs font-bold text-purple-400 bg-purple-900/60 px-2.5 py-0.5 rounded-lg">
                           STATUS: PAYOUT SCHEDULED
@@ -462,7 +477,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                         <div>
                           <span className="text-slate-400 text-[10px] uppercase font-bold block">MATATANGGAP:</span>
-                          <span className="text-base font-extrabold text-emerald-400">₱3,000.00 FIXED</span>
+                          <span className="text-base font-extrabold text-emerald-400">{isSoloParentEdu ? '₱5,000.00 FIXED' : '₱3,000.00 FIXED'}</span>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] uppercase font-bold block">PETSA & ORAS:</span>

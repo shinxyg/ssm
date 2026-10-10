@@ -122,12 +122,13 @@ export default function App() {
   // Fetch applications from PostgreSQL DB with fast O(1) state comparison
   const fetchDBApplications = async () => {
     try {
-      const [resAics, resSenior, resPwd, resSolo, resEdu, resLivelihood, resTraining] = await Promise.all([
+      const [resAics, resSenior, resPwd, resSolo, resEdu, resChildWelfare, resLivelihood, resTraining] = await Promise.all([
         fetch('http://localhost:5000/api/aics/applications').catch(() => null),
         fetch('http://localhost:5000/api/senior/applications').catch(() => null),
         fetch('http://localhost:5000/api/pwd/applications').catch(() => null),
         fetch('http://localhost:5000/api/solo-parent/applications').catch(() => null),
         fetch('http://localhost:5000/api/educational/applications').catch(() => null),
+        fetch('http://localhost:5000/api/child-welfare/applications').catch(() => null),
         fetch('http://localhost:5000/api/livelihood/applications').catch(() => null),
         fetch('http://localhost:5000/api/training/applications').catch(() => null)
       ]);
@@ -137,6 +138,7 @@ export default function App() {
       const pwdRaw: any[] = (resPwd && resPwd.ok) ? await resPwd.json() : [];
       const soloRaw: any[] = (resSolo && resSolo.ok) ? await resSolo.json() : [];
       const eduRaw: any[] = (resEdu && resEdu.ok) ? await resEdu.json() : [];
+      const cwRaw: any[] = (resChildWelfare && resChildWelfare.ok) ? await resChildWelfare.json() : [];
       const lvhRaw: any[] = (resLivelihood && resLivelihood.ok) ? await resLivelihood.json() : [];
       const trnRaw: any[] = (resTraining && resTraining.ok) ? await resTraining.json() : [];
 
@@ -191,12 +193,18 @@ export default function App() {
       const soloApps: ApplicationRecord[] = (Array.isArray(soloRaw) ? soloRaw : []).map(row => ({
         referenceNo: row.reference_no,
         applicantName: row.applicant_name,
-        serviceName: row.service_name || 'Solo Parent Financial Subsidy Program',
+        serviceName: (row.reference_no || '').startsWith('QC-SP-EDU')
+          ? 'Solo Parent Educational Assistance Program'
+          : row.service_name || 'Solo Parent Financial Subsidy Program',
         category: row.category || 'soloparent',
-        assistanceType: row.assistance_type || 'Solo Parent Welfare Grant',
+        assistanceType: (row.reference_no || '').startsWith('QC-SP-EDU')
+          ? 'Solo Parent Educational Assistance Program'
+          : row.assistance_type || 'Solo Parent Welfare Grant',
         status: row.status || 'Pending Document Validation',
         dateSubmitted: row.date_submitted ? new Date(row.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
-        amountOrType: '₱3,000.00 Fixed Solo Parent Cash Subsidy',
+        amountOrType: (row.reference_no || '').startsWith('QC-SP-EDU')
+          ? '₱5,000.00 Educational Grant'
+          : '₱3,000.00 Fixed Solo Parent Cash Subsidy',
         assignedSocialWorker: 'Ms. Jocelyn Reyes, RSW (Solo Parent Welfare Division)',
         scheduledPayoutDate: row.payout_date || row.scheduled_payout_date,
         scheduledPayoutTime: row.payout_time || row.scheduled_payout_time,
@@ -217,8 +225,8 @@ export default function App() {
         applicantName: row.applicant_name,
         serviceName: (row.reference_no || '').startsWith('QC-SP-EDU')
           ? 'Solo Parent Educational Assistance Program'
-          : (row.reference_no || '').startsWith('QC-EDU')
-          ? 'Educational Assistance for Indigent Children & Youth'
+          : (row.reference_no || '').startsWith('QC-CW')
+          ? 'Child Welfare Services'
           : row.service_name || 'Educational Assistance for Indigent Children & Youth',
         category: row.category || 'educational',
         assistanceType: row.assistance_type || 'Educational Cash Grant',
@@ -235,6 +243,30 @@ export default function App() {
           appointmentTime: row.appointment_time,
           venue: row.appointment_venue || 'Quezon City Hall SSDD Desk 4',
           assignedWorker: 'Educational Grant Evaluator, RSW'
+        },
+        disapprovalReason: row.disapproval_reason,
+        details: row.details
+      }));
+
+      const cwApps: ApplicationRecord[] = (Array.isArray(cwRaw) ? cwRaw : []).map(row => ({
+        referenceNo: row.reference_no,
+        applicantName: row.applicant_name,
+        serviceName: row.service_name || 'Child Welfare Services',
+        category: row.category || 'Child Welfare',
+        assistanceType: row.assistance_type || 'Child Welfare Services',
+        status: row.status || 'Pending Assessment',
+        dateSubmitted: row.date_submitted ? new Date(row.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
+        amountOrType: (row.service_name || '').toLowerCase().includes('educ') ? '₱5,000.00 Educational Grant' : 'Child Protection & Intake Services',
+        assignedSocialWorker: 'Ms. Corazon Mendoza, RSW (Child & Youth Welfare)',
+        scheduledPayoutDate: row.payout_date || row.scheduled_payout_date,
+        scheduledPayoutTime: row.payout_time || row.scheduled_payout_time,
+        appointmentDate: row.appointment_date,
+        appointmentTime: row.appointment_time,
+        appointmentDetails: {
+          appointmentDate: row.appointment_date,
+          appointmentTime: row.appointment_time,
+          venue: row.appointment_venue || 'Quezon City Hall SSDD Desk 4',
+          assignedWorker: 'Child Welfare Officer, RSW'
         },
         disapprovalReason: row.disapproval_reason,
         details: row.details
@@ -299,7 +331,7 @@ export default function App() {
       // Filter out non-AICS records from aicsApps list so module-specific tables take precedence
       const cleanAicsApps = (Array.isArray(aicsApps) ? aicsApps : []).filter(item => {
         const ref = item?.referenceNo || '';
-        return !ref.startsWith('QC-PWD-') && !ref.startsWith('SENIOR-') && !ref.startsWith('SP-') && !ref.startsWith('LVH-') && !ref.startsWith('TRN-');
+        return !ref.startsWith('QC-PWD-') && !ref.startsWith('SENIOR-') && !ref.startsWith('SP-') && !ref.startsWith('LVH-') && !ref.startsWith('TRN-') && !ref.startsWith('QC-EDU-') && !ref.startsWith('CW-');
       });
 
       const allDbApps = [
@@ -307,6 +339,7 @@ export default function App() {
         ...seniorApps,
         ...soloApps,
         ...eduApps,
+        ...cwApps,
         ...lvhApps,
         ...trnApps,
         ...cleanAicsApps

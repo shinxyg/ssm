@@ -548,6 +548,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                     const appt = app.appointmentDetails;
 
                     const isTrn = (app.referenceNo || '').startsWith('TRN-') || app.category === 'training' || (app.serviceName || '').toLowerCase().includes('training') || (app.serviceName || '').toLowerCase().includes('barista') || (app.serviceName || '').toLowerCase().includes('hairdressing') || (app.serviceName || '').toLowerCase().includes('pastry');
+                    const isCwProtection = (app.referenceNo || '').startsWith('QC-CW-') || (app.referenceNo || '').startsWith('CW-PROT-') || (app.serviceName || '').toLowerCase() === 'child welfare services' || (app.serviceName || '').toLowerCase().includes('child protection');
 
                     const rawDate = isTrn 
                       ? ((app as any).orientation_date || (app as any).orientationDate || app.appointmentDate || (app as any).appointment_date || appt?.appointmentDate || '2026-10-08')
@@ -608,9 +609,9 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                                 : app.status === 'Referred to Partner Agency' || app.status === 'Referred'
                                 ? 'Referred to Partner Agency'
                                 : isAppApproved(app.status) || isAppApproved(appt?.status)
-                                ? (app.status === 'RELEASED / COMPLETED' || (app.status as string) === 'Completed' ? 'Released & Archived' : ((app.referenceNo || '').startsWith('TRN-') || app.category === 'training' || (app.serviceName || '').toLowerCase().includes('training') || (app.serviceName || '').toLowerCase().includes('barista')) ? 'Qualified / Enrolled' : 'Approved & Ready for Payout')
+                                ? (app.status === 'RELEASED / COMPLETED' || app.status === 'APPROVED / COMPLETED' || (app.status as string) === 'Completed' ? (isCwProtection ? 'Approved / Completed' : 'Released & Archived') : isTrn ? 'Qualified / Enrolled' : isCwProtection ? 'Approved / Completed' : 'Approved & Ready for Payout')
                                 : isScheduled
-                                ? (((app.referenceNo || '').startsWith('TRN-') || app.category === 'training' || (app.serviceName || '').toLowerCase().includes('training') || (app.serviceName || '').toLowerCase().includes('barista')) ? 'Orientation Scheduled' : 'Interview Scheduled')
+                                ? (isTrn ? 'Orientation Scheduled' : 'Interview Scheduled')
                                 : 'Pending Schedule'}
                             </span>
                           </span>
@@ -971,7 +972,8 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                       type="button"
                       onClick={async () => {
                         const ref = assessmentApp.referenceNo;
-                        const newStatus = 'Released & Archived';
+                        const isCwProt = ref.startsWith('QC-CW-') || ref.startsWith('CW-PROT-') || (assessmentApp.serviceName || '').toLowerCase() === 'child welfare services' || (assessmentApp.serviceName || '').toLowerCase().includes('child protection');
+                        const newStatus = isCwProt ? 'APPROVED / COMPLETED' : 'APPROVED';
                         setDbAppointments((prev) =>
                           prev.map((item) => (item.referenceNo === ref ? { ...item, status: newStatus } : item))
                         );

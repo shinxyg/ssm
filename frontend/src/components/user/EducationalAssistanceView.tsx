@@ -252,6 +252,8 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
   const handleSubmitApplication = async () => {
     const newRef = mode === 'soloparent'
       ? `QC-SP-EDU-${Math.floor(100000 + Math.random() * 900000)}`
+      : mode === 'childwelfare'
+      ? `QC-CW-${Math.floor(100000 + Math.random() * 900000)}`
       : `QC-EDU-${Math.floor(100000 + Math.random() * 900000)}`;
     setGeneratedRefNo(newRef);
 
@@ -343,7 +345,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
       serviceName: mode === 'soloparent'
         ? 'Solo Parent Educational Assistance Program'
         : mode === 'childwelfare'
-        ? 'Child Welfare Services Aid'
+        ? 'Child Welfare Services'
         : 'Educational Assistance for Indigent Children & Youth',
       category: mode === 'soloparent' ? 'Solo Parent Services' : 'AICS Assistance',
       dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
@@ -399,7 +401,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               Application Successfully Submitted
             </h3>
             <p className={`text-xs max-w-sm mx-auto leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-              Your application for {mode === 'soloparent' ? 'Solo Parent Educational Assistance Grant (₱5,000.00)' : 'Educational Assistance'} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment.
+              Your application for {mode === 'soloparent' ? 'Solo Parent Educational Assistance Grant (₱5,000.00)' : mode === 'childwelfare' ? 'Child Protection / Foster Care' : 'Educational Assistance'} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment.
             </p>
           </div>
 
@@ -429,14 +431,14 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             type="button"
             onClick={() => {
               if (onNavigateToModule) {
-                onNavigateToModule('disbursements');
+                onNavigateToModule(mode === 'childwelfare' ? 'history' : 'disbursements');
               } else {
                 onBack();
               }
             }}
             className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
           >
-            <span>VIEW IN FINANCIAL AID / APPLICATION HISTORY</span>
+            <span>{mode === 'childwelfare' ? 'VIEW IN APPLICATION HISTORY' : 'VIEW IN FINANCIAL AID / APPLICATION HISTORY'}</span>
           </button>
         </div>
       </div>
