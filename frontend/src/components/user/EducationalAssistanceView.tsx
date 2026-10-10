@@ -264,6 +264,10 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
     if (docSoloParentId) uploadedDocsObj['soloParentId'] = docSoloParentId;
     if (docSchoolId) uploadedDocsObj['schoolId'] = docSchoolId;
     if (docGovId) uploadedDocsObj['govId'] = docGovId;
+    if (docAvailable) uploadedDocsObj['available_docs'] = docAvailable;
+    if (docReferral) uploadedDocsObj['referral_letter'] = docReferral;
+    if (docBirthCert) uploadedDocsObj['birth_certificate'] = docBirthCert;
+    if (docMedicalPoliceBarangay) uploadedDocsObj['medical_police_brgy'] = docMedicalPoliceBarangay;
 
     const payload = {
       referenceNo: newRef,
@@ -288,11 +292,15 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
       childDob,
       childAge,
       childSex,
+      childAddress,
       schoolName,
       gradeLevel,
       lrnNumber,
       typeOfSchool,
       otherEnrollmentInfo: schoolAddress || otherEnrollmentInfo,
+      concernDescription,
+      incidentDate,
+      incidentLocation,
       numChildrenInFamily,
       numChildrenStudying,
       monthlyFamilyIncome: monthlyIncome,
@@ -309,12 +317,16 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         childDob,
         childAge,
         childSex,
+        childAddress,
         schoolName,
         gradeLevel,
         lrnNumber,
         typeOfSchool,
         schoolAddress,
         otherEnrollmentInfo: schoolAddress || otherEnrollmentInfo,
+        concernDescription,
+        incidentDate,
+        incidentLocation,
         numChildrenInFamily,
         numChildrenStudying,
         monthlyFamilyIncome: monthlyIncome,

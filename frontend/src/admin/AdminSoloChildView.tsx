@@ -71,6 +71,12 @@ interface SoloParentApplication {
   grade_level?: string;
   lrn_number?: string;
   school_address?: string;
+  category?: string;
+  relationship_to_child?: string;
+  child_address?: string;
+  concern_description?: string;
+  incident_date?: string;
+  incident_location?: string;
 }
 
 export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode = true }) => {
@@ -558,8 +564,9 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
       {/* MANAGE APPLICATION MODAL (MATCHING EXACT AICS LAYOUT FROM SCREENSHOTS 1 & 2!) */}
       {/* ---------------------------------------------------------------------- */}
       {selectedApp && (() => {
-        const isSoloParentEdu = (selectedApp.reference_no || '').startsWith('QC-SP-EDU') || (selectedApp.service_name || '').toLowerCase().includes('solo parent educational');
-        const isIndigentEdu = (selectedApp.reference_no || '').startsWith('QC-EDU') || (selectedApp.service_name || '').toLowerCase().includes('indigent');
+        const isChildWelfare = (selectedApp.reference_no || '').startsWith('QC-CW-') || (selectedApp.category === 'child_welfare') || (selectedApp.service_name || '').toLowerCase().includes('child welfare');
+        const isSoloParentEdu = !isChildWelfare && ((selectedApp.reference_no || '').startsWith('QC-SP-EDU') || (selectedApp.service_name || '').toLowerCase().includes('solo parent educational'));
+        const isIndigentEdu = !isChildWelfare && ((selectedApp.reference_no || '').startsWith('QC-EDU') || (selectedApp.service_name || '').toLowerCase().includes('indigent'));
         const isEduApp = isSoloParentEdu || isIndigentEdu;
 
         return createPortal(
@@ -570,7 +577,9 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
               <div>
                 <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider">{selectedApp.reference_no}</span>
                 <h3 className="text-base font-extrabold text-white mt-0.5">
-                  {isSoloParentEdu
+                  {isChildWelfare
+                    ? 'Child Welfare Protection & Assistance Services'
+                    : isSoloParentEdu
                     ? 'Solo Parent Educational Assistance — ₱5,000 Cash Grant'
                     : isIndigentEdu
                     ? 'Educational Assistance for Indigent Children & Youth — ₱5,000 Cash Grant'
@@ -653,20 +662,24 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Email Address</span>
                           <div className="font-bold text-slate-200 text-xs mt-0.5 truncate">{selectedApp.email_address || 'N/A'}</div>
                         </div>
-                        {isIndigentEdu ? (
+                        {isChildWelfare || isIndigentEdu ? (
                           <>
                             <div>
                               <span className="text-slate-400 text-[10px] font-semibold uppercase">Relationship to Child</span>
-                              <div className="font-bold text-white text-xs mt-0.5">{selectedApp.details?.relationshipToChild || selectedApp.details?.relationToChild || (selectedApp as any).relationship_to_child || 'Parent / Guardian'}</div>
+                              <div className="font-bold text-white text-xs mt-0.5">{selectedApp.relationship_to_child || selectedApp.details?.relationshipToChild || selectedApp.details?.relationToChild || 'Parent / Guardian'}</div>
                             </div>
-                            <div>
-                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Target Sector(s)</span>
-                              <div className="font-bold text-white text-xs mt-0.5">{Array.isArray(selectedApp.details?.selectedSector) ? selectedApp.details.selectedSector.join(', ') : selectedApp.details?.selectedSector || (selectedApp as any).selected_sectors || 'Children & Youth'}</div>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Requested Service(s)</span>
-                              <div className="font-bold text-white text-xs mt-0.5">{Array.isArray(selectedApp.details?.selectedServices) ? selectedApp.details.selectedServices.join(', ') : selectedApp.details?.selectedServices || (selectedApp as any).selected_services || 'Child Protection'}</div>
-                            </div>
+                            {isIndigentEdu && (
+                              <>
+                                <div>
+                                  <span className="text-slate-400 text-[10px] font-semibold uppercase">Target Sector(s)</span>
+                                  <div className="font-bold text-white text-xs mt-0.5">{Array.isArray(selectedApp.details?.selectedSector) ? selectedApp.details.selectedSector.join(', ') : selectedApp.details?.selectedSector || (selectedApp as any).selected_sectors || 'Children & Youth'}</div>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 text-[10px] font-semibold uppercase">Requested Service(s)</span>
+                                  <div className="font-bold text-white text-xs mt-0.5">{Array.isArray(selectedApp.details?.selectedServices) ? selectedApp.details.selectedServices.join(', ') : selectedApp.details?.selectedServices || (selectedApp as any).selected_services || 'Child Protection'}</div>
+                                </div>
+                              </>
+                            )}
                           </>
                         ) : (
                           <div>
@@ -678,7 +691,71 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                     </div>
 
                     {/* SECTION B & C: SPECIFIC TO PROGRAM TYPE */}
-                    {isSoloParentEdu ? (
+                    {isChildWelfare ? (
+                      <>
+                        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
+                          <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                            <span>B. CHILD INFORMATION</span>
+                            <span className="text-[9px] font-mono text-slate-400">CHILD PROFILE</span>
+                          </span>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Child's Full Name</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.child_full_name || selectedApp.details?.childFullName || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Date of Birth</span>
+                              <div className="font-mono text-slate-200 mt-0.5">{selectedApp.child_dob || selectedApp.details?.childDob || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Age</span>
+                              <div className="font-bold text-slate-200 mt-0.5">
+                                {selectedApp.child_age || selectedApp.details?.childAge ? `${selectedApp.child_age || selectedApp.details?.childAge} yrs old` : 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Sex / Gender</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.child_sex || selectedApp.details?.childSex || 'N/A'}</div>
+                            </div>
+                            <div className="col-span-2">
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Child's Address</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">
+                                {selectedApp.child_address || selectedApp.details?.childAddress || (selectedApp.house_no ? `${selectedApp.house_no} ${selectedApp.street_name}, ${selectedApp.barangay}` : 'N/A')}
+                              </div>
+                            </div>
+                            <div className="col-span-2">
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">School Name (If applicable)</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.school_name || selectedApp.details?.schoolName || 'N/A'}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
+                          <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                            <span>C. REASON FOR REQUEST & INCIDENT DETAILS</span>
+                            <span className="text-[9px] font-mono text-slate-400 font-bold">CASE DETAILS</span>
+                          </span>
+                          <div className="space-y-3">
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase block mb-1">Description of Concern / Problem</span>
+                              <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800 text-slate-200 leading-relaxed font-sans">
+                                {selectedApp.concern_description || selectedApp.details?.concernDescription || 'N/A'}
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <span className="text-slate-400 text-[10px] font-semibold uppercase">Date / Approximate Date of Incident</span>
+                                <div className="font-mono font-bold text-slate-200 mt-0.5">{selectedApp.incident_date || selectedApp.details?.incidentDate || 'N/A'}</div>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 text-[10px] font-semibold uppercase">Location of Incident</span>
+                                <div className="font-semibold text-slate-200 mt-0.5">{selectedApp.incident_location || selectedApp.details?.incidentLocation || 'N/A'}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : isSoloParentEdu ? (
                       <>
                         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                           <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
@@ -914,7 +991,36 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
 
                 <div className="space-y-2.5">
                   {(() => {
-                    const docsList = [
+                    const docsList = isChildWelfare ? [
+                      { 
+                        key: 'available_docs', 
+                        altKeys: ['available_docs', 'availableDocs', 'indigency', 'qcid'], 
+                        title: 'UPLOADED AVAILABLE DOCUMENTS (GENERAL ID / DOCUMENTS)', 
+                        file: 'available_documents.png', 
+                        icon: FileText 
+                      },
+                      { 
+                        key: 'referral_letter', 
+                        altKeys: ['referral_letter', 'referralLetter'], 
+                        title: 'REFERRAL LETTER (IF APPLICABLE)', 
+                        file: 'referral_letter.pdf', 
+                        icon: FileText 
+                      },
+                      { 
+                        key: 'birth_certificate', 
+                        altKeys: ['birth_certificate', 'birthCertificate', 'birthCert'], 
+                        title: 'BIRTH CERTIFICATE (IF AVAILABLE)', 
+                        file: 'birth_certificate.pdf', 
+                        icon: FileText 
+                      },
+                      { 
+                        key: 'medical_police_brgy', 
+                        altKeys: ['medical_police_brgy', 'medicalPoliceBrgy', 'policeReport', 'brgyReport'], 
+                        title: 'MEDICAL / POLICE / BARANGAY DOCUMENTS (IF APPLICABLE)', 
+                        file: 'medical_police_report.pdf', 
+                        icon: FileText 
+                      }
+                    ] : [
                       { 
                         key: 'indigency', 
                         altKeys: ['indigency', 'proof_income'], 
@@ -1102,22 +1208,54 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                   </div>
                 </div>
               ) : (
-                <div className="bg-[#091224] border border-slate-800 rounded-2xl p-5 space-y-3 text-center shadow-xl">
-                  <div className="max-w-md mx-auto p-4 rounded-xl bg-[#0e1933] border border-blue-500/40 space-y-2 text-left shadow-lg">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">OFFICIAL ATTACHED DOCUMENT</span>
-                      <span className="text-[9px] font-mono text-slate-400">{inspectingDoc.filename}</span>
-                    </div>
-                    <div className="text-xs font-bold text-white">{inspectingDoc.title}</div>
-                    <div className="p-3 bg-slate-950 rounded-lg font-mono text-[10px] text-slate-300 space-y-1">
-                      <div>APPLICANT: {selectedApp ? selectedApp.applicant_name : 'Jefferson Fernando Lee'}</div>
-                      <div>REF CONTROL NO: {selectedApp ? selectedApp.reference_no : 'Ref Control No'}</div>
-                      <div>STATUS: VERIFIED & VALIDATED DOCUMENT</div>
-                    </div>
+                <div className="bg-[#091224] border border-slate-800 rounded-2xl p-4 space-y-3 text-center shadow-xl">
+                  <div className="w-full flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-800 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      OFFICIAL ATTACHED DOCUMENT IMAGE
+                    </span>
+                    <span className="text-[9px] font-mono text-slate-400">{inspectingDoc.filename}</span>
                   </div>
-                  <p className="text-[10px] text-slate-400 font-mono">
-                    {inspectingDoc.filename}
-                  </p>
+
+                  {/* REALISTIC GOVERNMENT DOCUMENT SVG IMAGE SHEET */}
+                  <div className="w-full flex items-center justify-center bg-black/90 p-2 rounded-xl border border-slate-800 overflow-hidden shadow-2xl">
+                    <img 
+                      src={`data:image/svg+xml;utf8,${encodeURIComponent(`
+                        <svg xmlns="http://www.w3.org/2000/svg" width="600" height="420" viewBox="0 0 600 420">
+                          <rect width="600" height="420" fill="#f8fafc" rx="12" ry="12"/>
+                          <rect x="12" y="12" width="576" height="396" fill="none" stroke="#cbd5e1" stroke-width="2" rx="8" stroke-dasharray="6,4"/>
+                          <rect x="24" y="24" width="552" height="372" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" rx="6"/>
+                          <rect x="24" y="24" width="552" height="10" fill="#1e3a8a"/>
+                          <text x="300" y="56" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#64748b" text-anchor="middle" letter-spacing="1">REPUBLIC OF THE PHILIPPINES</text>
+                          <text x="300" y="74" font-family="Arial, sans-serif" font-size="14" font-weight="900" fill="#1e293b" text-anchor="middle">QUEZON CITY GOVERNMENT</text>
+                          <text x="300" y="90" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#2563eb" text-anchor="middle">SOCIAL SERVICES DEVELOPMENT DEPARTMENT</text>
+                          <line x1="60" y1="100" x2="540" y2="100" stroke="#cbd5e1" stroke-width="1"/>
+                          <text x="300" y="128" font-family="Arial, sans-serif" font-size="14" font-weight="900" fill="#0f172a" text-anchor="middle">${inspectingDoc.title.toUpperCase()}</text>
+                          <rect x="45" y="144" width="510" height="175" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" rx="8"/>
+                          <text x="65" y="174" font-family="monospace" font-size="11" font-weight="bold" fill="#475569">APPLICANT NAME:</text>
+                          <text x="210" y="174" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#0f172a">${selectedApp ? selectedApp.applicant_name : 'JEFFERSON FERNANDO LEE'}</text>
+                          <text x="65" y="204" font-family="monospace" font-size="11" font-weight="bold" fill="#475569">REF CONTROL NO:</text>
+                          <text x="210" y="204" font-family="monospace" font-size="13" font-weight="extrabold" fill="#1d4ed8">${selectedApp ? selectedApp.reference_no : 'QC-CW-299273'}</text>
+                          <text x="65" y="234" font-family="monospace" font-size="11" font-weight="bold" fill="#475569">DOCUMENT FILE:</text>
+                          <text x="210" y="234" font-family="monospace" font-size="11" fill="#334155">${inspectingDoc.filename}</text>
+                          <text x="65" y="264" font-family="monospace" font-size="11" font-weight="bold" fill="#475569">VALIDATION STATUS:</text>
+                          <text x="210" y="264" font-family="Arial, sans-serif" font-size="12" font-weight="extrabold" fill="#047857">OFFICIALLY VERIFIED & STORED IN DB</text>
+                          <g transform="translate(435, 220)">
+                            <circle cx="45" cy="45" r="38" fill="#dcfce7" stroke="#10b981" stroke-width="2"/>
+                            <circle cx="45" cy="45" r="33" fill="none" stroke="#059669" stroke-width="1" stroke-dasharray="3,2"/>
+                            <text x="45" y="40" font-family="Arial, sans-serif" font-size="8" font-weight="900" fill="#047857" text-anchor="middle">QUEZON CITY</text>
+                            <text x="45" y="50" font-family="Arial, sans-serif" font-size="10" font-weight="900" fill="#047857" text-anchor="middle">VERIFIED</text>
+                            <text x="45" y="60" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="#059669" text-anchor="middle">SSDD OFFICIAL</text>
+                          </g>
+                          <line x1="65" y1="365" x2="230" y2="365" stroke="#94a3b8" stroke-width="1"/>
+                          <text x="147" y="380" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#64748b" text-anchor="middle">AUTHORIZED SIGNATURE</text>
+                          <path d="M 85 360 Q 115 330 145 355 T 205 340" fill="none" stroke="#1e40af" stroke-width="2"/>
+                        </svg>
+                      `)}`} 
+                      alt={inspectingDoc.title}
+                      className="max-h-[360px] w-auto max-w-full rounded-lg object-contain shadow-2xl border border-slate-700/60"
+                    />
+                  </div>
                 </div>
               )}
             </div>

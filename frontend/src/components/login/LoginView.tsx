@@ -1167,8 +1167,8 @@ export const LoginView: React.FC<LoginViewProps> = ({
               {/* Challenge Body Content */}
               <div className="p-3">
                 {challengeMode === 'image' ? (
-                  /* 3x3 SINGLE CONTIGUOUS PHOTO SLICED GRID */
-                  <div className="w-full grid grid-cols-3 gap-[2px] bg-slate-900 p-[2px] rounded border border-slate-700/80 select-none overflow-hidden">
+                  /* 3x3 PHOTO SLICED GRID WITH CORNER BLUE CHECKMARKS (MATCHING PIC 2) */
+                  <div className="w-full grid grid-cols-3 gap-1 bg-slate-900/90 p-1 rounded-lg border border-slate-700/80 select-none overflow-hidden">
                     {Array.from({ length: 9 }).map((_, idx) => {
                       const isSelected = selectedTiles.includes(idx);
                       const col = idx % 3;
@@ -1178,7 +1178,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
                         <div
                           key={idx}
                           onClick={() => handleToggleTile(idx)}
-                          className="relative w-full aspect-square cursor-pointer overflow-hidden transition-all duration-150 group bg-slate-800"
+                          className={`relative w-full aspect-square cursor-pointer overflow-hidden transition-all duration-150 group bg-slate-800 rounded-sm ${
+                            isSelected ? 'ring-2 ring-blue-500 scale-[0.98]' : 'hover:opacity-95'
+                          }`}
                           style={{
                             backgroundImage: `url("${currentTopic.bgImage}")`,
                             backgroundSize: '300% 300%',
@@ -1187,9 +1189,9 @@ export const LoginView: React.FC<LoginViewProps> = ({
                           }}
                         >
                           {isSelected && (
-                            <div className="absolute inset-0 bg-blue-600/30 ring-4 ring-blue-500 z-10 flex items-center justify-center">
-                              <div className="bg-blue-600 text-white rounded-full p-1.5 shadow-2xl border-2 border-white">
-                                <Check className="w-5 h-5 stroke-[3]" />
+                            <div className="absolute bottom-1 left-1 z-20 flex items-center justify-center animate-in zoom-in-75 duration-150">
+                              <div className="bg-[#1a73e8] text-white rounded-full p-1 shadow-xl ring-2 ring-white/90">
+                                <Check className="w-3.5 h-3.5 stroke-[3.5]" />
                               </div>
                             </div>
                           )}
