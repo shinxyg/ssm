@@ -494,10 +494,10 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                 </thead>
                 <tbody className={`divide-y text-xs font-medium ${darkMode ? 'divide-slate-800/60' : 'divide-slate-200'}`}>
                   {filteredApps.map((app, idx) => {
-                    const st = app.status;
-                    const isApproved = st === 'APPROVED BY ADMIN' || st === 'APPROVED' || st === 'Approved' || st === 'Ready for Payout' || st === 'PAYOUT SCHEDULED';
-                    const isReleased = st === 'RELEASED / COMPLETED' || st === 'Completed' || st === 'RELEASED';
-                    const isRejected = st === 'REJECTED' || st === 'Disapproved' || st === 'Rejected';
+                    const st = (app.status || '').toUpperCase();
+                    const isApproved = st.includes('APPROVED') || st.includes('READY') || st.includes('PAYOUT');
+                    const isReleased = st.includes('RELEASED') || st.includes('COMPLETED');
+                    const isRejected = st.includes('REJECT') || st.includes('DISAPPROV');
 
                     return (
                       <tr 
