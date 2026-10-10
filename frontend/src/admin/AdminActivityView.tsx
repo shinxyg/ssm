@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, History, CheckCircle2, XCircle, Calendar, ChevronDown, Trash2, Activity, RotateCcw, FileText, Info } from 'lucide-react';
+import { Search, CheckCircle2, XCircle, ChevronDown, Trash2, Activity, RotateCcw, FileText, Info } from 'lucide-react';
 
 interface ActivityLog {
   id: number;
@@ -348,43 +348,31 @@ export const AdminActivityView: React.FC<{ darkMode?: boolean }> = ({ darkMode =
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className={`${cardClass} border rounded-2xl p-5 flex justify-between items-start`}>
+        <div className={`${cardClass} border rounded-2xl p-5`}>
           <div>
             <span className={`text-[11px] font-bold tracking-wider uppercase block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>TOTAL ENTRIES</span>
             <div className={`text-3xl font-extrabold tracking-tight mt-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{totalEntries}</div>
           </div>
-          <div className={`p-2 rounded-xl ${darkMode ? 'bg-slate-800/80 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-            <History className="w-4 h-4" />
-          </div>
         </div>
 
-        <div className={`${cardClass} border rounded-2xl p-5 flex justify-between items-start`}>
+        <div className={`${cardClass} border rounded-2xl p-5`}>
           <div>
             <span className={`text-[11px] font-bold tracking-wider uppercase block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>APPROVED</span>
             <div className="text-3xl font-extrabold text-emerald-500 tracking-tight mt-2">{approvedCount}</div>
           </div>
-          <div className={`p-2 rounded-full ${darkMode ? 'bg-emerald-950/60 border border-emerald-500/30 text-emerald-400' : 'bg-emerald-100 border border-emerald-200 text-emerald-600'}`}>
-            <CheckCircle2 className="w-4 h-4" />
-          </div>
         </div>
 
-        <div className={`${cardClass} border rounded-2xl p-5 flex justify-between items-start`}>
+        <div className={`${cardClass} border rounded-2xl p-5`}>
           <div>
             <span className={`text-[11px] font-bold tracking-wider uppercase block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>REJECTED</span>
             <div className="text-3xl font-extrabold text-rose-500 tracking-tight mt-2">{rejectedCount}</div>
           </div>
-          <div className={`p-2 rounded-full ${darkMode ? 'bg-rose-950/60 border border-rose-500/30 text-rose-400' : 'bg-rose-100 border border-rose-200 text-rose-600'}`}>
-            <XCircle className="w-4 h-4" />
-          </div>
         </div>
 
-        <div className={`${cardClass} border rounded-2xl p-5 flex justify-between items-start`}>
+        <div className={`${cardClass} border rounded-2xl p-5`}>
           <div>
             <span className={`text-[11px] font-bold tracking-wider uppercase block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>TODAY</span>
             <div className={`text-3xl font-extrabold tracking-tight mt-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{todayCount}</div>
-          </div>
-          <div className={`p-2 rounded-xl ${darkMode ? 'bg-slate-800/80 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-            <Calendar className="w-4 h-4" />
           </div>
         </div>
       </div>

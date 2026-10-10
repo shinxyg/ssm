@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Users, CheckCircle2, Ban, Shield, ChevronDown, UserCog, RefreshCw, Power, Radio, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { Search, CheckCircle2, ChevronDown, UserCog, RefreshCw, Power, Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import { maskEmail, maskPhoneNumber, logDataUnmaskEvent } from '../utils/masking';
 
 interface UserRecord {
@@ -125,72 +125,43 @@ export const AdminUserView: React.FC<{ darkMode?: boolean }> = ({ darkMode = tru
             User Management
           </h1>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={fetchUsers}
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-              darkMode 
-                ? 'bg-[#0e1726] border-slate-700 text-slate-300 hover:text-white hover:bg-[#121c2e]' 
-                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-400' : ''}`} />
-            <span>Live Sync</span>
-          </button>
-        </div>
       </div>
 
       {/* Top 4 Summary Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className={`border rounded-2xl p-5 shadow-lg flex justify-between items-start ${
+        <div className={`border rounded-2xl p-5 shadow-lg ${
           darkMode ? 'bg-[#0e1726] border-slate-800/90 text-white' : 'bg-white border-slate-200/90 text-slate-900'
         }`}>
           <div>
             <span className={`text-[11px] font-bold tracking-wider uppercase block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>TOTAL USERS</span>
             <div className={`text-3xl font-extrabold tracking-tight mt-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{totalCount}</div>
-            <span className={`text-[10px] font-medium mt-1 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Registered citizen accounts</span>
-          </div>
-          <div className={`p-2 rounded-xl ${darkMode ? 'bg-blue-950/60 border border-blue-500/30 text-blue-400' : 'bg-blue-100 border border-blue-200 text-blue-600'}`}>
-            <Users className="w-4 h-4" />
           </div>
         </div>
 
-        <div className={`border rounded-2xl p-5 shadow-lg flex justify-between items-start ${
+        <div className={`border rounded-2xl p-5 shadow-lg ${
           darkMode ? 'bg-[#0e1726] border-slate-800/90 text-white' : 'bg-white border-slate-200/90 text-slate-900'
         }`}>
           <div>
             <span className={`text-[11px] font-bold tracking-wider uppercase block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>ONLINE USERS</span>
             <div className="text-3xl font-extrabold text-emerald-400 tracking-tight mt-2">{onlineCount}</div>
-            <span className={`text-[10px] font-medium mt-1 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Currently logged in & active</span>
-          </div>
-          <div className={`p-2 rounded-full ${darkMode ? 'bg-emerald-950/60 border border-emerald-500/30 text-emerald-400' : 'bg-emerald-100 border border-emerald-200 text-emerald-600'}`}>
-            <Radio className="w-4 h-4 animate-pulse" />
           </div>
         </div>
 
-        <div className={`border rounded-2xl p-5 shadow-lg flex justify-between items-start ${
+        <div className={`border rounded-2xl p-5 shadow-lg ${
           darkMode ? 'bg-[#0e1726] border-slate-800/90 text-white' : 'bg-white border-slate-200/90 text-slate-900'
         }`}>
           <div>
             <span className={`text-[11px] font-bold tracking-wider uppercase block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>OFFLINE USERS</span>
             <div className={`text-3xl font-extrabold tracking-tight mt-2 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{offlineCount}</div>
-            <span className={`text-[10px] font-medium mt-1 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Logged out / Inactive session</span>
-          </div>
-          <div className={`p-2 rounded-full ${darkMode ? 'bg-slate-900 border border-slate-700 text-slate-400' : 'bg-slate-100 border border-slate-300 text-slate-500'}`}>
-            <Ban className="w-4 h-4" />
           </div>
         </div>
 
-        <div className={`border rounded-2xl p-5 shadow-lg flex justify-between items-start ${
+        <div className={`border rounded-2xl p-5 shadow-lg ${
           darkMode ? 'bg-[#0e1726] border-slate-800/90 text-white' : 'bg-white border-slate-200/90 text-slate-900'
         }`}>
           <div>
             <span className={`text-[11px] font-bold tracking-wider uppercase block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>ADMINISTRATORS</span>
             <div className="text-3xl font-extrabold text-purple-400 tracking-tight mt-2">{adminCount}</div>
-            <span className={`text-[10px] font-medium mt-1 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>System administration roles</span>
-          </div>
-          <div className={`p-2 rounded-xl ${darkMode ? 'bg-purple-950/60 border border-purple-500/30 text-purple-400' : 'bg-purple-100 border border-purple-200 text-purple-600'}`}>
-            <Shield className="w-4 h-4" />
           </div>
         </div>
       </div>
