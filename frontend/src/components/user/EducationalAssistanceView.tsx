@@ -122,6 +122,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
   const [typeOfSchool, setTypeOfSchool] = useState<string>('Select Type of School');
   const [lrnNumber, setLrnNumber] = useState<string>('');
   const [otherEnrollmentInfo, setOtherEnrollmentInfo] = useState<string>('');
+  const [schoolAddress, setSchoolAddress] = useState<string>('');
 
   // Step 2 Form States - Family Information
   const [numChildrenInFamily, setNumChildrenInFamily] = useState<string>('');
@@ -289,7 +290,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
       gradeLevel,
       lrnNumber,
       typeOfSchool,
-      otherEnrollmentInfo,
+      otherEnrollmentInfo: schoolAddress || otherEnrollmentInfo,
       numChildrenInFamily,
       numChildrenStudying,
       monthlyFamilyIncome: monthlyIncome,
@@ -310,7 +311,8 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         gradeLevel,
         lrnNumber,
         typeOfSchool,
-        otherEnrollmentInfo,
+        schoolAddress,
+        otherEnrollmentInfo: schoolAddress || otherEnrollmentInfo,
         numChildrenInFamily,
         numChildrenStudying,
         monthlyFamilyIncome: monthlyIncome,
@@ -321,7 +323,13 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
     };
 
     try {
-      await fetch('http://localhost:5000/api/educational/applications', {
+      const targetEndpoint = mode === 'soloparent'
+        ? 'http://localhost:5000/api/solo-parent/applications'
+        : mode === 'childwelfare'
+        ? 'http://localhost:5000/api/child-welfare/applications'
+        : 'http://localhost:5000/api/educational/applications';
+
+      await fetch(targetEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -336,7 +344,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
         ? 'Solo Parent Educational Assistance Program'
         : mode === 'childwelfare'
         ? 'Child Welfare Services Aid'
-        : 'AICS Educational Financial Aid - Children with Disability',
+        : 'Educational Assistance for Indigent Children & Youth',
       category: mode === 'soloparent' ? 'Solo Parent Services' : 'AICS Assistance',
       dateSubmitted: `${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`,
       status: 'Pending Document Validation',
@@ -898,12 +906,16 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
             <div>
               <h3 className={bannerTitleClass}>
-                {mode === 'educational' 
+                {mode === 'soloparent'
+                  ? (isTagalog ? 'PROGRAMA SA TULONG SA EDUKASYON PARA SA SOLO PARENT — PORMA NG APLIKASYON' : 'SOLO PARENT EDUCATIONAL ASSISTANCE PROGRAM — APPLICATION FORM')
+                  : mode === 'educational' 
                   ? (isTagalog ? 'TULONG SA EDUKASYON PARA SA MGA KAPUS-PALAD NA BATA AT KABATAAN — PORMA NG APLIKASYON' : 'EDUCATIONAL ASSISTANCE FOR INDIGENT CHILDREN & YOUTH — APPLICATION FORM') 
                   : (isTagalog ? 'SERBISYO SA KAPAKANAN NG BATA — PORMA NG APLIKASYON' : 'CHILD WELFARE SERVICES — APPLICATION FORM')}
               </h3>
               <p className={bannerTextClass}>
-                {isTagalog ? 'Mangyaring kumpletuhin ang impormasyon para sa Aplikante/Magulang, Benepisyaryong Bata, at Pamilya. Ang mga patlang na may (*) ay kinakailangan.' : 'Please complete the information for Applicant/Parent, Child Beneficiary, and Family. Fields marked with (*) are required.'}
+                {mode === 'soloparent'
+                  ? (isTagalog ? 'Mangyaring kumpletuhin ang impormasyon para sa Solo Parent Aplikante at Mag-aaral/Anak na Benepisyaryo. Ang mga patlang na may (*) ay kinakailangan.' : 'Please complete the information for Solo Parent Applicant and Student/Child Beneficiary. Fields marked with (*) are required.')
+                  : (isTagalog ? 'Mangyaring kumpletuhin ang impormasyon para sa Aplikante/Magulang, Benepisyaryong Bata, at Pamilya. Ang mga patlang na may (*) ay kinakailangan.' : 'Please complete the information for Applicant/Parent, Child Beneficiary, and Family. Fields marked with (*) are required.')}
               </p>
             </div>
           </div>
@@ -1108,37 +1120,89 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             </div>
           </div>
 
-          {/* RELATIONSHIP TO CHILD / BENEFICIARY */}
-          <div className={`pt-4 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-            <label className={labelClass}>{isTagalog ? 'Relasyon sa Bata *' : 'Relationship to Child *'}</label>
-            <select
-              value={relationToChild}
-              onChange={(e) => setRelationToChild(e.target.value)}
-              className={`${inputClass} max-w-md`}
-            >
-              <option value="Select Relationship">{isTagalog ? 'Pumili ng Relasyon' : 'Select Relationship'}</option>
-              <option value="Parent">{isTagalog ? 'Magulang' : 'Parent'}</option>
-              <option value="Father">{isTagalog ? 'Ama' : 'Father'}</option>
-              <option value="Mother">{isTagalog ? 'Ina' : 'Mother'}</option>
-              <option value="Guardian">{isTagalog ? 'Tagapangalaga' : 'Guardian'}</option>
-              <option value="Grandparent">{isTagalog ? 'Lolo/Lola' : 'Grandparent'}</option>
-              <option value="Relative">{isTagalog ? 'Kamag-anak' : 'Relative'}</option>
-              <option value="Other">{isTagalog ? 'Iba pa' : 'Other'}</option>
-            </select>
-          </div>
+          {/* RELATIONSHIP TO CHILD / BENEFICIARY (Non-Solo Parent mode only) */}
+          {mode !== 'soloparent' && (
+            <div className={`pt-4 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+              <label className={labelClass}>{isTagalog ? 'Relasyon sa Bata *' : 'Relationship to Child *'}</label>
+              <select
+                value={relationToChild}
+                onChange={(e) => setRelationToChild(e.target.value)}
+                className={`${inputClass} max-w-md`}
+              >
+                <option value="Select Relationship">{isTagalog ? 'Pumili ng Relasyon' : 'Select Relationship'}</option>
+                <option value="Parent">{isTagalog ? 'Magulang' : 'Parent'}</option>
+                <option value="Father">{isTagalog ? 'Ama' : 'Father'}</option>
+                <option value="Mother">{isTagalog ? 'Ina' : 'Mother'}</option>
+                <option value="Guardian">{isTagalog ? 'Tagapangalaga' : 'Guardian'}</option>
+                <option value="Grandparent">{isTagalog ? 'Lolo/Lola' : 'Grandparent'}</option>
+                <option value="Relative">{isTagalog ? 'Kamag-anak' : 'Relative'}</option>
+                <option value="Other">{isTagalog ? 'Iba pa' : 'Other'}</option>
+              </select>
+            </div>
+          )}
 
-          {/* SECTION B: CHILD INFORMATION */}
+          {/* SECTION B: STUDENT / DEPENDENT CHILD INFORMATION */}
           <div className={`space-y-4 pt-6 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
             <div className="flex items-center gap-2">
               <User className="w-4 h-4 text-blue-500" />
               <h3 className={`text-xs font-extrabold tracking-wider uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
                 {isTagalog 
-                  ? (mode === 'childwelfare' ? 'B. IMPORMASYON NG BATA' : 'B. IMPORMASYON NG BATA / BENEPISYARYO')
-                  : (mode === 'childwelfare' ? 'B. CHILD INFORMATION' : 'B. CHILD / BENEFICIARY INFORMATION')}
+                  ? (mode === 'soloparent' ? 'B. IMPORMASYON NG MAG-AARAL / ANÁK' : mode === 'childwelfare' ? 'B. IMPORMASYON NG BATA' : 'B. IMPORMASYON NG BATA / BENEPISYARYO')
+                  : (mode === 'soloparent' ? 'B. STUDENT / DEPENDENT CHILD INFORMATION' : mode === 'childwelfare' ? 'B. CHILD INFORMATION' : 'B. CHILD / BENEFICIARY INFORMATION')}
               </h3>
             </div>
 
-            {mode === 'childwelfare' ? (
+            {mode === 'soloparent' ? (
+              <div className="space-y-4">
+                <div>
+                  <label className={labelClass}>{isTagalog ? 'Buong Pangalan ng Mag-aaral (Anak / Mag-aaral) *' : 'Student Full Name (Anak / Mag-aaral) *'}</label>
+                  <input
+                    type="text"
+                    value={childFullName}
+                    onChange={(e) => setChildFullName(e.target.value)}
+                    placeholder="e.g. Juan Dela Cruz Jr."
+                    className={inputClass}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className={labelClass}>{isTagalog ? 'Edad *' : 'Age (Edad) *'}</label>
+                    <input
+                      type="text"
+                      value={childAge}
+                      readOnly
+                      disabled
+                      placeholder="e.g. 14"
+                      className={`${inputClass} select-none cursor-not-allowed opacity-85`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>{isTagalog ? 'Petsa ng Kapanganakan (YYYY-MM-DD) *' : 'Date of Birth (YYYY-MM-DD) *'}</label>
+                    <input
+                      type="date"
+                      value={childDob}
+                      onChange={(e) => setChildDob(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>{isTagalog ? 'Kasarian *' : 'Sex (Kasarian) *'}</label>
+                    <select
+                      value={childSex}
+                      onChange={(e) => setChildSex(e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="Select Sex">{isTagalog ? 'Pumili ng Kasarian' : 'Select...'}</option>
+                      <option value="Male">{isTagalog ? 'Lalaki' : 'Male / Lalaki'}</option>
+                      <option value="Female">{isTagalog ? 'Babae' : 'Female / Babae'}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ) : mode === 'childwelfare' ? (
               <div className="space-y-4">
                 <div>
                   <label className={labelClass}>{isTagalog ? 'Buong Pangalan ng Bata *' : "Child's Full Name *"}</label>
@@ -1273,13 +1337,24 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
 
                 <div>
                   <label className={labelClass}>{isTagalog ? 'Antas / Baitang *' : 'Grade Level *'}</label>
-                  <input
-                    type="text"
+                  <select
                     value={gradeLevel}
                     onChange={(e) => setGradeLevel(e.target.value)}
-                    placeholder={isTagalog ? 'hal. Baitang 5 / Baitang 11' : 'e.g. Grade 5 / Grade 11'}
                     className={inputClass}
-                  />
+                  >
+                    <option value="">{isTagalog ? 'Pumili ng Antas / Baitang' : 'Select Grade Level'}</option>
+                    <option value="Grade 1">Grade 1</option>
+                    <option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option>
+                    <option value="Grade 4">Grade 4</option>
+                    <option value="Grade 5">Grade 5</option>
+                    <option value="Grade 6">Grade 6</option>
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                    <option value="Grade 10">Grade 10</option>
+                    <option value="ALS">ALS (Alternative Learning System)</option>
+                  </select>
                 </div>
 
                 <div>
@@ -1322,141 +1397,216 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             )}
           </div>
 
-          {/* SECTION C: REASON FOR REQUEST OR FAMILY INFORMATION */}
-          <div className={`space-y-4 pt-6 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-            <div className="flex items-center gap-2">
-              {mode === 'childwelfare' ? (
-                <FileText className="w-4 h-4 text-blue-500" />
-              ) : (
-                <Users className="w-4 h-4 text-blue-500" />
-              )}
-              <h3 className={`text-xs font-extrabold tracking-wider uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                {isTagalog 
-                  ? (mode === 'childwelfare' ? 'C. DAHILAN NG HILING' : 'C. IMPORMASYON NG PAMILYA')
-                  : (mode === 'childwelfare' ? 'C. REASON FOR REQUEST' : 'C. FAMILY INFORMATION')}
-              </h3>
-            </div>
+          {/* SECTION C: SCHOOL & ACADEMIC DETAILS (For Solo Parent mode) */}
+          {mode === 'soloparent' && (
+            <div className={`space-y-4 pt-6 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+              <div className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-blue-500" />
+                <h3 className={`text-xs font-extrabold tracking-wider uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                  {isTagalog ? 'C. MGA DETALYE NG PAARALAN AT AKADEMIKO' : 'C. SCHOOL & ACADEMIC DETAILS'}
+                </h3>
+              </div>
 
-            {mode === 'childwelfare' ? (
               <div className="space-y-4">
-                <div>
-                  <label className={labelClass}>{isTagalog ? 'Deskripsyon ng alalahanin/problema *' : 'Description of concern/problem *'}</label>
-                  <textarea
-                    rows={4}
-                    value={concernDescription}
-                    onChange={(e) => setConcernDescription(e.target.value)}
-                    placeholder={isTagalog ? 'Magbigay ng mga detalye ukol sa sitwasyon ng bata, alalahanin, o dahilan ng paghiling ng tulong / proteksyon...' : 'Please provide details regarding the child\'s situation, concern, or reason for requesting assistance / protection...'}
-                    className={inputClass}
-                  />
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>{isTagalog ? 'Petsa / tantyang petsa ng insidente, kung naaangkop' : 'Date / approximate date of incident, if applicable'}</label>
+                    <label className={labelClass}>{isTagalog ? 'Pangalan ng Paaralan / Institusyon *' : 'Name of School / Institution *'}</label>
                     <input
-                      type="date"
-                      value={incidentDate}
-                      onChange={(e) => setIncidentDate(e.target.value)}
+                      type="text"
+                      value={schoolName}
+                      onChange={(e) => setSchoolName(e.target.value)}
+                      placeholder="e.g. Sauyo High School / Quezon City Public School"
                       className={inputClass}
                     />
                   </div>
 
                   <div>
-                    <label className={labelClass}>{isTagalog ? 'Lokasyon ng insidente, kung naaangkop' : 'Location of incident, if applicable'}</label>
+                    <label className={labelClass}>{isTagalog ? 'Antas / Taon sa Akademiko *' : 'Grade Level / Academic Year *'}</label>
+                    <select
+                      value={gradeLevel}
+                      onChange={(e) => setGradeLevel(e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="">{isTagalog ? 'Pumili ng Antas / Baitang' : 'Select Grade Level'}</option>
+                      <option value="Grade 1">Grade 1</option>
+                      <option value="Grade 2">Grade 2</option>
+                      <option value="Grade 3">Grade 3</option>
+                      <option value="Grade 4">Grade 4</option>
+                      <option value="Grade 5">Grade 5</option>
+                      <option value="Grade 6">Grade 6</option>
+                      <option value="Grade 7">Grade 7</option>
+                      <option value="Grade 8">Grade 8</option>
+                      <option value="Grade 9">Grade 9</option>
+                      <option value="Grade 10">Grade 10</option>
+                      <option value="ALS">ALS (Alternative Learning System)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>{isTagalog ? 'Learner Reference Number (LRN) / Student ID *' : 'Learner Reference Number (LRN) / Student ID *'}</label>
                     <input
                       type="text"
-                      value={incidentLocation}
-                      onChange={(e) => setIncidentLocation(e.target.value)}
-                      placeholder={isTagalog ? 'hal. Barangay / Kalye / Tiyak na lokasyon (Optional)' : 'e.g. Barangay / Street / Specific location (Optional)'}
+                      value={lrnNumber}
+                      onChange={(e) => setLrnNumber(e.target.value)}
+                      placeholder="e.g. 136548190234"
+                      className={inputClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>{isTagalog ? 'Kumupletong Tirahan ng Paaralan *' : 'Complete School Address *'}</label>
+                    <input
+                      type="text"
+                      value={schoolAddress}
+                      onChange={(e) => setSchoolAddress(e.target.value)}
+                      placeholder="e.g. Sauyo Road, Novaliches, Quezon City"
                       className={inputClass}
                     />
                   </div>
                 </div>
               </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            </div>
+          )}
+
+          {/* SECTION D: REASON FOR REQUEST / FAMILY INFORMATION (Non-Solo Parent mode only) */}
+          {mode !== 'soloparent' && (
+            <div className={`space-y-4 pt-6 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+              <div className="flex items-center gap-2">
+                {mode === 'childwelfare' ? (
+                  <FileText className="w-4 h-4 text-blue-500" />
+                ) : (
+                  <Users className="w-4 h-4 text-blue-500" />
+                )}
+                <h3 className={`text-xs font-extrabold tracking-wider uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                  {isTagalog 
+                    ? (mode === 'childwelfare' ? 'D. DAHILAN NG HILING' : 'C. IMPORMASYON NG PAMILYA')
+                    : (mode === 'childwelfare' ? 'D. REASON FOR REQUEST' : 'C. FAMILY INFORMATION')}
+                </h3>
+              </div>
+
+              {mode === 'childwelfare' ? (
+                <div className="space-y-4">
                   <div>
-                    <label className={labelClass}>{isTagalog ? 'Bilang ng mga Bata sa Pamilya *' : 'Number of Children in the Family *'}</label>
-                    <input
-                      type="number"
-                      value={numChildrenInFamily}
-                      onChange={(e) => setNumChildrenInFamily(e.target.value)}
-                      placeholder={isTagalog ? 'Ilagay ang bilang' : 'Enter number'}
+                    <label className={labelClass}>{isTagalog ? 'Deskripsyon ng alalahanin/problema *' : 'Description of concern/problem *'}</label>
+                    <textarea
+                      rows={4}
+                      value={concernDescription}
+                      onChange={(e) => setConcernDescription(e.target.value)}
+                      placeholder={isTagalog ? 'Magbigay ng mga detalye ukol sa sitwasyon ng bata, alalahanin, o dahilan ng paghiling ng tulong / proteksyon...' : 'Please provide details regarding the child\'s situation, concern, or reason for requesting assistance / protection...'}
                       className={inputClass}
                     />
                   </div>
 
-                  <div>
-                    <label className={labelClass}>{isTagalog ? 'Bilang ng mga Batang Kasalukuyang Nag-aaral *' : 'Number of Children Currently Studying *'}</label>
-                    <input
-                      type="number"
-                      value={numChildrenStudying}
-                      onChange={(e) => setNumChildrenStudying(e.target.value)}
-                      placeholder={isTagalog ? 'Ilagay ang bilang' : 'Enter number'}
-                      className={inputClass}
-                    />
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelClass}>{isTagalog ? 'Petsa / tantyang petsa ng insidente, kung naaangkop' : 'Date / approximate date of incident, if applicable'}</label>
+                      <input
+                        type="date"
+                        value={incidentDate}
+                        onChange={(e) => setIncidentDate(e.target.value)}
+                        className={inputClass}
+                      />
+                    </div>
 
-                  <div>
-                    <label className={labelClass}>{isTagalog ? 'Buwanang Kita ng Pamilya *' : 'Monthly Family Income *'}</label>
-                    <select
-                      value={monthlyIncome}
-                      onChange={(e) => setMonthlyIncome(e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="Select Monthly Income">{isTagalog ? 'Pumili ng Buwanang Kita' : 'Select Monthly Income'}</option>
-                      <option value="Below ₱10,000">{isTagalog ? 'Mababa sa ₱10,000' : 'Below ₱10,000'}</option>
-                      <option value="₱10,000 - ₱15,000">₱10,000 - ₱15,000</option>
-                      <option value="₱15,001 - ₱25,000">₱15,001 - ₱25,000</option>
-                      <option value="₱25,001 and above">{isTagalog ? '₱25,001 pataas' : '₱25,001 and above'}</option>
-                    </select>
+                    <div>
+                      <label className={labelClass}>{isTagalog ? 'Lokasyon ng insidente, kung naaangkop' : 'Location of incident, if applicable'}</label>
+                      <input
+                        type="text"
+                        value={incidentLocation}
+                        onChange={(e) => setIncidentLocation(e.target.value)}
+                        placeholder={isTagalog ? 'hal. Barangay / Kalye / Tiyak na lokasyon (Optional)' : 'e.g. Barangay / Street / Specific location (Optional)'}
+                        className={inputClass}
+                      />
+                    </div>
                   </div>
                 </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className={labelClass}>{isTagalog ? 'Bilang ng mga Bata sa Pamilya *' : 'Number of Children in the Family *'}</label>
+                      <input
+                        type="number"
+                        value={numChildrenInFamily}
+                        onChange={(e) => setNumChildrenInFamily(e.target.value)}
+                        placeholder={isTagalog ? 'Ilagay ang bilang' : 'Enter number'}
+                        className={inputClass}
+                      />
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                  <div>
-                    <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng 4Ps? *' : '4Ps Beneficiary? *'}</label>
-                    <select
-                      value={is4psBeneficiary}
-                      onChange={(e) => setIs4psBeneficiary(e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="Select Option">{isTagalog ? 'Pumili ng Pagpipilian' : 'Select Option'}</option>
-                      <option value="Yes">{isTagalog ? 'Oo' : 'Yes'}</option>
-                      <option value="No">{isTagalog ? 'Hindi' : 'No'}</option>
-                    </select>
+                    <div>
+                      <label className={labelClass}>{isTagalog ? 'Bilang ng mga Batang Kasalukuyang Nag-aaral *' : 'Number of Children Currently Studying *'}</label>
+                      <input
+                        type="number"
+                        value={numChildrenStudying}
+                        onChange={(e) => setNumChildrenStudying(e.target.value)}
+                        placeholder={isTagalog ? 'Ilagay ang bilang' : 'Enter number'}
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>{isTagalog ? 'Buwanang Kita ng Pamilya *' : 'Monthly Family Income *'}</label>
+                      <select
+                        value={monthlyIncome}
+                        onChange={(e) => setMonthlyIncome(e.target.value)}
+                        className={inputClass}
+                      >
+                        <option value="Select Monthly Income">{isTagalog ? 'Pumili ng Buwanang Kita' : 'Select Monthly Income'}</option>
+                        <option value="Below ₱10,000">{isTagalog ? 'Mababa sa ₱10,000' : 'Below ₱10,000'}</option>
+                        <option value="₱10,000 - ₱15,000">₱10,000 - ₱15,000</option>
+                        <option value="₱15,001 - ₱25,000">₱15,001 - ₱25,000</option>
+                        <option value="₱25,001 and above">{isTagalog ? '₱25,001 pataas' : '₱25,001 and above'}</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng Tulong sa Edukasyon ng Solo Parent? *' : 'Solo Parent Educational Assistance Beneficiary? *'}</label>
-                    <select
-                      value={isSoloParentBeneficiary}
-                      onChange={(e) => setIsSoloParentBeneficiary(e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="Select Option">{isTagalog ? 'Pumili ng Pagpipilian' : 'Select Option'}</option>
-                      <option value="Yes">{isTagalog ? 'Oo' : 'Yes'}</option>
-                      <option value="No">{isTagalog ? 'Hindi' : 'No'}</option>
-                    </select>
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    <div>
+                      <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng 4Ps? *' : '4Ps Beneficiary? *'}</label>
+                      <select
+                        value={is4psBeneficiary}
+                        onChange={(e) => setIs4psBeneficiary(e.target.value)}
+                        className={inputClass}
+                      >
+                        <option value="Select Option">{isTagalog ? 'Pumili ng Pagpipilian' : 'Select Option'}</option>
+                        <option value="Yes">{isTagalog ? 'Oo' : 'Yes'}</option>
+                        <option value="No">{isTagalog ? 'Hindi' : 'No'}</option>
+                      </select>
+                    </div>
 
-                  <div>
-                    <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng Tulong sa Edukasyon ng PWD? *' : 'PWD Educational Assistance Beneficiary? *'}</label>
-                    <select
-                      value={isPwdBeneficiary}
-                      onChange={(e) => setIsPwdBeneficiary(e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="Select Option">{isTagalog ? 'Pumili ng Pagpipilian' : 'Select Option'}</option>
-                      <option value="Yes">{isTagalog ? 'Oo' : 'Yes'}</option>
-                      <option value="No">{isTagalog ? 'Hindi' : 'No'}</option>
-                    </select>
+                    <div>
+                      <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng Tulong sa Edukasyon ng Solo Parent? *' : 'Solo Parent Educational Assistance Beneficiary? *'}</label>
+                      <select
+                        value={isSoloParentBeneficiary}
+                        onChange={(e) => setIsSoloParentBeneficiary(e.target.value)}
+                        className={inputClass}
+                      >
+                        <option value="Select Option">{isTagalog ? 'Pumili ng Pagpipilian' : 'Select Option'}</option>
+                        <option value="Yes">{isTagalog ? 'Oo' : 'Yes'}</option>
+                        <option value="No">{isTagalog ? 'Hindi' : 'No'}</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng Tulong sa Edukasyon ng PWD? *' : 'PWD Educational Assistance Beneficiary? *'}</label>
+                      <select
+                        value={isPwdBeneficiary}
+                        onChange={(e) => setIsPwdBeneficiary(e.target.value)}
+                        className={inputClass}
+                      >
+                        <option value="Select Option">{isTagalog ? 'Pumili ng Pagpipilian' : 'Select Option'}</option>
+                        <option value="Yes">{isTagalog ? 'Oo' : 'Yes'}</option>
+                        <option value="No">{isTagalog ? 'Hindi' : 'No'}</option>
+                      </select>
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-between pt-4">
             <button
@@ -1758,23 +1908,37 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                       <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'REHISTRADONG EMAIL ADDRESS' : 'REGISTERED EMAIL ADDRESS'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{emailAddress || 'N/A'}</span>
                     </div>
-                    <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'RELASYON SA BATA' : 'RELATION TO CHILD'}</span>
-                      <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{relationToChild || 'N/A'}</span>
-                    </div>
+                    {mode !== 'soloparent' && (
+                      <div>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'RELASYON SA BATA' : 'RELATION TO CHILD'}</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{relationToChild || 'N/A'}</span>
+                      </div>
+                    )}
+                    {mode !== 'soloparent' && (
+                      <>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PINILING SEKTOR' : 'TARGET SECTOR(S)'}</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{selectedSector.length > 0 ? selectedSector.join(', ') : 'Children & Youth'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'HINILING NA SERBISYO' : 'REQUESTED SERVICE(S)'}</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{selectedServices.length > 0 ? selectedServices.join(', ') : 'Child Protection & Educational Aid'}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* Section B: Child Information */}
+                {/* Section B: Child / Student Information */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
                     {isTagalog 
-                      ? (mode === 'childwelfare' ? 'B. IMPORMASYON NG BATA' : 'B. IMPORMASYON NG BATA / BENEPISYARYO')
-                      : (mode === 'childwelfare' ? 'B. CHILD INFORMATION' : 'B. CHILD / BENEFICIARY INFORMATION')}
+                      ? (mode === 'soloparent' ? 'B. IMPORMASYON NG MAG-AARAL / ANÁK' : mode === 'childwelfare' ? 'B. IMPORMASYON NG BATA' : 'B. IMPORMASYON NG BATA / BENEPISYARYO')
+                      : (mode === 'soloparent' ? 'B. STUDENT / DEPENDENT CHILD INFORMATION' : mode === 'childwelfare' ? 'B. CHILD INFORMATION' : 'B. CHILD / BENEFICIARY INFORMATION')}
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
                     <div>
-                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'BUONG PANGALAN NG BATA' : 'CHILD FULL NAME'}</span>
+                      <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'BUONG PANGALAN NG MAG-AARAL' : 'STUDENT FULL NAME'}</span>
                       <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{childFullName || 'N/A'}</span>
                     </div>
                     <div>
@@ -1796,7 +1960,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                           <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{schoolName || 'N/A'}</span>
                         </div>
                       </>
-                    ) : (
+                    ) : mode !== 'soloparent' ? (
                       <>
                         <div>
                           <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PANGALAN NG PAARALAN' : 'SCHOOL NAME'}</span>
@@ -1817,59 +1981,88 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                           </div>
                         )}
                       </>
-                    )}
+                    ) : null}
                   </div>
                 </div>
 
-                {/* Section C: Reason for Request / Family Information */}
-                <div>
-                  <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    {isTagalog 
-                      ? (mode === 'childwelfare' ? 'C. DAHILAN NG HILING' : 'C. IMPORMASYON NG PAMILYA')
-                      : (mode === 'childwelfare' ? 'C. REASON FOR REQUEST' : 'C. FAMILY INFORMATION')}
-                  </h5>
-                  {mode === 'childwelfare' ? (
-                    <div className="space-y-3 text-xs">
-                      <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'DESKRIPSYON NG ALALAHANIN / PROBLEMA' : 'DESCRIPTION OF CONCERN / PROBLEM'}</span>
-                        <p className={`font-medium leading-relaxed mt-0.5 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{concernDescription || 'N/A'}</p>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6">
-                        <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PETSA NG INSIDENTE' : 'DATE OF INCIDENT'}</span>
-                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{incidentDate || 'N/A'}</span>
-                        </div>
-                        <div>
-                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'LOKASYON NG INSIDENTE' : 'LOCATION OF INCIDENT'}</span>
-                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{incidentLocation || 'N/A'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
+                {/* Section C: School & Academic Details (For Solo Parent mode) */}
+                {mode === 'soloparent' && (
+                  <div>
+                    <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
+                      {isTagalog ? 'C. MGA DETALYE NG PAARALAN AT AKADEMIKO' : 'C. SCHOOL & ACADEMIC DETAILS'}
+                    </h5>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'MGA BATA SA PAMILYA' : 'CHILDREN IN FAMILY'}</span>
-                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{numChildrenInFamily || 'N/A'}</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PANGALAN NG PAARALAN / INSTITUSYON' : 'NAME OF SCHOOL / INSTITUTION'}</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{schoolName || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'MGA BATANG NAG-AARAL' : 'CHILDREN STUDYING'}</span>
-                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{numChildrenStudying || 'N/A'}</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'ANTAS / TAON SA AKADEMIKO' : 'GRADE LEVEL / ACADEMIC YEAR'}</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{gradeLevel || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'BUWANANG KITA NG PAMILYA' : 'MONTHLY FAMILY INCOME'}</span>
-                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{monthlyIncome}</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>LEARNER REFERENCE NUMBER (LRN) / STUDENT ID</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{lrnNumber || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>4PS / SOLO PARENT</span>
-                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{is4psBeneficiary} / {isSoloParentBeneficiary}</span>
-                      </div>
-                      <div>
-                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'BENEPISYARYO NG PWD' : 'PWD BENEFICIARY'}</span>
-                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{isPwdBeneficiary}</span>
+                        <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'KUMUPLETONG TIRAHAN NG PAARALAN' : 'COMPLETE SCHOOL ADDRESS'}</span>
+                        <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{schoolAddress || 'N/A'}</span>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {/* Section D: Reason for Request / Family Information (Non-Solo Parent mode only) */}
+                {mode !== 'soloparent' && (
+                  <div>
+                    <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
+                      {isTagalog 
+                        ? (mode === 'childwelfare' ? 'C. DAHILAN NG HILING' : 'C. IMPORMASYON NG PAMILYA')
+                        : (mode === 'childwelfare' ? 'C. REASON FOR REQUEST' : 'C. FAMILY INFORMATION')}
+                    </h5>
+                    {mode === 'childwelfare' ? (
+                      <div className="space-y-3 text-xs">
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'DESKRIPSYON NG ALALAHANIN / PROBLEMA' : 'DESCRIPTION OF CONCERN / PROBLEM'}</span>
+                          <p className={`font-medium leading-relaxed mt-0.5 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{concernDescription || 'N/A'}</p>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6">
+                          <div>
+                            <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'PETSA NG INSIDENTE' : 'DATE OF INCIDENT'}</span>
+                            <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{incidentDate || 'N/A'}</span>
+                          </div>
+                          <div>
+                            <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'LOKASYON NG INSIDENTE' : 'LOCATION OF INCIDENT'}</span>
+                            <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{incidentLocation || 'N/A'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'MGA BATA SA PAMILYA' : 'CHILDREN IN FAMILY'}</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{numChildrenInFamily || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'MGA BATANG NAG-AARAL' : 'CHILDREN STUDYING'}</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{numChildrenStudying || 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'BUWANANG KITA NG PAMILYA' : 'MONTHLY FAMILY INCOME'}</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{monthlyIncome}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>4PS / SOLO PARENT</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{is4psBeneficiary} / {isSoloParentBeneficiary}</span>
+                        </div>
+                        <div>
+                          <span className={`text-[10px] font-extrabold block uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{isTagalog ? 'BENEPISYARYO NG PWD' : 'PWD BENEFICIARY'}</span>
+                          <span className={`font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{isPwdBeneficiary}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

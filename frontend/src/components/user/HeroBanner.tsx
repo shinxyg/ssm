@@ -68,7 +68,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       {/* Headline & Subtitle */}
       <div className="relative z-10 max-w-3xl mb-6">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight mb-2">
-          {isTagalog ? 'Maligayang Pagdating, JEFFERSON LEE!' : 'Welcome, JEFFERSON LEE!'}
+          {isTagalog ? 'Maligayang Pagdating sa GovServe Portal!' : 'Welcome to GovServe Citizen Portal!'}
         </h2>
         <p className="text-slate-200 text-xs sm:text-sm leading-relaxed font-normal">
           {isTagalog 

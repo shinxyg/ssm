@@ -246,7 +246,31 @@ app.get('/api/health', async (req, res) => {
 // GET all AICS applications from PostgreSQL DB
 app.get('/api/aics/applications', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM aics_applications ORDER BY date_submitted DESC');
+    // Clean up any misplaced non-AICS rows asynchronously
+    pool.query(`
+      DELETE FROM aics_applications 
+      WHERE reference_no LIKE 'QC-EDU-%' 
+         OR reference_no LIKE 'QC-SP-EDU-%' 
+         OR reference_no LIKE 'CW-%' 
+         OR reference_no LIKE 'SP-%' 
+         OR reference_no LIKE 'LVH-%' 
+         OR reference_no LIKE 'TRN-%' 
+         OR reference_no LIKE 'QC-PWD-%' 
+         OR reference_no LIKE 'SENIOR-%';
+    `).catch(() => null);
+
+    const result = await pool.query(`
+      SELECT * FROM aics_applications 
+      WHERE reference_no NOT LIKE 'QC-EDU-%' 
+        AND reference_no NOT LIKE 'QC-SP-EDU-%' 
+        AND reference_no NOT LIKE 'CW-%' 
+        AND reference_no NOT LIKE 'SP-%' 
+        AND reference_no NOT LIKE 'LVH-%' 
+        AND reference_no NOT LIKE 'TRN-%' 
+        AND reference_no NOT LIKE 'QC-PWD-%' 
+        AND reference_no NOT LIKE 'SENIOR-%'
+      ORDER BY date_submitted DESC;
+    `);
     const formatted = result.rows.map(row => ({
       id: row.id,
       reference_no: row.reference_no,
@@ -946,6 +970,196 @@ app.get('/api/child-welfare/applications', async (req, res) => {
   }
 });
 
+// POST submit new Child Welfare application to PostgreSQL DB
+app.post('/api/child-welfare/applications', async (req, res) => {
+  const { 
+    referenceNo, 
+    applicantName, 
+    firstName,
+    middleName,
+    lastName,
+    suffix,
+    qcitizenId,
+    nationality,
+    dob,
+    age,
+    gender,
+    civilStatus,
+    houseNo,
+    streetName,
+    barangay,
+    phoneNumber,
+    emailAddress,
+    soloParentIdNo,
+    relationshipToChild,
+    childFullName,
+    childDob,
+    childAge,
+    childSex,
+    childAddress,
+    schoolName,
+    gradeLevel,
+    lrnNumber,
+    typeOfSchool,
+    otherEnrollmentInfo,
+    selectedSectors,
+    selectedServices,
+    concernDescription,
+    incidentDate,
+    incidentLocation,
+    assistanceType,
+    numChildrenInFamily,
+    numChildrenStudying,
+    monthlyFamilyIncome,
+    is4psBeneficiary,
+    isSoloEducationalBeneficiary,
+    isPwdEducationalBeneficiary,
+    status,
+    uploadedDocuments,
+    details
+  } = req.body;
+
+  try {
+    const refNo = referenceNo || `QC-CW-${Math.floor(100000 + Math.random() * 900000)}`;
+    const name = applicantName || details?.applicantName || `${firstName || 'JEFFERSON'} ${lastName || 'LEE'}`.trim();
+    const savedDetails = JSON.stringify(details || {});
+    const savedDocs = JSON.stringify(uploadedDocuments || {});
+
+    const query = `
+      INSERT INTO child_welfare_applications (
+        reference_no, applicant_name, first_name, middle_name, last_name, suffix, qcitizen_id, nationality, dob, age, gender, civil_status,
+        house_no, street_name, barangay, phone_number, email_address, solo_parent_id_no, relationship_to_child,
+        child_full_name, child_dob, child_age, child_sex, child_address, school_name, grade_level, lrn_number, type_of_school, other_enrollment_info,
+        selected_sectors, selected_services, concern_description, incident_date, incident_location, assistance_type,
+        num_children_in_family, num_children_studying, monthly_family_income, is_4ps_beneficiary, is_solo_educational_beneficiary, is_pwd_educational_beneficiary,
+        status, uploaded_documents, details
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+        $13, $14, $15, $16, $17, $18, $19,
+        $20, $21, $22, $23, $24, $25, $26, $27, $28, $29,
+        $30, $31, $32, $33, $34, $35,
+        $36, $37, $38, $39, $40, $41,
+        $42, $43, $44
+      )
+      ON CONFLICT (reference_no) DO UPDATE SET
+        applicant_name = EXCLUDED.applicant_name,
+        status = EXCLUDED.status,
+        uploaded_documents = EXCLUDED.uploaded_documents,
+        details = EXCLUDED.details,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *;
+    `;
+
+    const values = [
+      refNo, name, firstName || 'JEFFERSON', middleName || 'FERNANDO', lastName || 'LEE', suffix || '', qcitizenId || '110008262304143', nationality || 'FILIPINO',
+      dob || '2004-09-27', age || '22', gender || 'Male', civilStatus || 'Single',
+      houseNo || '176', streetName || '23', barangay || 'Bagong Silangan', phoneNumber || '09155582122', emailAddress || 'jeffersonlee1234@gmail.com',
+      soloParentIdNo || '', relationshipToChild || 'Parent',
+      childFullName || '', childDob || '', childAge || '', childSex || '', childAddress || '', schoolName || '', gradeLevel || '', lrnNumber || '', typeOfSchool || '', otherEnrollmentInfo || '',
+      JSON.stringify(selectedSectors || []), JSON.stringify(selectedServices || []), concernDescription || '', incidentDate || '', incidentLocation || '', assistanceType || 'Child Welfare Aid',
+      numChildrenInFamily || '', numChildrenStudying || '', monthlyFamilyIncome || '', is4psBeneficiary || 'No', isSoloEducationalBeneficiary || 'No', isPwdEducationalBeneficiary || 'No',
+      status || 'Pending Document Validation', savedDocs, savedDetails
+    ];
+
+    const result = await pool.query(query, values);
+    const row = result.rows[0];
+    res.status(201).json(row);
+  } catch (err) {
+    console.error('Error saving Child Welfare application:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update status/scheduling of a Child Welfare application
+app.put('/api/child-welfare/applications/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status, disapprovalReason, appointmentDate, appointmentTime, appointmentVenue, payoutDate, payoutTime, payoutVenue } = req.body;
+  try {
+    const query = `
+      UPDATE child_welfare_applications 
+      SET 
+        status = COALESCE($1, status),
+        disapproval_reason = COALESCE($2, disapproval_reason),
+        appointment_date = COALESCE($3, appointment_date),
+        appointment_time = COALESCE($4, appointment_time),
+        appointment_venue = COALESCE($5, appointment_venue),
+        payout_date = COALESCE($6, payout_date),
+        payout_time = COALESCE($7, payout_time),
+        payout_venue = COALESCE($8, payout_venue),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE reference_no = $9 OR id::text = $9
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [
+      status, disapprovalReason, appointmentDate, appointmentTime, appointmentVenue, payoutDate, payoutTime, payoutVenue, id
+    ]);
+    const row = result.rows[0];
+    if (!row) {
+      return res.status(404).json({ error: 'Child Welfare application not found' });
+    }
+
+    // Sync to appointments table when approved / scheduled
+    if (status === 'APPROVED BY ADMIN' || status === 'APPROVED' || (status || '').includes('Approved') || (status || '').includes('APPROVED') || (status || '').includes('Released') || appointmentDate) {
+      const isCompleted = status === 'Released & Archived' || status === 'Approved' || status === 'APPROVED' || status === 'Ready for Payout' || status === 'Passed / Completed';
+      const apptStatus = isCompleted ? (status === 'Approved' || status === 'APPROVED' ? 'Released & Archived' : status) : (appointmentDate ? 'Interview Scheduled' : 'Pending Schedule');
+      try {
+        const checkAppt = await pool.query(`SELECT id FROM appointments WHERE reference_no = $1`, [row.reference_no]);
+        if (checkAppt.rows.length > 0) {
+          await pool.query(`
+            UPDATE appointments 
+            SET 
+              appointment_date = COALESCE($1, appointment_date),
+              appointment_time = COALESCE($2, appointment_time),
+              venue = COALESCE($3, venue),
+              status = $4
+            WHERE reference_no = $5;
+          `, [appointmentDate || null, appointmentTime || null, appointmentVenue || null, apptStatus, row.reference_no]);
+        } else {
+          await pool.query(`
+            INSERT INTO appointments (reference_no, module_name, applicant_name, appointment_date, appointment_time, venue, purpose, status)
+            VALUES ($1, 'CHILD WELFARE', $2, $3, $4, COALESCE($5, 'Quezon City Hall SSDD Office'), 'Child Welfare Services SSDD Assessment & Intake Interview', $6);
+          `, [row.reference_no, row.applicant_name, appointmentDate || null, appointmentTime || null, appointmentVenue || null, apptStatus]);
+        }
+      } catch (e) {
+        console.warn('Sync appointments warning for Child Welfare:', e.message);
+      }
+    }
+
+    // Sync to financial disbursements when payout scheduled or approved
+    if (status === 'APPROVED' || status === 'APPROVED BY ADMIN' || status === 'Payout Scheduled' || status === 'PAYOUT SCHEDULED') {
+      const finStatus = (status === 'Payout Scheduled' || status === 'PAYOUT SCHEDULED') ? 'PAYOUT SCHEDULED' : 'PENDING PAYOUT SCHEDULE';
+      try {
+        const checkFin = await pool.query(`SELECT id FROM financial_disbursements WHERE reference_no = $1`, [row.reference_no]);
+        if (checkFin.rows.length > 0) {
+          await pool.query(`
+            UPDATE financial_disbursements 
+            SET 
+              payout_date = COALESCE($1, payout_date),
+              payout_start_time = COALESCE($2, payout_start_time),
+              venue = COALESCE($3, venue),
+              status = $4,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE reference_no = $5;
+          `, [payoutDate || row.payout_date || null, payoutTime || row.payout_time || null, payoutVenue || row.payout_venue || null, finStatus, row.reference_no]);
+        } else {
+          await pool.query(`
+            INSERT INTO financial_disbursements (reference_no, applicant_name, module_name, benefit_name, amount, payout_date, payout_start_time, venue, status)
+            VALUES ($1, $2, 'CHILD WELFARE', 'Educational Assistance for Indigent Children & Youth', 5000.00, $3, $4, $5, $6);
+          `, [row.reference_no, row.applicant_name, payoutDate || row.payout_date || null, payoutTime || row.payout_time || null, payoutVenue || row.payout_venue || null, finStatus]);
+        }
+      } catch (e) {
+        console.warn('Sync financial disbursements warning for Child Welfare:', e.message);
+      }
+    }
+
+    res.json(row);
+  } catch (err) {
+    console.error('Error updating Child Welfare application status:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET all Solo Parent applications from PostgreSQL DB
 app.get('/api/solo-parent/applications', async (req, res) => {
   try {
@@ -978,6 +1192,14 @@ app.post('/api/solo-parent/applications', async (req, res) => {
     soloParentIdNo,
     soloParentStatus,
     soloParentCategory,
+    childFullName,
+    childAge,
+    childDob,
+    childSex,
+    schoolName,
+    gradeLevel,
+    lrnNumber,
+    schoolAddress,
     numDependents,
     ageYoungestDependent,
     employmentStatus,
@@ -1004,19 +1226,29 @@ app.post('/api/solo-parent/applications', async (req, res) => {
       INSERT INTO solo_parent_applications (
         reference_no, applicant_name, first_name, middle_name, last_name, suffix, nationality, dob, age, gender, civil_status,
         house_no, street_name, barangay, phone_number, email_address, solo_parent_id_no, solo_parent_status,
-        solo_parent_category, num_dependents, age_youngest_dependent, employment_status, occupation, employer_income_source,
+        solo_parent_category, child_full_name, child_age, child_dob, child_sex, school_name, grade_level, lrn_number, school_address,
+        num_dependents, age_youngest_dependent, employment_status, occupation, employer_income_source,
         monthly_income, receiving_gov_assistance, gov_program_name, gov_assistance_amount_freq, receiving_pension, pension_type,
         status, uploaded_documents, details
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
         $12, $13, $14, $15, $16, $17, $18,
-        $19, $20, $21, $22, $23, $24,
-        $25, $26, $27, $28, $29, $30,
-        $31, $32, $33
+        $19, $20, $21, $22, $23, $24, $25, $26, $27,
+        $28, $29, $30, $31, $32,
+        $33, $34, $35, $36, $37, $38,
+        $39, $40, $41
       )
       ON CONFLICT (reference_no) DO UPDATE SET
         applicant_name = EXCLUDED.applicant_name,
+        child_full_name = EXCLUDED.child_full_name,
+        child_age = EXCLUDED.child_age,
+        child_dob = EXCLUDED.child_dob,
+        child_sex = EXCLUDED.child_sex,
+        school_name = EXCLUDED.school_name,
+        grade_level = EXCLUDED.grade_level,
+        lrn_number = EXCLUDED.lrn_number,
+        school_address = EXCLUDED.school_address,
         status = EXCLUDED.status,
         uploaded_documents = EXCLUDED.uploaded_documents,
         details = EXCLUDED.details,
@@ -1029,7 +1261,10 @@ app.post('/api/solo-parent/applications', async (req, res) => {
       dob || '2004-09-27', age || '22', gender || 'Male', civilStatus || 'Single',
       houseNo || '176', streetName || '23', barangay || 'Bagong Silangan', phoneNumber || '09155582122', emailAddress || 'jeffersonlee1234@gmail.com',
       soloParentIdNo || 'SP-2026-88492', soloParentStatus || 'Active / Validated SPIC',
-      soloParentCategory || 'Unmarried parent', numDependents || '1', ageYoungestDependent || '3', employmentStatus || 'Unemployed',
+      soloParentCategory || 'Educational Assistance Grant',
+      childFullName || null, childAge || null, childDob || null, childSex || null,
+      schoolName || null, gradeLevel || null, lrnNumber || null, schoolAddress || null,
+      numDependents || '1', ageYoungestDependent || '3', employmentStatus || 'Unemployed',
       occupation || '', employerIncomeSource || '', monthlyIncome || '0', receivingGovAssistance || 'No', govProgramName || '',
       govAssistanceAmountFreq || '', receivingPension || 'No', pensionType || '',
       status || 'Pending Document Validation', savedDocs, savedDetails
@@ -1321,6 +1556,34 @@ app.post('/api/educational/applications', async (req, res) => {
     const result = await pool.query(query, values);
     const row = result.rows[0];
 
+    if (refNo.startsWith('QC-EDU')) {
+      pool.query(`
+        INSERT INTO child_welfare_applications (
+          reference_no, applicant_name, first_name, middle_name, last_name, suffix, qcitizen_id, nationality, dob, age, gender, civil_status,
+          house_no, street_name, barangay, phone_number, email_address, solo_parent_id_no, relationship_to_child,
+          child_full_name, child_dob, child_age, child_sex, school_name, grade_level, lrn_number, type_of_school, other_enrollment_info,
+          num_children_in_family, num_children_studying, monthly_family_income, is_4ps_beneficiary, is_solo_educational_beneficiary, is_pwd_educational_beneficiary,
+          service_name, category, amount, status, uploaded_documents, details
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+          $13, $14, $15, $16, $17, $18, $19,
+          $20, $21, $22, $23, $24, $25, $26, $27, $28,
+          $29, $30, $31, $32, $33, $34,
+          $35, $36, $37, $38, $39, $40
+        ) ON CONFLICT (reference_no) DO UPDATE SET
+          status = EXCLUDED.status,
+          uploaded_documents = EXCLUDED.uploaded_documents,
+          details = EXCLUDED.details,
+          updated_at = CURRENT_TIMESTAMP;
+      `, [
+        refNo, name, firstName || 'JEFFERSON', middleName || 'FERNANDO', lastName || 'LEE', suffix || '', soloParentIdNo || '110008262304143', nationality || 'FILIPINO', dob || '2004-09-27', age || '22', gender || 'Male', civilStatus || 'Single',
+        houseNo || '176', streetName || '23', barangay || 'Bagong Silangan', phoneNumber || '09155582122', emailAddress || 'jeffersonlee1234@gmail.com', soloParentIdNo || '', relationshipToChild || 'Parent',
+        childFullName || '', childDob || '', childAge || '', childSex || '', schoolName || '', gradeLevel || '', lrnNumber || '', typeOfSchool || '', otherEnrollmentInfo || '',
+        numChildrenInFamily || '', numChildrenStudying || '', monthlyFamilyIncome || '', is4psBeneficiary || 'No', isSoloEducationalBeneficiary || 'No', isPwdEducationalBeneficiary || 'No',
+        'Educational Assistance for Indigent Children & Youth', 'childwelfare', 5000.00, status || 'Pending Document Validation', savedDocs, savedDetails
+      ]).catch(err => console.warn('Child Welfare sync warning:', err));
+    }
+
     sendNotificationEmail({
       to: emailAddress || 'clarencemillares15@gmail.com',
       subject: `GovServe Notice: Educational Assistance Application Received (${row.reference_no})`,
@@ -1376,6 +1639,32 @@ app.put('/api/educational/applications/:id/status', async (req, res) => {
       return res.status(404).json({ error: 'Educational application not found' });
     }
     const row = result.rows[0];
+
+    // Sync to appointments table when approved / scheduled
+    if (status === 'APPROVED BY ADMIN' || status === 'APPROVED' || (status || '').includes('Approved') || (status || '').includes('APPROVED') || appointmentDate) {
+      const apptStatus = appointmentDate ? 'Interview Scheduled' : 'Pending Schedule';
+      try {
+        const checkAppt = await pool.query(`SELECT id FROM appointments WHERE reference_no = $1`, [row.reference_no]);
+        if (checkAppt.rows.length > 0) {
+          await pool.query(`
+            UPDATE appointments 
+            SET 
+              appointment_date = COALESCE($1, appointment_date),
+              appointment_time = COALESCE($2, appointment_time),
+              venue = COALESCE($3, venue),
+              status = $4
+            WHERE reference_no = $5;
+          `, [appointmentDate || null, appointmentTime || null, appointmentVenue || null, apptStatus, row.reference_no]);
+        } else {
+          await pool.query(`
+            INSERT INTO appointments (reference_no, module_name, applicant_name, appointment_date, appointment_time, venue, purpose, status)
+            VALUES ($1, 'EDUCATIONAL', $2, $3, $4, COALESCE($5, 'Quezon City Hall SSDD Office'), 'Educational Assistance SSDD Assessment & Intake Interview', $6);
+          `, [row.reference_no, row.applicant_name, appointmentDate || null, appointmentTime || null, appointmentVenue || null, apptStatus]);
+        }
+      } catch (e) {
+        console.warn('Sync appointments warning for Educational:', e.message);
+      }
+    }
 
     // If status becomes "APPROVED", "APPROVED BY ADMIN", or "Payout Scheduled", sync to financial_disbursements
     if (status === 'APPROVED' || status === 'APPROVED BY ADMIN' || status === 'Payout Scheduled' || status === 'PAYOUT SCHEDULED') {
@@ -1883,31 +2172,38 @@ app.post('/api/appointments', async (req, res) => {
   } = req.body;
 
   try {
-    const query = `
-      INSERT INTO appointments 
-      (reference_no, module_name, applicant_name, appointment_date, appointment_time, venue, purpose, social_worker_notes, status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Interview Scheduled')
-      ON CONFLICT (reference_no) DO UPDATE SET
-        appointment_date = EXCLUDED.appointment_date,
-        appointment_time = EXCLUDED.appointment_time,
-        venue = EXCLUDED.venue,
-        purpose = COALESCE(EXCLUDED.purpose, appointments.purpose),
-        status = 'Interview Scheduled',
-        social_worker_notes = COALESCE(EXCLUDED.social_worker_notes, appointments.social_worker_notes)
-      RETURNING *;
-    `;
-    const values = [
-      referenceNo,
-      moduleName || 'SOLO PARENT',
-      applicantName || 'Applicant Name',
-      appointmentDate,
-      appointmentTime,
-      venue || 'Quezon City Hall SSDD Office',
-      purpose || 'Solo Parent SSDD Assessment & Intake Interview',
-      socialWorkerNotes || 'Schedule set by Admin'
-    ];
-
-    const result = await pool.query(query, values);
+    const checkAppt = await pool.query(`SELECT id FROM appointments WHERE reference_no = $1`, [referenceNo]);
+    let result;
+    if (checkAppt.rows.length > 0) {
+      result = await pool.query(`
+        UPDATE appointments 
+        SET 
+          appointment_date = COALESCE($1, appointment_date),
+          appointment_time = COALESCE($2, appointment_time),
+          venue = COALESCE($3, venue),
+          purpose = COALESCE($4, purpose),
+          status = 'Interview Scheduled',
+          social_worker_notes = COALESCE($5, social_worker_notes)
+        WHERE reference_no = $6
+        RETURNING *;
+      `, [appointmentDate, appointmentTime, venue, purpose, socialWorkerNotes, referenceNo]);
+    } else {
+      result = await pool.query(`
+        INSERT INTO appointments 
+        (reference_no, module_name, applicant_name, appointment_date, appointment_time, venue, purpose, social_worker_notes, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Interview Scheduled')
+        RETURNING *;
+      `, [
+        referenceNo,
+        moduleName || 'SOLO PARENT',
+        applicantName || 'Applicant Name',
+        appointmentDate,
+        appointmentTime,
+        venue || 'Quezon City Hall SSDD Office',
+        purpose || 'Solo Parent SSDD Assessment & Intake Interview',
+        socialWorkerNotes || 'Schedule set by Admin'
+      ]);
+    }
     const row = result.rows[0];
 
     // Sync status & date to solo_parent_applications
@@ -1987,26 +2283,36 @@ app.put('/api/appointments/:id/status', async (req, res) => {
       return res.status(404).json({ error: 'Appointment not found' });
     }
     const row = result.rows[0];
+    // Sync status to all module application tables
+    const refNo = row.reference_no;
+    const isApprovedStatus = 
+      status === 'APPROVED' || 
+      status === 'Approved' || 
+      status === 'Released & Archived' || 
+      status === 'RELEASED / COMPLETED' || 
+      status === 'Ready for Payout' || 
+      status === 'Passed / Completed' || 
+      status === 'Qualified / Enrolled';
 
-    // If status is APPROVED, transfer to solo_parent_applications AND financial_disbursements!
-    if (status === 'APPROVED' || status === 'Approved') {
-      await pool.query(`
-        UPDATE solo_parent_applications 
-        SET status = 'APPROVED', updated_at = CURRENT_TIMESTAMP 
-        WHERE reference_no = $1;
-      `, [row.reference_no]);
+    const isRejectedStatus = status === 'REJECTED' || status === 'Rejected' || status === 'Unqualified';
+    const targetStatus = isApprovedStatus ? (status === 'Approved' || status === 'APPROVED' ? 'Released & Archived' : status) : status;
 
+    if (isApprovedStatus || isRejectedStatus) {
+      await pool.query(`UPDATE solo_parent_applications SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE reference_no = $2;`, [targetStatus, refNo]).catch(() => null);
+      await pool.query(`UPDATE child_welfare_applications SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE reference_no = $2;`, [targetStatus, refNo]).catch(() => null);
+      await pool.query(`UPDATE educational_applications SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE reference_no = $2;`, [targetStatus, refNo]).catch(() => null);
+      await pool.query(`UPDATE livelihood_applications SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE reference_no = $2;`, [targetStatus, refNo]).catch(() => null);
+      await pool.query(`UPDATE training_applications SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE reference_no = $2;`, [targetStatus, refNo]).catch(() => null);
+      await pool.query(`UPDATE senior_applications SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE reference_no = $2;`, [targetStatus, refNo]).catch(() => null);
+      await pool.query(`UPDATE aics_applications SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE reference_no = $2;`, [targetStatus, refNo]).catch(() => null);
+    }
+
+    if (isApprovedStatus) {
       await pool.query(`
         INSERT INTO financial_disbursements (reference_no, applicant_name, module_name, benefit_name, amount, status)
-        VALUES ($1, $2, 'SOLO PARENT', '₱3,000 Fixed Solo Parent Cash Subsidy', 3000.00, 'PENDING PAYOUT SCHEDULE')
+        VALUES ($1, $2, COALESCE($3, 'SOCIAL WELFARE'), 'Social Services Welfare Assistance', 5000.00, 'PENDING PAYOUT SCHEDULE')
         ON CONFLICT (reference_no) DO UPDATE SET status = 'PENDING PAYOUT SCHEDULE', updated_at = CURRENT_TIMESTAMP;
-      `, [row.reference_no, row.applicant_name]);
-    } else if (status === 'REJECTED' || status === 'Rejected') {
-      await pool.query(`
-        UPDATE solo_parent_applications 
-        SET status = 'REJECTED', updated_at = CURRENT_TIMESTAMP 
-        WHERE reference_no = $1;
-      `, [row.reference_no]);
+      `, [refNo, row.applicant_name, row.module_name]).catch(() => null);
     }
 
     res.json(row);
@@ -2326,18 +2632,28 @@ app.post('/api/activity-logs/:id/restore', async (req, res) => {
 
 // Helper to normalize citizen key for deduplication across all modules
 const normalizeCitizenKey = (name = '', phone = '', email = '', obj = {}) => {
-  const cleanPhone = (phone || obj.phone_number || '').trim().replace(/[^0-9]/g, '');
-  if (cleanPhone && cleanPhone.length >= 7) return `phone-${cleanPhone.slice(-10)}`;
-
   const cleanEmail = (email || obj.email_address || obj.email || '').trim().toLowerCase();
-  if (cleanEmail && cleanEmail.includes('@')) return `email-${cleanEmail}`;
+  if (cleanEmail && cleanEmail.includes('@') && !cleanEmail.includes('unknown') && !cleanEmail.includes('sample')) {
+    return `email-${cleanEmail}`;
+  }
 
-  const firstName = (obj.first_name || '').trim().toLowerCase();
-  const lastName = (obj.last_name || '').trim().toLowerCase();
-  if (firstName && lastName) return `name-${firstName}-${lastName}`;
+  const cleanPhone = (phone || obj.phone_number || '').trim().replace(/[^0-9]/g, '');
+  if (cleanPhone && cleanPhone.length >= 7) {
+    return `phone-${cleanPhone.slice(-10)}`;
+  }
 
-  const cleanName = (name || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (cleanName) return `name-${cleanName}`;
+  const cleanNameParts = (name || `${obj.first_name || ''} ${obj.last_name || ''}`)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (cleanNameParts.length >= 2) {
+    return `name-${cleanNameParts[0]}-${cleanNameParts[cleanNameParts.length - 1]}`;
+  } else if (cleanNameParts.length === 1) {
+    return `name-${cleanNameParts[0]}`;
+  }
 
   return 'unknown-citizen';
 };
@@ -2379,21 +2695,52 @@ app.get('/api/beneficiaries', async (req, res) => {
     const citizenMap = new Map();
 
     const getOrCreateCitizen = (key, defaultName, sourceObj = {}) => {
-      if (!citizenMap.has(key)) {
-        const details = sourceObj.details || {};
-        const personalInfo = details.personalInformation || {};
+      const details = sourceObj.details || {};
+      const personalInfo = details.personalInformation || {};
 
-        const firstName = sourceObj.first_name || personalInfo.firstName || '';
-        const lastName = sourceObj.last_name || personalInfo.lastName || '';
-        const middleName = sourceObj.middle_name || personalInfo.middleName || '';
-        const fullComboName = [firstName, middleName, lastName, sourceObj.suffix].filter(Boolean).join(' ').trim();
-        const rawName = fullComboName || defaultName || `${firstName} ${middleName} ${lastName}`.trim() || 'QC Resident';
+      const firstName = sourceObj.first_name || personalInfo.firstName || '';
+      const lastName = sourceObj.last_name || personalInfo.lastName || '';
+      const middleName = sourceObj.middle_name || personalInfo.middleName || '';
+      const fullComboName = [firstName, middleName, lastName, sourceObj.suffix].filter(Boolean).join(' ').trim();
+      const rawName = fullComboName || defaultName || `${firstName} ${middleName} ${lastName}`.trim() || 'QC Resident';
 
-        const houseNo = sourceObj.house_no || personalInfo.houseNo || '176';
-        const street = sourceObj.street_name || personalInfo.streetName || '23';
-        const barangay = sourceObj.barangay || personalInfo.barangay || 'Bagong Silangan';
+      const email = (sourceObj.email_address || sourceObj.email || '').trim().toLowerCase();
+      const phone = (sourceObj.phone_number || personalInfo.phoneNumber || '').trim().replace(/[^0-9]/g, '');
 
-        citizenMap.set(key, {
+      const nameParts = rawName.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+      const firstWord = nameParts[0] || '';
+      const lastWord = nameParts.length >= 2 ? nameParts[nameParts.length - 1] : '';
+
+      // Check if existing citizen in citizenMap matches by key, email, phone, or first+last name
+      let existingCitizen = citizenMap.get(key);
+
+      if (!existingCitizen) {
+        for (const [ckey, c] of citizenMap.entries()) {
+          const cEmail = (c.email || '').trim().toLowerCase();
+          const cPhone = (c.phone || '').trim().replace(/[^0-9]/g, '');
+          const cNameParts = (c.rawName || '').trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+          const cFirstWord = cNameParts[0] || '';
+          const cLastWord = cNameParts.length >= 2 ? cNameParts[cNameParts.length - 1] : '';
+
+          const emailMatch = email && cEmail && email === cEmail;
+          const phoneMatch = phone && cPhone && phone.slice(-10) === cPhone.slice(-10);
+          const nameMatch = firstWord && lastWord && cFirstWord && cLastWord && firstWord === cFirstWord && lastWord === cLastWord;
+
+          if (emailMatch || phoneMatch || nameMatch) {
+            existingCitizen = c;
+            citizenMap.set(key, c);
+            break;
+          }
+        }
+      }
+
+      if (!existingCitizen) {
+        const houseNo = sourceObj.house_no || personalInfo.houseNo || '';
+        const street = sourceObj.street_name || personalInfo.streetName || '';
+        const barangay = sourceObj.barangay || personalInfo.barangay || '';
+        const fullAddrParts = [houseNo, street, barangay, barangay ? 'Quezon City' : ''].filter(Boolean).join(' ');
+
+        existingCitizen = {
           key,
           id: `QC-BEN-2026-${String(citizenMap.size + 1).padStart(4, '0')}`,
           name: formatProperCase(rawName),
@@ -2401,15 +2748,15 @@ app.get('/api/beneficiaries', async (req, res) => {
           firstName: formatProperCase(firstName),
           lastName: formatProperCase(lastName),
           middleName: formatProperCase(middleName),
-          dob: sourceObj.dob || personalInfo.dateOfBirth || sourceObj.patient_dob || '2004-09-27',
-          age: sourceObj.age || personalInfo.age || sourceObj.patient_age || '22',
-          gender: sourceObj.gender || personalInfo.gender || 'Male',
-          civilStatus: sourceObj.civil_status || personalInfo.civilStatus || 'Single',
-          address: `${houseNo} ${street}, ${barangay}, Quezon City`.trim(),
-          barangay: formatProperCase(barangay) || 'Bagong Silangan',
-          phone: sourceObj.phone_number || personalInfo.phoneNumber || '09155582122',
-          email: sourceObj.email_address || sourceObj.email || 'jeffersonlee1234@gmail.com',
-          qcId: sourceObj.qcitizen_id || sourceObj.senior_id_no || personalInfo.seniorCitizenId || '110008262304143',
+          dob: sourceObj.dob || personalInfo.dateOfBirth || sourceObj.patient_dob || '',
+          age: sourceObj.age || personalInfo.age || sourceObj.patient_age || '',
+          gender: sourceObj.gender || personalInfo.gender || '',
+          civilStatus: sourceObj.civil_status || personalInfo.civilStatus || '',
+          address: fullAddrParts || 'Quezon City',
+          barangay: formatProperCase(barangay) || 'Quezon City',
+          phone: sourceObj.phone_number || personalInfo.phoneNumber || '',
+          email: sourceObj.email_address || sourceObj.email || '',
+          qcId: sourceObj.qcitizen_id || sourceObj.senior_id_no || personalInfo.seniorCitizenId || '',
           idType: 'QCitizen ID',
           idDocumentUrl: null,
           idDocumentName: null,
@@ -2418,17 +2765,28 @@ app.get('/api/beneficiaries', async (req, res) => {
           totalCash: 0,
           nonCashCount: 0,
           manualVerification: verifMap.get(key) || null,
-        });
+        };
+        citizenMap.set(key, existingCitizen);
       } else {
-        const citizen = citizenMap.get(key);
-        const newMiddle = sourceObj.middle_name || (sourceObj.details && sourceObj.details.middleName) || '';
-        if (newMiddle && !citizen.middleName) {
-          citizen.middleName = formatProperCase(newMiddle);
-          const fullNameCombo = [sourceObj.first_name || citizen.firstName, newMiddle, sourceObj.last_name || citizen.lastName, sourceObj.suffix].filter(Boolean).join(' ');
-          citizen.name = formatProperCase(fullNameCombo);
+        if (rawName.length > (existingCitizen.name || '').length) {
+          existingCitizen.name = formatProperCase(rawName);
+          existingCitizen.rawName = rawName.toUpperCase();
+        }
+        if (middleName && !existingCitizen.middleName) {
+          existingCitizen.middleName = formatProperCase(middleName);
+        }
+        if (phone && !existingCitizen.phone) {
+          existingCitizen.phone = phone;
+        }
+        if (email && !existingCitizen.email) {
+          existingCitizen.email = email;
+        }
+        if (sourceObj.qcitizen_id && !existingCitizen.qcId) {
+          existingCitizen.qcId = sourceObj.qcitizen_id;
         }
       }
-      return citizenMap.get(key);
+
+      return existingCitizen;
     };
 
     // Helper status checkers
@@ -2686,7 +3044,7 @@ app.get('/api/beneficiaries', async (req, res) => {
     });
 
     // Format final list of beneficiaries
-    const beneficiaries = Array.from(citizenMap.values()).map(c => {
+    const beneficiaries = Array.from(new Set(citizenMap.values())).map(c => {
       // Determine verification status
       let verificationStatus = 'Pending';
       if (c.manualVerification) {

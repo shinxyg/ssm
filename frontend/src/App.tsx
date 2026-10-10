@@ -215,7 +215,11 @@ export default function App() {
       const eduApps: ApplicationRecord[] = (Array.isArray(eduRaw) ? eduRaw : []).map(row => ({
         referenceNo: row.reference_no,
         applicantName: row.applicant_name,
-        serviceName: row.service_name || 'Solo Parent Educational Assistance Program',
+        serviceName: (row.reference_no || '').startsWith('QC-SP-EDU')
+          ? 'Solo Parent Educational Assistance Program'
+          : (row.reference_no || '').startsWith('QC-EDU')
+          ? 'Educational Assistance for Indigent Children & Youth'
+          : row.service_name || 'Educational Assistance for Indigent Children & Youth',
         category: row.category || 'educational',
         assistanceType: row.assistance_type || 'Educational Cash Grant',
         status: row.status || 'Pending Document Validation',
@@ -338,7 +342,7 @@ export default function App() {
     const isPwd = (newApp.category || '').toLowerCase().includes('pwd') || (newApp.serviceName || '').toLowerCase().includes('pwd') || (newApp.referenceNo || '').startsWith('QC-PWD-');
     const isSenior = (newApp.category || '').toLowerCase().includes('senior') || (newApp.serviceName || '').toLowerCase().includes('senior') || (newApp.referenceNo || '').startsWith('SENIOR-');
     const isSolo = (newApp.category || '').toLowerCase() === 'soloparent' || (newApp.referenceNo || '').startsWith('SP-SUBSIDY-') || (newApp.referenceNo || '').startsWith('SP-');
-    const isEdu = (newApp.category || '').toLowerCase() === 'educational' || (newApp.referenceNo || '').startsWith('QC-SP-EDU-');
+    const isEdu = (newApp.category || '').toLowerCase().includes('educational') || (newApp.category || '').toLowerCase().includes('child') || (newApp.serviceName || '').toLowerCase().includes('child') || (newApp.referenceNo || '').startsWith('QC-SP-EDU-') || (newApp.referenceNo || '').startsWith('QC-EDU-') || (newApp.referenceNo || '').startsWith('CW-');
     const isLvh = (newApp.category || '').toLowerCase() === 'livelihood' || (newApp.referenceNo || '').startsWith('LVH-');
     const isTrn = (newApp.category || '').toLowerCase() === 'training' || (newApp.referenceNo || '').startsWith('TRN-');
 
@@ -375,32 +379,50 @@ export default function App() {
     setApplications(prev => prev.map(app => app.referenceNo === refNo ? { ...app, status: newStatus, ...(extraFields || {}) } : app));
     const isSenior = (refNo || '').startsWith('SENIOR-');
     const isPwd = (refNo || '').startsWith('QC-PWD-') || (refNo || '').includes('PWD');
-    const isSolo = (refNo || '').startsWith('SP-SUBSIDY-') || (refNo || '').startsWith('SP-');
-    const isEdu = (refNo || '').startsWith('QC-SP-EDU-');
+    const isSolo = (refNo || '').startsWith('SP-') || (refNo || '').startsWith('QC-SP-') || (refNo || '').includes('SOLO');
+    const isCw = (refNo || '').startsWith('QC-CW-') || (refNo || '').startsWith('QC-EDU-');
+    const isEdu = (refNo || '').startsWith('QC-EDU-');
     const isLvh = (refNo || '').startsWith('LVH-');
     const isTrn = (refNo || '').startsWith('TRN-');
 
-    let endpoint = `http://localhost:5000/api/aics/applications/${encodeURIComponent(refNo)}/status`;
-    if (isSenior) {
-      endpoint = `http://localhost:5000/api/senior/applications/${encodeURIComponent(refNo)}/status`;
+    const endpointsToTry: string[] = [];
+    if (isCw) {
+      endpointsToTry.push(
+        `http://localhost:5000/api/child-welfare/applications/${encodeURIComponent(refNo)}/status`,
+        `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`,
+        `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`
+      );
+    } else if (isSenior) {
+      endpointsToTry.push(`http://localhost:5000/api/senior/applications/${encodeURIComponent(refNo)}/status`);
     } else if (isPwd) {
-      endpoint = `http://localhost:5000/api/pwd/applications/${encodeURIComponent(refNo)}/status`;
+      endpointsToTry.push(`http://localhost:5000/api/pwd/applications/${encodeURIComponent(refNo)}/status`);
     } else if (isSolo) {
-      endpoint = `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`;
+      endpointsToTry.push(
+        `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`,
+        `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`
+      );
     } else if (isEdu) {
-      endpoint = `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`;
+      endpointsToTry.push(
+        `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`,
+        `http://localhost:5000/api/child-welfare/applications/${encodeURIComponent(refNo)}/status`
+      );
     } else if (isLvh) {
-      endpoint = `http://localhost:5000/api/livelihood/applications/${encodeURIComponent(refNo)}/status`;
+      endpointsToTry.push(`http://localhost:5000/api/livelihood/applications/${encodeURIComponent(refNo)}/status`);
     } else if (isTrn) {
-      endpoint = `http://localhost:5000/api/training/applications/${encodeURIComponent(refNo)}/status`;
+      endpointsToTry.push(`http://localhost:5000/api/training/applications/${encodeURIComponent(refNo)}/status`);
+    } else {
+      endpointsToTry.push(`http://localhost:5000/api/aics/applications/${encodeURIComponent(refNo)}/status`);
     }
 
     try {
-      await fetch(endpoint, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, ...(extraFields || {}) })
-      });
+      for (const ep of endpointsToTry) {
+        const res = await fetch(ep, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus, ...(extraFields || {}) })
+        });
+        if (res.ok) break;
+      }
     } catch (err) {
       console.error('Error updating status in DB:', err);
     }

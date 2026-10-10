@@ -101,9 +101,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  const displayName = userName || (userRole === 'admin' ? t('header.system_admin') : 'Jefferson Lee');
+  const displayName = userName || (userRole === 'admin' ? t('header.system_admin') : 'QCitizen Beneficiary');
   const displaySubtitle = userSubtitle || (userRole === 'admin' ? 'Administrator' : t('header.citizen_resident'));
-  const displayInitials = userInitials || (userRole === 'admin' ? 'AD' : 'JL');
+  const displayInitials = userInitials || (userRole === 'admin' ? 'AD' : 'QC');
 
 
   // Generate Notifications derived from application lifecycle (Citizen & Admin)

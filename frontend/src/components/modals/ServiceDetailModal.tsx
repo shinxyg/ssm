@@ -22,9 +22,9 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
   const isTagalog = language === 'Tagalog';
 
   const [tab, setTab] = useState<'info' | 'apply'>('info');
-  const [fullName, setFullName] = useState<string>('JEFFERSON LEE');
-  const [contactNo, setContactNo] = useState<string>('0917-889-4321');
-  const [barangay, setBarangay] = useState<string>('Barangay San Lorenzo, District 2');
+  const [fullName, setFullName] = useState<string>('');
+  const [contactNo, setContactNo] = useState<string>('');
+  const [barangay, setBarangay] = useState<string>('');
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
 

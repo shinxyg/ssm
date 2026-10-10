@@ -190,8 +190,8 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
     }
   }, [schedulingApp]);
 
-  // Fetch appointments from PostgreSQL Backend API on mount
-  useEffect(() => {
+  // Fetch appointments from PostgreSQL Backend API on mount & interval
+  const fetchAppointments = () => {
     fetch('http://localhost:5000/api/appointments')
       .then((res) => res.json())
       .then((data) => {
@@ -212,6 +212,12 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
         }
       })
       .catch((err) => console.log('Notice: Backend API offline or fetching from local state', err));
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+    const interval = setInterval(fetchAppointments, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   // Merge Applications from prop with DB appointments (exclude pending & rejected/disapproved apps)
@@ -875,17 +881,27 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                       type="button"
                       onClick={async () => {
                         const ref = assessmentApp.referenceNo;
+                        const newStatus = 'Unqualified';
+                        setDbAppointments((prev) =>
+                          prev.map((item) => (item.referenceNo === ref ? { ...item, status: newStatus } : item))
+                        );
                         try {
-                          await fetch(`http://localhost:5000/api/training/applications/${ref}/status`, {
+                          await fetch(`http://localhost:5000/api/appointments/${encodeURIComponent(ref)}/status`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ status: 'Unqualified', rejectionReason: 'Did not pass training orientation requirements' })
+                            body: JSON.stringify({ status: newStatus })
+                          });
+                          await fetch(`http://localhost:5000/api/training/applications/${encodeURIComponent(ref)}/status`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus, rejectionReason: 'Did not pass training orientation requirements' })
                           });
                         } catch (e) {
                           console.warn("API update warning:", e);
                         }
-                        if (onUpdateStatus) onUpdateStatus(ref, 'Unqualified');
+                        if (onUpdateStatus) onUpdateStatus(ref, newStatus);
                         setAssessmentApp(null);
+                        setTimeout(fetchAppointments, 500);
                       }}
                       className="px-4 py-2 bg-rose-950/70 hover:bg-rose-900 border border-rose-700/60 text-rose-300 font-bold text-xs rounded-xl transition-colors"
                     >
@@ -896,17 +912,27 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                       type="button"
                       onClick={async () => {
                         const ref = assessmentApp.referenceNo;
+                        const newStatus = 'Qualified / Enrolled';
+                        setDbAppointments((prev) =>
+                          prev.map((item) => (item.referenceNo === ref ? { ...item, status: newStatus } : item))
+                        );
                         try {
-                          await fetch(`http://localhost:5000/api/training/applications/${ref}/status`, {
+                          await fetch(`http://localhost:5000/api/appointments/${encodeURIComponent(ref)}/status`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ status: 'Qualified / Enrolled' })
+                            body: JSON.stringify({ status: newStatus })
+                          });
+                          await fetch(`http://localhost:5000/api/training/applications/${encodeURIComponent(ref)}/status`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
                           });
                         } catch (e) {
                           console.warn("API update warning:", e);
                         }
-                        if (onUpdateStatus) onUpdateStatus(ref, 'Qualified / Enrolled');
+                        if (onUpdateStatus) onUpdateStatus(ref, newStatus);
                         setAssessmentApp(null);
+                        setTimeout(fetchAppointments, 500);
                       }}
                       className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-colors"
                     >
@@ -917,9 +943,24 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                   <>
                     <button
                       type="button"
-                      onClick={() => {
-                        if (onUpdateStatus) onUpdateStatus(assessmentApp.referenceNo, 'Rejected');
+                      onClick={async () => {
+                        const ref = assessmentApp.referenceNo;
+                        const newStatus = 'Rejected';
+                        setDbAppointments((prev) =>
+                          prev.map((item) => (item.referenceNo === ref ? { ...item, status: newStatus } : item))
+                        );
+                        try {
+                          await fetch(`http://localhost:5000/api/appointments/${encodeURIComponent(ref)}/status`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                          });
+                        } catch (e) {
+                          console.warn("API update warning:", e);
+                        }
+                        if (onUpdateStatus) onUpdateStatus(ref, newStatus);
                         setAssessmentApp(null);
+                        setTimeout(fetchAppointments, 500);
                       }}
                       className="px-4 py-2 bg-rose-950/70 hover:bg-rose-900 border border-rose-700/60 text-rose-300 font-bold text-xs rounded-xl transition-colors"
                     >
@@ -928,9 +969,24 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
 
                     <button
                       type="button"
-                      onClick={() => {
-                        if (onUpdateStatus) onUpdateStatus(assessmentApp.referenceNo, 'Ready for Payout');
+                      onClick={async () => {
+                        const ref = assessmentApp.referenceNo;
+                        const newStatus = 'Released & Archived';
+                        setDbAppointments((prev) =>
+                          prev.map((item) => (item.referenceNo === ref ? { ...item, status: newStatus } : item))
+                        );
+                        try {
+                          await fetch(`http://localhost:5000/api/appointments/${encodeURIComponent(ref)}/status`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus })
+                          });
+                        } catch (e) {
+                          console.warn("API update warning:", e);
+                        }
+                        if (onUpdateStatus) onUpdateStatus(ref, newStatus);
                         setAssessmentApp(null);
+                        setTimeout(fetchAppointments, 500);
                       }}
                       className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl shadow-lg transition-colors"
                     >

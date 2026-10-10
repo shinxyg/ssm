@@ -121,6 +121,17 @@ export const initDB = async () => {
       ALTER TABLE appointments ALTER COLUMN appointment_time DROP NOT NULL;
       ALTER TABLE appointments ALTER COLUMN venue DROP NOT NULL;
 
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'appointments_reference_no_key'
+        ) THEN
+          ALTER TABLE appointments ADD CONSTRAINT appointments_reference_no_key UNIQUE (reference_no);
+        END IF;
+      EXCEPTION
+        WHEN OTHERS THEN NULL;
+      END $$;
+
       CREATE TABLE IF NOT EXISTS pwd_applications (
         id SERIAL PRIMARY KEY,
         reference_no VARCHAR(50) UNIQUE NOT NULL,
@@ -352,6 +363,15 @@ export const initDB = async () => {
       ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS details JSONB;
       ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS child_full_name VARCHAR(255);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS child_age VARCHAR(10);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS child_dob VARCHAR(50);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS child_sex VARCHAR(20);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS school_name VARCHAR(255);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS grade_level VARCHAR(100);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS lrn_number VARCHAR(50);
+      ALTER TABLE solo_parent_applications ADD COLUMN IF NOT EXISTS school_address TEXT;
+
       CREATE TABLE IF NOT EXISTS solo_parent_applications (
         id SERIAL PRIMARY KEY,
         reference_no VARCHAR(50) UNIQUE NOT NULL,
@@ -373,6 +393,14 @@ export const initDB = async () => {
         solo_parent_id_no VARCHAR(50),
         solo_parent_status VARCHAR(100),
         solo_parent_category VARCHAR(100),
+        child_full_name VARCHAR(255),
+        child_age VARCHAR(10),
+        child_dob VARCHAR(50),
+        child_sex VARCHAR(20),
+        school_name VARCHAR(255),
+        grade_level VARCHAR(100),
+        lrn_number VARCHAR(50),
+        school_address TEXT,
         num_dependents VARCHAR(10),
         age_youngest_dependent VARCHAR(10),
         employment_status VARCHAR(100),
@@ -474,6 +502,112 @@ export const initDB = async () => {
         date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS child_welfare_applications (
+        id SERIAL PRIMARY KEY,
+        reference_no VARCHAR(50) UNIQUE NOT NULL,
+        applicant_name VARCHAR(255) NOT NULL,
+        first_name VARCHAR(100),
+        middle_name VARCHAR(100),
+        last_name VARCHAR(100),
+        suffix VARCHAR(20),
+        qcitizen_id VARCHAR(50),
+        nationality VARCHAR(50) DEFAULT 'FILIPINO',
+        dob VARCHAR(50),
+        age VARCHAR(10),
+        gender VARCHAR(20),
+        civil_status VARCHAR(50),
+        house_no VARCHAR(100),
+        street_name VARCHAR(150),
+        barangay VARCHAR(150),
+        phone_number VARCHAR(50),
+        email_address VARCHAR(255),
+        solo_parent_id_no VARCHAR(50),
+        relationship_to_child VARCHAR(100),
+        child_full_name VARCHAR(255),
+        child_dob VARCHAR(50),
+        child_age VARCHAR(10),
+        child_sex VARCHAR(20),
+        child_address VARCHAR(255),
+        school_name VARCHAR(255),
+        grade_level VARCHAR(100),
+        lrn_number VARCHAR(50),
+        type_of_school VARCHAR(100),
+        other_enrollment_info VARCHAR(255),
+        selected_sectors JSONB,
+        selected_services JSONB,
+        concern_description TEXT,
+        incident_date VARCHAR(50),
+        incident_location VARCHAR(255),
+        assistance_type VARCHAR(100),
+        num_children_in_family VARCHAR(10),
+        num_children_studying VARCHAR(10),
+        monthly_family_income VARCHAR(100),
+        is_4ps_beneficiary VARCHAR(10),
+        is_solo_educational_beneficiary VARCHAR(10),
+        is_pwd_educational_beneficiary VARCHAR(10),
+        service_name VARCHAR(255) DEFAULT 'Child Welfare Services Aid',
+        category VARCHAR(50) DEFAULT 'child_welfare',
+        amount NUMERIC(10,2) DEFAULT 5000.00,
+        status VARCHAR(100) DEFAULT 'Pending Document Validation',
+        disapproval_reason TEXT,
+        appointment_date VARCHAR(50),
+        appointment_time VARCHAR(50),
+        appointment_venue VARCHAR(255),
+        payout_date VARCHAR(50),
+        payout_time VARCHAR(50),
+        payout_venue VARCHAR(255),
+        uploaded_documents JSONB,
+        details JSONB,
+        date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- Drop redundant separate child_documents table so all docs are consolidated in child_welfare_applications
+      DROP TABLE IF EXISTS child_documents CASCADE;
+
+      -- ALTER TABLE migrations for child_welfare_applications to ensure all columns exist
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS first_name VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS middle_name VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS last_name VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS suffix VARCHAR(20);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS qcitizen_id VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS nationality VARCHAR(50) DEFAULT 'FILIPINO';
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS dob VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS age VARCHAR(10);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS gender VARCHAR(20);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS civil_status VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS house_no VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS street_name VARCHAR(150);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS barangay VARCHAR(150);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS email_address VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS solo_parent_id_no VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS relationship_to_child VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_full_name VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_dob VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_age VARCHAR(10);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_sex VARCHAR(20);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS child_address VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS school_name VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS grade_level VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS lrn_number VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS type_of_school VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS other_enrollment_info VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS selected_sectors JSONB;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS selected_services JSONB;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS concern_description TEXT;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS incident_date VARCHAR(50);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS incident_location VARCHAR(255);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS assistance_type VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS num_children_in_family VARCHAR(10);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS num_children_studying VARCHAR(10);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS monthly_family_income VARCHAR(100);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS is_4ps_beneficiary VARCHAR(10);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS is_solo_educational_beneficiary VARCHAR(10);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS is_pwd_educational_beneficiary VARCHAR(10);
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS uploaded_documents JSONB;
+      ALTER TABLE child_welfare_applications ADD COLUMN IF NOT EXISTS details JSONB;
 
       CREATE TABLE IF NOT EXISTS training_applications (
         id SERIAL PRIMARY KEY,

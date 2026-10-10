@@ -45,7 +45,7 @@ export const TrackApplicationsModal: React.FC<TrackApplicationsModalProps> = ({
             </div>
             <div>
               <h3 className={`text-base font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Track My Applications</h3>
-              <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Jefferson Lee • Citizen ID: 4402-9812-7634</p>
+              <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>QCitizen Beneficiary • Real-Time Status Tracker</p>
             </div>
           </div>
           <button

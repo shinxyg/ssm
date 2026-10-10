@@ -63,6 +63,14 @@ interface SoloParentApplication {
   uploaded_documents?: Record<string, { name: string; size: number; dataUrl: string }>;
   details?: any;
   date_submitted?: string;
+  child_full_name?: string;
+  child_age?: string;
+  child_dob?: string;
+  child_sex?: string;
+  school_name?: string;
+  grade_level?: string;
+  lrn_number?: string;
+  school_address?: string;
 }
 
 export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode = true }) => {
@@ -83,9 +91,10 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
 
   const fetchApplications = async () => {
     try {
-      const [spRes, eduRes] = await Promise.all([
+      const [spRes, eduRes, cwRes] = await Promise.all([
         fetch('http://localhost:5000/api/solo-parent/applications').catch(() => null),
         fetch('http://localhost:5000/api/educational/applications').catch(() => null),
+        fetch('http://localhost:5000/api/child-welfare/applications').catch(() => null),
       ]);
       let combined: SoloParentApplication[] = [];
       if (spRes && spRes.ok) {
@@ -95,11 +104,15 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
       if (eduRes && eduRes.ok) {
         const eduData = await eduRes.json();
         const soloEduApps = eduData
-          .filter((app: any) => app.is_solo_educational_beneficiary || app.category === 'Solo Parent Services' || (app.service_name || '').includes('Solo Parent'))
+          .filter((app: any) => app.is_solo_educational_beneficiary || app.category === 'Solo Parent Services' || (app.service_name || '').includes('Solo Parent') || (app.reference_no || '').startsWith('QC-SP-EDU') || (app.reference_no || '').startsWith('QC-EDU'))
           .map((app: any) => ({
             id: app.id,
             reference_no: app.reference_no,
-            service_name: app.service_name || 'Solo Parent Educational Assistance Program',
+            service_name: (app.reference_no || '').startsWith('QC-SP-EDU')
+              ? 'Solo Parent Educational Assistance Program'
+              : (app.reference_no || '').startsWith('QC-EDU')
+              ? 'Educational Assistance for Indigent Children & Youth'
+              : (app.service_name || 'Educational Assistance for Indigent Children & Youth'),
             applicant_name: app.applicant_name,
             first_name: app.first_name,
             middle_name: app.middle_name,
@@ -108,15 +121,28 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             nationality: app.nationality,
             dob: app.dob,
             age: app.age,
+            gender: app.gender,
+            civil_status: app.civil_status,
+            house_no: app.house_no,
+            street_name: app.street_name,
+            barangay: app.barangay,
             phone_number: app.phone_number,
             email_address: app.email_address,
             solo_parent_category: 'Educational Assistance Grant',
-            monthly_income: app.monthly_family_income,
+            monthly_income: app.monthly_family_income || app.monthly_income,
             status: app.status || 'Pending Document Validation',
             disapproval_reason: app.disapproval_reason,
             uploaded_documents: app.uploaded_documents,
             details: app.details,
-            date_submitted: app.date_submitted
+            date_submitted: app.date_submitted,
+            child_full_name: app.child_full_name,
+            child_age: app.child_age,
+            child_dob: app.child_dob,
+            child_sex: app.child_sex,
+            school_name: app.school_name,
+            grade_level: app.grade_level,
+            lrn_number: app.lrn_number,
+            school_address: app.school_address
           }));
 
         const existingRefNos = new Set(combined.map(a => a.reference_no));
@@ -126,6 +152,51 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
           }
         });
       }
+
+      if (cwRes && cwRes.ok) {
+        const cwData = await cwRes.json();
+        const existingRefNos = new Set(combined.map(a => a.reference_no));
+        cwData.forEach((app: any) => {
+          if (!existingRefNos.has(app.reference_no)) {
+            combined.push({
+              id: app.id,
+              reference_no: app.reference_no,
+              service_name: app.service_name || 'Child Welfare Services Aid',
+              applicant_name: app.applicant_name,
+              first_name: app.first_name,
+              middle_name: app.middle_name,
+              last_name: app.last_name,
+              suffix: app.suffix,
+              nationality: app.nationality,
+              dob: app.dob,
+              age: app.age,
+              gender: app.gender,
+              civil_status: app.civil_status,
+              house_no: app.house_no,
+              street_name: app.street_name,
+              barangay: app.barangay,
+              phone_number: app.phone_number,
+              email_address: app.email_address,
+              solo_parent_category: 'Child Welfare Assistance',
+              monthly_income: app.monthly_family_income || app.monthly_income,
+              status: app.status || 'Pending Document Validation',
+              disapproval_reason: app.disapproval_reason,
+              uploaded_documents: app.uploaded_documents,
+              details: app.details,
+              date_submitted: app.date_submitted,
+              child_full_name: app.child_full_name,
+              child_age: app.child_age,
+              child_dob: app.child_dob,
+              child_sex: app.child_sex,
+              school_name: app.school_name,
+              grade_level: app.grade_level,
+              lrn_number: app.lrn_number,
+              school_address: app.child_address
+            });
+          }
+        });
+      }
+
       setApplications(combined);
     } catch (err) {
       console.error('Error fetching solo parent applications:', err);
@@ -154,26 +225,30 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
   // Update Status in PostgreSQL DB
   const handleUpdateStatus = async (refNo: string, newStatus: string, reason?: string) => {
     try {
+      const isCw = refNo.startsWith('QC-CW') || refNo.startsWith('QC-EDU') || (selectedApp?.service_name || '').toLowerCase().includes('indigent') || (selectedApp?.service_name || '').toLowerCase().includes('child welfare');
       const isEdu = refNo.startsWith('QC-SP-EDU') || (selectedApp?.solo_parent_category || '').toLowerCase().includes('educational') || Boolean(selectedApp?.details?.childFullName);
-      const primaryEndpoint = isEdu
-        ? `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`
-        : `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`;
 
-      const fallbackEndpoint = isEdu
-        ? `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`
-        : `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`;
+      const endpointsToTry = isCw
+        ? [
+            `http://localhost:5000/api/child-welfare/applications/${encodeURIComponent(refNo)}/status`,
+            `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`,
+            `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`
+          ]
+        : isEdu
+        ? [
+            `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`,
+            `http://localhost:5000/api/child-welfare/applications/${encodeURIComponent(refNo)}/status`,
+            `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`
+          ]
+        : [
+            `http://localhost:5000/api/solo-parent/applications/${encodeURIComponent(refNo)}/status`,
+            `http://localhost:5000/api/educational/applications/${encodeURIComponent(refNo)}/status`,
+            `http://localhost:5000/api/child-welfare/applications/${encodeURIComponent(refNo)}/status`
+          ];
 
-      let res = await fetch(primaryEndpoint, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: newStatus,
-          disapprovalReason: reason || null,
-        }),
-      });
-
-      if (!res.ok) {
-        res = await fetch(fallbackEndpoint, {
+      let res: Response | null = null;
+      for (const ep of endpointsToTry) {
+        res = await fetch(ep, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -181,9 +256,10 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             disapprovalReason: reason || null,
           }),
         });
+        if (res.ok) break;
       }
 
-      if (res.ok) {
+      if (res && res.ok) {
         await fetchApplications();
         if (selectedApp && selectedApp.reference_no === refNo) {
           setSelectedApp(prev => prev ? { ...prev, status: newStatus, disapproval_reason: reason } : null);
@@ -436,7 +512,11 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                           {app.applicant_name || `${app.first_name || 'JEFFERSON'} ${app.last_name || 'LEE'}`}
                         </td>
                         <td className={`py-4 px-6 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                          {app.service_name || (app.reference_no?.includes('EDU') || (app.solo_parent_category || '').toLowerCase().includes('educational') ? 'Solo Parent Educational Assistance Program' : 'Solo Parent Financial Subsidy Program')}
+                          {(app.reference_no || '').startsWith('QC-SP-EDU') 
+                            ? 'Solo Parent Educational Assistance Program' 
+                            : (app.reference_no || '').startsWith('QC-EDU') 
+                            ? 'Educational Assistance for Indigent Children & Youth' 
+                            : app.service_name || (app.reference_no?.includes('EDU') || (app.solo_parent_category || '').toLowerCase().includes('educational') ? 'Solo Parent Educational Assistance Program' : 'Solo Parent Financial Subsidy Program')}
                         </td>
                         <td className={`py-4 px-6 font-mono text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                           {app.date_submitted ? `${new Date(app.date_submitted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ${new Date(app.date_submitted).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}` : 'Oct 5, 2026 • 10:57 AM'}
@@ -478,11 +558,10 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
       {/* MANAGE APPLICATION MODAL (MATCHING EXACT AICS LAYOUT FROM SCREENSHOTS 1 & 2!) */}
       {/* ---------------------------------------------------------------------- */}
       {selectedApp && (() => {
-        const isEduApp = Boolean(
-          (selectedApp.solo_parent_category || '').toLowerCase().includes('educational') ||
-          (selectedApp.reference_no || '').startsWith('QC-SP-EDU') ||
-          selectedApp.details?.childFullName
-        );
+        const isSoloParentEdu = (selectedApp.reference_no || '').startsWith('QC-SP-EDU') || (selectedApp.service_name || '').toLowerCase().includes('solo parent educational');
+        const isIndigentEdu = (selectedApp.reference_no || '').startsWith('QC-EDU') || (selectedApp.service_name || '').toLowerCase().includes('indigent');
+        const isEduApp = isSoloParentEdu || isIndigentEdu;
+
         return createPortal(
         <div className="fixed inset-0 z-[99999] bg-[#030712]/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
           <div className="bg-[#0e172a] text-slate-100 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-slate-800 my-auto">
@@ -491,7 +570,11 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
               <div>
                 <span className="text-[10px] font-mono font-bold text-blue-400 uppercase tracking-wider">{selectedApp.reference_no}</span>
                 <h3 className="text-base font-extrabold text-white mt-0.5">
-                  {(selectedApp.solo_parent_category || '').toLowerCase().includes('educational') || (selectedApp.reference_no || '').startsWith('QC-SP-EDU') || selectedApp.details?.childFullName ? 'Solo Parent Educational Assistance — ₱5,000 Cash Grant' : 'Solo Parent Subsidy — ₱3,000 Cash Grant'}
+                  {isSoloParentEdu
+                    ? 'Solo Parent Educational Assistance — ₱5,000 Cash Grant'
+                    : isIndigentEdu
+                    ? 'Educational Assistance for Indigent Children & Youth — ₱5,000 Cash Grant'
+                    : 'Solo Parent Subsidy — ₱3,000 Cash Grant'}
                 </h3>
               </div>
               <button
@@ -506,7 +589,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             {/* Modal Body */}
             <div className="p-6 space-y-5 text-xs overflow-y-auto flex-1 custom-modal-scroll">
 
-                    {/* SECTION 2: APPLICANT / PARENT / GUARDIAN INFORMATION (INDIVIDUAL FIELDS) */}
+                    {/* SECTION A: APPLICANT / PARENT / GUARDIAN INFORMATION */}
                     <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-4">
                       <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
                         <span>A. APPLICANT / PARENT / GUARDIAN INFORMATION</span>
@@ -516,15 +599,15 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">First Name</span>
-                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.first_name || 'JEFFERSON'}</div>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.first_name || 'N/A'}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Middle Name</span>
-                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.middle_name || 'FERNANDO'}</div>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.middle_name || 'N/A'}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Last Name</span>
-                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.last_name || 'LEE'}</div>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.last_name || 'N/A'}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Suffix</span>
@@ -536,89 +619,157 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Date of Birth</span>
-                          <div className="font-mono text-slate-200 text-xs mt-0.5">{selectedApp.dob || '27/09/2004'}</div>
+                          <div className="font-mono text-slate-200 text-xs mt-0.5">{selectedApp.dob || 'N/A'}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Age</span>
-                          <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.age ? `${selectedApp.age} yrs old` : '22 yrs old'}</div>
+                          <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.age ? `${selectedApp.age} yrs old` : 'N/A'}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Gender</span>
-                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.gender || 'Male'}</div>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.gender || selectedApp.details?.gender || 'Male'}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Civil Status</span>
-                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.civil_status || 'Solo Parent'}</div>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.civil_status || selectedApp.details?.civilStatus || (isSoloParentEdu ? 'Solo Parent' : 'Single')}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">House / Bldg No.</span>
-                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.house_no || '176'}</div>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.house_no || selectedApp.details?.houseNo || '176'}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Street Name</span>
-                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.street_name || '23'}</div>
+                          <div className="font-semibold text-slate-300 text-xs mt-0.5">{selectedApp.street_name || selectedApp.details?.streetName || '23'}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Barangay</span>
-                          <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.barangay || 'Bagong Silangan'}</div>
+                          <div className="font-bold text-slate-200 text-xs mt-0.5">{selectedApp.barangay || selectedApp.details?.barangay || 'Bagong Silangan'}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Phone Number</span>
-                          <div className="font-mono font-bold text-slate-200 text-xs mt-0.5">{selectedApp.phone_number || '09155582122'}</div>
+                          <div className="font-mono font-bold text-slate-200 text-xs mt-0.5">{selectedApp.phone_number || 'N/A'}</div>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] font-semibold uppercase">Email Address</span>
-                          <div className="font-bold text-slate-200 text-xs mt-0.5 truncate">{selectedApp.email_address || 'jeffersonlee1234@gmail.com'}</div>
+                          <div className="font-bold text-slate-200 text-xs mt-0.5 truncate">{selectedApp.email_address || 'N/A'}</div>
                         </div>
-                        <div>
-                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Existing Solo Parent ID No.</span>
-                          <div className="font-mono font-bold text-white text-xs mt-0.5">{selectedApp.solo_parent_id_no || selectedApp.details?.spicNumber || 'SP-we432432'}</div>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 text-[10px] font-semibold uppercase">Relationship to Child</span>
-                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.details?.relationshipToChild || (selectedApp as any).relationship_to_child || 'Parent / Guardian'}</div>
-                        </div>
+                        {isIndigentEdu ? (
+                          <>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Relationship to Child</span>
+                              <div className="font-bold text-white text-xs mt-0.5">{selectedApp.details?.relationshipToChild || selectedApp.details?.relationToChild || (selectedApp as any).relationship_to_child || 'Parent / Guardian'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Target Sector(s)</span>
+                              <div className="font-bold text-white text-xs mt-0.5">{Array.isArray(selectedApp.details?.selectedSector) ? selectedApp.details.selectedSector.join(', ') : selectedApp.details?.selectedSector || (selectedApp as any).selected_sectors || 'Children & Youth'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Requested Service(s)</span>
+                              <div className="font-bold text-white text-xs mt-0.5">{Array.isArray(selectedApp.details?.selectedServices) ? selectedApp.details.selectedServices.join(', ') : selectedApp.details?.selectedServices || (selectedApp as any).selected_services || 'Child Protection'}</div>
+                            </div>
+                          </>
+                        ) : (
+                          <div>
+                            <span className="text-slate-400 text-[10px] font-semibold uppercase">Existing Solo Parent ID No.</span>
+                            <div className="font-mono font-bold text-white text-xs mt-0.5">{selectedApp.solo_parent_id_no || selectedApp.details?.spicNumber || 'N/A'}</div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* SECTION 3: B. CHILD / BENEFICIARY INFORMATION (STUDENT PROFILE) */}
-                    {isEduApp ? (
+                    {/* SECTION B & C: SPECIFIC TO PROGRAM TYPE */}
+                    {isSoloParentEdu ? (
                       <>
                         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                           <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                            <span>B. CHILD / BENEFICIARY INFORMATION</span>
-                            <span className="text-[9px] font-mono text-blue-400">STUDENT BENEFICIARY</span>
+                            <span>SECTION B: STUDENT / DEPENDENT CHILD INFORMATION</span>
+                            <span className="text-[9px] font-mono text-slate-400">STUDENT BENEFICIARY</span>
                           </span>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <div>
-                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Full Name</span>
-                              <div className="font-bold text-white mt-0.5">{selectedApp.details?.childFullName || (selectedApp as any).child_full_name || 'N/A'}</div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Student Full Name</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.child_full_name || selectedApp.details?.childFullName || 'N/A'}</div>
                             </div>
                             <div>
                               <span className="text-slate-400 text-[10px] font-semibold uppercase">Date of Birth</span>
-                              <div className="font-mono text-slate-200 mt-0.5">{selectedApp.details?.childDob || (selectedApp as any).child_dob || 'N/A'}</div>
+                              <div className="font-mono text-slate-200 mt-0.5">{selectedApp.child_dob || selectedApp.details?.childDob || 'N/A'}</div>
                             </div>
                             <div>
                               <span className="text-slate-400 text-[10px] font-semibold uppercase">Age</span>
                               <div className="font-bold text-slate-200 mt-0.5">
-                                {selectedApp.details?.childAge || (selectedApp as any).child_age ? `${selectedApp.details?.childAge || (selectedApp as any).child_age} yrs old` : 'N/A'}
+                                {selectedApp.child_age || selectedApp.details?.childAge ? `${selectedApp.child_age || selectedApp.details?.childAge} yrs old` : 'N/A'}
                               </div>
                             </div>
                             <div>
                               <span className="text-slate-400 text-[10px] font-semibold uppercase">Sex</span>
-                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.details?.childSex || (selectedApp as any).child_sex || 'N/A'}</div>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.child_sex || selectedApp.details?.childSex || 'N/A'}</div>
                             </div>
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
+                          <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                            <span>SECTION C: SCHOOL & ACADEMIC DETAILS</span>
+                            <span className="text-[9px] font-mono text-slate-400 font-bold">ACADEMIC INFO</span>
+                          </span>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <div>
                               <span className="text-slate-400 text-[10px] font-semibold uppercase">School Name</span>
-                              <div className="font-bold text-white mt-0.5">{selectedApp.details?.schoolName || (selectedApp as any).school_name || 'N/A'}</div>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.school_name || selectedApp.details?.schoolName || 'N/A'}</div>
                             </div>
                             <div>
-                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Grade Level</span>
-                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.details?.gradeLevel || (selectedApp as any).grade_level || 'N/A'}</div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Grade / Year Level</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.grade_level || selectedApp.details?.gradeLevel || 'N/A'}</div>
                             </div>
                             <div>
                               <span className="text-slate-400 text-[10px] font-semibold uppercase">Learner Reference No. (LRN)</span>
-                              <div className="font-mono font-bold text-blue-400 mt-0.5">{selectedApp.details?.lrnNumber || (selectedApp as any).lrn_number || 'N/A'}</div>
+                              <div className="font-mono font-bold text-white mt-0.5">{selectedApp.lrn_number || selectedApp.details?.lrnNumber || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">School Address</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.school_address || selectedApp.details?.schoolAddress || 'N/A'}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : isIndigentEdu ? (
+                      <>
+                        {/* INDIGENT CHILDREN & YOUTH EDUCATIONAL ASSISTANCE FORM STRUCTURE */}
+                        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
+                          <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                            <span>B. CHILD / BENEFICIARY INFORMATION</span>
+                            <span className="text-[9px] font-mono text-slate-400">STUDENT BENEFICIARY</span>
+                          </span>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Full Name</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.child_full_name || selectedApp.details?.childFullName || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Date of Birth</span>
+                              <div className="font-mono text-slate-200 mt-0.5">{selectedApp.child_dob || selectedApp.details?.childDob || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Age</span>
+                              <div className="font-bold text-slate-200 mt-0.5">
+                                {selectedApp.child_age || selectedApp.details?.childAge ? `${selectedApp.child_age || selectedApp.details?.childAge} yrs old` : 'N/A'}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Sex</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.child_sex || selectedApp.details?.childSex || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">School Name</span>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.school_name || selectedApp.details?.schoolName || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Grade Level</span>
+                              <div className="font-semibold text-slate-300 mt-0.5">{selectedApp.grade_level || selectedApp.details?.gradeLevel || 'N/A'}</div>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 text-[10px] font-semibold uppercase">Learner Reference No. (LRN)</span>
+                              <div className="font-mono font-bold text-white mt-0.5">{selectedApp.lrn_number || selectedApp.details?.lrnNumber || 'N/A'}</div>
                             </div>
                             <div>
                               <span className="text-slate-400 text-[10px] font-semibold uppercase">Type of School</span>
@@ -631,11 +782,10 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                           </div>
                         </div>
 
-                        {/* SECTION 4: C. FAMILY & FINANCIAL INFORMATION */}
                         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                           <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
                             <span>C. FAMILY INFORMATION & FINANCIAL ASSESSMENT</span>
-                            <span className="text-[9px] font-mono text-emerald-400 font-bold">ELIGIBILITY ASSESS</span>
+                            <span className="text-[9px] font-mono text-slate-400 font-bold">ELIGIBILITY ASSESS</span>
                           </span>
                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
                             <div>
@@ -648,7 +798,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                             </div>
                             <div>
                               <span className="text-slate-400 text-[10px] font-semibold uppercase">Monthly Family Income</span>
-                              <div className="font-bold text-emerald-400 mt-0.5">
+                              <div className="font-bold text-white mt-0.5">
                                 {selectedApp.monthly_income || selectedApp.details?.monthlyFamilyIncome || (selectedApp as any).monthly_family_income || '₱10,000 – ₱15,000'}
                               </div>
                             </div>
@@ -658,7 +808,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                             </div>
                             <div>
                               <span className="text-slate-400 text-[10px] font-semibold uppercase">Solo Parent Educational Beneficiary?</span>
-                              <div className="font-bold text-emerald-400 mt-0.5">{selectedApp.details?.isSoloEducationalBeneficiary || (selectedApp as any).is_solo_educational_beneficiary || 'Yes'}</div>
+                              <div className="font-bold text-white mt-0.5">{selectedApp.details?.isSoloEducationalBeneficiary || (selectedApp as any).is_solo_educational_beneficiary || 'No'}</div>
                             </div>
                             <div>
                               <span className="text-slate-400 text-[10px] font-semibold uppercase">PWD Educational Beneficiary?</span>
@@ -716,7 +866,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                             </div>
                             <div>
                               <span className="text-slate-400 text-[10px] font-semibold uppercase">Monthly Income (PHP)</span>
-                              <div className="font-bold text-emerald-400 mt-0.5">
+                              <div className="font-bold text-white mt-0.5">
                                 {(() => {
                                   const val = selectedApp.monthly_income;
                                   if (!val || val === '0' || val === 'P0' || val === '₱0') return '₱0.00';
@@ -756,7 +906,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                       </>
                     )}
 
-              {/* SECTION 6: UPLOADED REQUIREMENTS (MATCHING EXACT SCREENSHOT 2!) */}
+              {/* UPLOADED REQUIREMENTS */}
               <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                 <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
                   <span>UPLOADED REQUIREMENTS (CLICK TO VIEW / INSPECT)</span>
@@ -766,8 +916,8 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                   {(() => {
                     const docsList = [
                       { 
-                        key: 'proof_income', 
-                        altKeys: ['proof_income', 'indigency'], 
+                        key: 'indigency', 
+                        altKeys: ['indigency', 'proof_income'], 
                         title: 'ORIGINAL BARANGAY CERTIFICATE OF INDIGENCY', 
                         file: 'proof_of_indigency.png', 
                         icon: FileText 
@@ -779,20 +929,27 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                         file: 'certificate_of_enrollment.png', 
                         icon: FileText 
                       }] : []),
+                      ...(isIndigentEdu ? [{ 
+                        key: 'schoolId', 
+                        altKeys: ['schoolId', 'school_id', 'recentSchoolId'], 
+                        title: 'RECENT SCHOOL ID (IF AVAILABLE)', 
+                        file: 'recent_school_id.png', 
+                        icon: FileText 
+                      }] : []),
                       { 
                         key: 'qcid', 
-                        altKeys: ['qcid', 'qcitizenId'], 
-                        title: 'QCITIZEN ID', 
+                        altKeys: ['qcid', 'qcitizenId', 'govId'], 
+                        title: isIndigentEdu ? 'VALID GOVERNMENT ID / PREFERABLY QCITIZEN ID' : 'QCITIZEN ID', 
                         file: 'qcitizen_id_card.png', 
                         icon: ImageIcon 
                       },
-                      { 
+                      ...(!isIndigentEdu ? [{ 
                         key: 'spic', 
                         altKeys: ['spic', 'soloParentId'], 
                         title: 'SOLO PARENT ID / CERTIFICATION', 
                         file: 'spic_identification_card.png', 
                         icon: CreditCard 
-                      }
+                      }] : [])
                     ];
 
                     return docsList.map((docItem) => {

@@ -149,7 +149,17 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
     // 1. AICS (Indigent Guarantee Letters - strictly ₱0 cash disbursement)
     dbAicsApps.forEach(a => {
       const ref = a.reference_no || a.referenceNo || (a.id ? `QC-AICS-2026-${a.id}` : null);
-      if (ref && !seenRefs.has(ref)) {
+      const isNonAics = ref && (
+        ref.startsWith('QC-EDU-') || 
+        ref.startsWith('QC-SP-EDU-') || 
+        ref.startsWith('CW-') || 
+        ref.startsWith('SP-') || 
+        ref.startsWith('LVH-') || 
+        ref.startsWith('TRN-') || 
+        ref.startsWith('QC-PWD-') || 
+        ref.startsWith('SENIOR-')
+      );
+      if (ref && !isNonAics && !seenRefs.has(ref)) {
         seenRefs.add(ref);
         list.push({
           id: `aics-${a.id || ref}`,
@@ -223,8 +233,8 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       const ref = edu.reference_no || `QC-EDU-${edu.id}`;
       if (!seenRefs.has(ref)) {
         seenRefs.add(ref);
-        const isChildWelfare = (edu.category || '').toLowerCase().includes('child') || (edu.service_name || '').toLowerCase().includes('child') || (ref.startsWith('CW-'));
-        const prog: 'cw_edu' | 'solo_parent' = isChildWelfare ? 'cw_edu' : 'solo_parent';
+        const isSoloEdu = (edu.category || '').toLowerCase().includes('solo') || (edu.service_name || '').toLowerCase().includes('solo') || ref.startsWith('QC-SP-EDU-');
+        const prog: 'cw_edu' | 'solo_parent' = isSoloEdu ? 'solo_parent' : 'cw_edu';
         list.push({
           id: `edu-${edu.id}`,
           referenceNo: ref,
@@ -243,7 +253,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       const ref = cw.reference_no || `CW-${cw.id}`;
       if (!seenRefs.has(ref)) {
         seenRefs.add(ref);
-        const isEduAid = (cw.service_name || '').toLowerCase().includes('educ') || ref.includes('EDUC') || (cw.category || '').toLowerCase().includes('educ');
+        const isEduAid = (cw.service_name || '').toLowerCase().includes('educ') || ref.includes('EDUC') || (cw.category || '').toLowerCase().includes('educ') || ref.startsWith('QC-EDU-');
         list.push({
           id: `cw-${cw.id}`,
           referenceNo: ref,
