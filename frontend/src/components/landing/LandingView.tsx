@@ -4,7 +4,6 @@ import {
   Home, 
   FileText, 
   ClipboardList, 
-  Banknote, 
   ArrowRight, 
   Sun, 
   Moon 
@@ -77,7 +76,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
           <p className={`text-xs font-normal leading-relaxed max-w-md mx-auto pt-0.5 ${
             darkMode ? 'text-slate-300/90' : 'text-slate-600'
           }`}>
-            A comprehensive digital platform for crisis assistance, PWD and senior citizen services, solo parent support, livelihood training, and financial aid disbursement.
+            A comprehensive digital platform for crisis assistance, PWD and senior citizen services, solo parent support, and livelihood training.
           </p>
 
           {/* Access the Portal CTA Button */}
@@ -93,11 +92,9 @@ export const LandingView: React.FC<LandingViewProps> = ({
           </div>
         </div>
 
-        {/* Feature Cards Grid (Matching exact proportions from user screenshot) */}
-        <div className="mt-10 space-y-3.5 max-w-[720px] mx-auto w-full">
-          
-          {/* Row 1: 3 Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        {/* Feature Cards Grid (2x2 Grid - 2 per row) */}
+        <div className="mt-10 max-w-[500px] mx-auto w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {/* Card 1: AICS */}
             <div className={`border rounded-2xl p-4 text-left transition-all duration-300 cursor-pointer group ${
               darkMode 
@@ -154,10 +151,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                 Solo parent and child welfare monitoring
               </p>
             </div>
-          </div>
 
-          {/* Row 2: 2 Centered Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-w-[474px] mx-auto w-full">
             {/* Card 4: Livelihood & Training */}
             <div className={`border rounded-2xl p-4 text-left transition-all duration-300 cursor-pointer group ${
               darkMode 
@@ -176,27 +170,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                 Skills training and starter kit assistance
               </p>
             </div>
-
-            {/* Card 5: Financial Aid Disbursement */}
-            <div className={`border rounded-2xl p-4 text-left transition-all duration-300 cursor-pointer group ${
-              darkMode 
-                ? 'bg-[#0b1324] border-[#141e33] hover:bg-[#101b33] hover:border-slate-700/80 hover:shadow-2xl' 
-                : 'bg-white border-slate-200/90 hover:border-cyan-300 hover:shadow-lg'
-            }`}>
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-105 ${
-                darkMode ? 'bg-[#122635] text-[#38bdf8] border border-[#1d3d5c]' : 'bg-cyan-50 text-cyan-600 border border-cyan-200'
-              }`}>
-                <Banknote className="w-4 h-4 stroke-[2.2]" />
-              </div>
-              <h3 className={`font-bold text-xs sm:text-sm mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                Financial Aid Disbursement
-              </h3>
-              <p className={`text-[11px] font-normal leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                Release tracking across all assistance programs
-              </p>
-            </div>
           </div>
-
         </div>
 
         {/* Stats Summary Bar */}
@@ -235,7 +209,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
             {/* Stat 3 */}
             <div className="pt-3 md:pt-0 md:pl-3">
               <span className={`text-xl sm:text-2xl font-extrabold block tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                5 Core
+                4 Core
               </span>
               <span className={`text-[11px] font-bold block mt-0.5 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
                 Welfare Programs
