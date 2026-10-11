@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Sparkles, HeartHandshake } from 'lucide-react';
+import { Search, HeartHandshake } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface HeroBannerProps {
@@ -32,9 +32,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   ];
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border shadow-2xl p-6 lg:p-8 transition-all duration-300 ${
+    <div className={`relative overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 px-6 sm:px-8 lg:px-12 py-6 sm:py-7 lg:py-8 border-b shadow-xl transition-all duration-300 ${
       darkMode 
-        ? 'bg-gradient-to-r from-[#101b3b] via-[#14234b] to-[#0d162d] border-blue-500/20' 
+        ? 'bg-gradient-to-r from-[#0d152d] via-[#132247] to-[#0a1124] border-blue-500/20' 
         : 'bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 border-blue-400/30'
     }`}>
       {/* Background Seal Graphic Overlay */}
@@ -49,18 +49,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       {/* Top Flex Row: Badge */}
       <div className="relative z-10 flex items-center mb-4">
         {/* Badge Pill */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/80 border border-blue-400/30 text-blue-200 text-xs font-semibold">
-          <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+        <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-900/80 border border-blue-400/30 text-blue-200 text-xs font-semibold">
           <span>{isTagalog ? 'GovServe Portal ng Mamamayan • Gabay sa Serbisyo at Tulong' : 'Gov Serves Social Services Portal • Help & Service Guide'}</span>
         </div>
       </div>
 
       {/* Headline & Subtitle */}
-      <div className="relative z-10 max-w-3xl mb-6">
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight mb-2">
+      <div className="relative z-10 max-w-3xl mb-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug mb-1.5">
           {isTagalog ? 'Maligayang Pagdating sa GovServe Portal!' : 'Welcome to GovServe Citizen Portal!'}
         </h2>
-        <p className="text-slate-200 text-xs sm:text-sm leading-relaxed font-normal">
+        <p className="text-slate-300 text-xs sm:text-[13px] leading-relaxed font-normal">
           {isTagalog 
             ? 'Alamin ang mga magagamit na programa ng tulong pampinansyal (AICS Medikal, Libing, Edukasyon), mga benepisyo sa sektor (PWD, Senior Citizen, Solo Parent), kalinga sa bata, at pondo sa pangkabuhayan.'
             : 'Explore available financial aid programs (AICS Medical, Funeral, Educational), special sector benefits (PWD, Senior Citizen, Solo Parent), child welfare support, and livelihood training grants before filing your digital application.'}
@@ -128,10 +127,10 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           );
         })}
 
-        {/* Special Blue Glow Pill: Assistance & Eligibility Finder */}
+        {/* Special Blue Pill: Assistance & Eligibility Finder */}
         <button
           onClick={onOpenEligibilityModal}
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/40 border border-blue-400/50 transition-all cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs border border-blue-400/50 transition-all cursor-pointer"
         >
           <HeartHandshake className="w-3.5 h-3.5" />
           <span>{isTagalog ? 'Tagahanap ng Tulong at Kwalipikasyon' : 'Assistance & Eligibility Finder'}</span>

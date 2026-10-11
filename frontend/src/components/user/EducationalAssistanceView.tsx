@@ -134,7 +134,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
 
   // Child Welfare Specific States (mode === 'childwelfare')
   const [qcitizenId, setQcitizenId] = useState<string>('110008262304143');
-  const [childAddress, setChildAddress] = useState<string>('176 23, Bagong Silangan');
+  const [childAddress, setChildAddress] = useState<string>('');
   const [concernDescription, setConcernDescription] = useState<string>('');
   const [incidentDate, setIncidentDate] = useState<string>('');
   const [incidentLocation, setIncidentLocation] = useState<string>('');
@@ -934,14 +934,13 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             </div>
           </div>
 
-          {/* SECTION A: APPLICANT / PARENT / GUARDIAN INFORMATION */}
+          {/* SECTION: APPLICANT / PARENT / GUARDIAN INFORMATION */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-blue-500" />
+            <div>
               <h3 className={`text-xs font-extrabold tracking-wider uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
                 {isTagalog 
-                  ? 'A. IMPORMASYON NG APLIKANTE / MAGULANG / TAGAPANGALAGA (NAPATUNAYANG PROPYL NG MAMAMAYAN - READ ONLY)'
-                  : 'A. APPLICANT / PARENT / GUARDIAN INFORMATION (VERIFIED CITIZEN PROFILE - READ ONLY)'}
+                  ? 'IMPORMASYON NG APLIKANTE / MAGULANG / TAGAPANGALAGA'
+                  : 'APPLICANT / PARENT / GUARDIAN INFORMATION'}
               </h3>
             </div>
 
@@ -1155,14 +1154,13 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             </div>
           )}
 
-          {/* SECTION B: STUDENT / DEPENDENT CHILD INFORMATION */}
+          {/* SECTION: STUDENT / DEPENDENT CHILD INFORMATION */}
           <div className={`space-y-4 pt-6 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-blue-500" />
+            <div>
               <h3 className={`text-xs font-extrabold tracking-wider uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
                 {isTagalog 
-                  ? (mode === 'soloparent' ? 'B. IMPORMASYON NG MAG-AARAL / ANÁK' : mode === 'childwelfare' ? 'B. IMPORMASYON NG BATA' : 'B. IMPORMASYON NG BATA / BENEPISYARYO')
-                  : (mode === 'soloparent' ? 'B. STUDENT / DEPENDENT CHILD INFORMATION' : mode === 'childwelfare' ? 'B. CHILD INFORMATION' : 'B. CHILD / BENEFICIARY INFORMATION')}
+                  ? (mode === 'soloparent' ? 'IMPORMASYON NG MAG-AARAL / ANÁK' : mode === 'childwelfare' ? 'IMPORMASYON NG BATA' : 'IMPORMASYON NG BATA / BENEPISYARYO')
+                  : (mode === 'soloparent' ? 'STUDENT / DEPENDENT CHILD INFORMATION' : mode === 'childwelfare' ? 'CHILD INFORMATION' : 'CHILD / BENEFICIARY INFORMATION')}
               </h3>
             </div>
 
@@ -1273,7 +1271,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                       type="text"
                       value={childAddress}
                       onChange={(e) => setChildAddress(e.target.value)}
-                      placeholder="176 23"
+                      placeholder={isTagalog ? 'Ilagay ang Tirahan' : 'Enter Address'}
                       className={inputClass}
                     />
                   </div>
@@ -1375,9 +1373,10 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   <label className={labelClass}>Learner Reference Number (LRN)</label>
                   <input
                     type="text"
+                    inputMode="numeric"
                     value={lrnNumber}
-                    onChange={(e) => setLrnNumber(e.target.value)}
-                    placeholder={isTagalog ? '12-digit LRN (Optional)' : '12-digit LRN (Optional)'}
+                    onChange={(e) => setLrnNumber(e.target.value.replace(/\D/g, ''))}
+                    placeholder={isTagalog ? 'LRN (Numero Lamang, Walang Limit)' : 'LRN (Numbers only, No limit)'}
                     className={inputClass}
                   />
                 </div>
@@ -1411,13 +1410,12 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             )}
           </div>
 
-          {/* SECTION C: SCHOOL & ACADEMIC DETAILS (For Solo Parent mode) */}
+          {/* SECTION: SCHOOL & ACADEMIC DETAILS (For Solo Parent mode) */}
           {mode === 'soloparent' && (
             <div className={`space-y-4 pt-6 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-              <div className="flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-blue-500" />
+              <div>
                 <h3 className={`text-xs font-extrabold tracking-wider uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
-                  {isTagalog ? 'C. MGA DETALYE NG PAARALAN AT AKADEMIKO' : 'C. SCHOOL & ACADEMIC DETAILS'}
+                  {isTagalog ? 'MGA DETALYE NG PAARALAN AT AKADEMIKO' : 'SCHOOL & ACADEMIC DETAILS'}
                 </h3>
               </div>
 
@@ -1462,9 +1460,10 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                     <label className={labelClass}>{isTagalog ? 'Learner Reference Number (LRN) / Student ID *' : 'Learner Reference Number (LRN) / Student ID *'}</label>
                     <input
                       type="text"
+                      inputMode="numeric"
                       value={lrnNumber}
-                      onChange={(e) => setLrnNumber(e.target.value)}
-                      placeholder="e.g. 136548190234"
+                      onChange={(e) => setLrnNumber(e.target.value.replace(/\D/g, ''))}
+                      placeholder={isTagalog ? 'LRN (Numero Lamang, Walang Limit)' : 'LRN (Numbers only, No limit)'}
                       className={inputClass}
                     />
                   </div>
@@ -1484,19 +1483,14 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             </div>
           )}
 
-          {/* SECTION D: REASON FOR REQUEST / FAMILY INFORMATION (Non-Solo Parent mode only) */}
+          {/* SECTION: REASON FOR REQUEST / FAMILY INFORMATION (Non-Solo Parent mode only) */}
           {mode !== 'soloparent' && (
             <div className={`space-y-4 pt-6 border-t ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-              <div className="flex items-center gap-2">
-                {mode === 'childwelfare' ? (
-                  <FileText className="w-4 h-4 text-blue-500" />
-                ) : (
-                  <Users className="w-4 h-4 text-blue-500" />
-                )}
+              <div>
                 <h3 className={`text-xs font-extrabold tracking-wider uppercase ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
                   {isTagalog 
-                    ? (mode === 'childwelfare' ? 'D. DAHILAN NG HILING' : 'C. IMPORMASYON NG PAMILYA')
-                    : (mode === 'childwelfare' ? 'D. REASON FOR REQUEST' : 'C. FAMILY INFORMATION')}
+                    ? (mode === 'childwelfare' ? 'DAHILAN NG HILING' : 'IMPORMASYON NG PAMILYA')
+                    : (mode === 'childwelfare' ? 'REASON FOR REQUEST' : 'FAMILY INFORMATION')}
                 </h3>
               </div>
 
@@ -1539,30 +1533,34 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               ) : (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className={labelClass}>{isTagalog ? 'Bilang ng mga Bata sa Pamilya *' : 'Number of Children in the Family *'}</label>
+                    <div className="flex flex-col justify-end">
+                      <label className={`${labelClass} min-h-[2.25rem] flex items-end`}>{isTagalog ? 'Bilang ng mga Bata sa Pamilya *' : 'Number of Children in the Family *'}</label>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={2}
                         value={numChildrenInFamily}
-                        onChange={(e) => setNumChildrenInFamily(e.target.value)}
+                        onChange={(e) => setNumChildrenInFamily(e.target.value.replace(/\D/g, '').slice(0, 2))}
                         placeholder={isTagalog ? 'Ilagay ang bilang' : 'Enter number'}
                         className={inputClass}
                       />
                     </div>
 
-                    <div>
-                      <label className={labelClass}>{isTagalog ? 'Bilang ng mga Batang Kasalukuyang Nag-aaral *' : 'Number of Children Currently Studying *'}</label>
+                    <div className="flex flex-col justify-end">
+                      <label className={`${labelClass} min-h-[2.25rem] flex items-end`}>{isTagalog ? 'Bilang ng mga Batang Kasalukuyang Nag-aaral *' : 'Number of Children Currently Studying *'}</label>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={2}
                         value={numChildrenStudying}
-                        onChange={(e) => setNumChildrenStudying(e.target.value)}
+                        onChange={(e) => setNumChildrenStudying(e.target.value.replace(/\D/g, '').slice(0, 2))}
                         placeholder={isTagalog ? 'Ilagay ang bilang' : 'Enter number'}
                         className={inputClass}
                       />
                     </div>
 
-                    <div>
-                      <label className={labelClass}>{isTagalog ? 'Buwanang Kita ng Pamilya *' : 'Monthly Family Income *'}</label>
+                    <div className="flex flex-col justify-end">
+                      <label className={`${labelClass} min-h-[2.25rem] flex items-end`}>{isTagalog ? 'Buwanang Kita ng Pamilya *' : 'Monthly Family Income *'}</label>
                       <select
                         value={monthlyIncome}
                         onChange={(e) => setMonthlyIncome(e.target.value)}
@@ -1579,7 +1577,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                     <div>
-                      <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng 4Ps? *' : '4Ps Beneficiary? *'}</label>
+                      <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng 4Ps *' : '4Ps Beneficiary *'}</label>
                       <select
                         value={is4psBeneficiary}
                         onChange={(e) => setIs4psBeneficiary(e.target.value)}
@@ -1592,7 +1590,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                     </div>
 
                     <div>
-                      <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng Tulong sa Edukasyon ng Solo Parent? *' : 'Solo Parent Educational Assistance Beneficiary? *'}</label>
+                      <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng Solo Parent *' : 'Solo Parent Beneficiary *'}</label>
                       <select
                         value={isSoloParentBeneficiary}
                         onChange={(e) => setIsSoloParentBeneficiary(e.target.value)}
@@ -1605,7 +1603,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                     </div>
 
                     <div>
-                      <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng Tulong sa Edukasyon ng PWD? *' : 'PWD Educational Assistance Beneficiary? *'}</label>
+                      <label className={labelClass}>{isTagalog ? 'Benepisyaryo ng PWD *' : 'PWD Beneficiary *'}</label>
                       <select
                         value={isPwdBeneficiary}
                         onChange={(e) => setIsPwdBeneficiary(e.target.value)}
@@ -1852,10 +1850,10 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
               </div>
 
               <div className="p-5 space-y-6">
-                {/* Section A: Applicant Information */}
+                {/* Section: Applicant Information */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
-                    {isTagalog ? 'A. IMPORMASYON NG APLIKANTE' : 'A. APPLICANT INFORMATION'}
+                    {isTagalog ? 'IMPORMASYON NG APLIKANTE' : 'APPLICANT INFORMATION'}
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-6 text-xs">
                     <div>
@@ -1943,12 +1941,12 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   </div>
                 </div>
 
-                {/* Section B: Child / Student Information */}
+                {/* Section: Child / Student Information */}
                 <div>
                   <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
                     {isTagalog 
-                      ? (mode === 'soloparent' ? 'B. IMPORMASYON NG MAG-AARAL / ANÁK' : mode === 'childwelfare' ? 'B. IMPORMASYON NG BATA' : 'B. IMPORMASYON NG BATA / BENEPISYARYO')
-                      : (mode === 'soloparent' ? 'B. STUDENT / DEPENDENT CHILD INFORMATION' : mode === 'childwelfare' ? 'B. CHILD INFORMATION' : 'B. CHILD / BENEFICIARY INFORMATION')}
+                      ? (mode === 'soloparent' ? 'IMPORMASYON NG MAG-AARAL / ANÁK' : mode === 'childwelfare' ? 'IMPORMASYON NG BATA' : 'IMPORMASYON NG BATA / BENEPISYARYO')
+                      : (mode === 'soloparent' ? 'STUDENT / DEPENDENT CHILD INFORMATION' : mode === 'childwelfare' ? 'CHILD INFORMATION' : 'CHILD / BENEFICIARY INFORMATION')}
                   </h5>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-xs">
                     <div>
@@ -2026,13 +2024,13 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
                   </div>
                 )}
 
-                {/* Section D: Reason for Request / Family Information (Non-Solo Parent mode only) */}
+                {/* Section: Reason for Request / Family Information (Non-Solo Parent mode only) */}
                 {mode !== 'soloparent' && (
                   <div>
                     <h5 className={`text-xs font-extrabold uppercase tracking-wider mb-3 pb-1 border-b ${darkMode ? 'text-blue-400 border-slate-800' : 'text-blue-600 border-slate-200'}`}>
                       {isTagalog 
-                        ? (mode === 'childwelfare' ? 'C. DAHILAN NG HILING' : 'C. IMPORMASYON NG PAMILYA')
-                        : (mode === 'childwelfare' ? 'C. REASON FOR REQUEST' : 'C. FAMILY INFORMATION')}
+                        ? (mode === 'childwelfare' ? 'DAHILAN NG HILING' : 'IMPORMASYON NG PAMILYA')
+                        : (mode === 'childwelfare' ? 'REASON FOR REQUEST' : 'FAMILY INFORMATION')}
                     </h5>
                     {mode === 'childwelfare' ? (
                       <div className="space-y-3 text-xs">

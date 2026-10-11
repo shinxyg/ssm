@@ -101,9 +101,67 @@ export const Navbar: React.FC<NavbarProps> = ({
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  const displayName = userName || (userRole === 'admin' ? t('header.system_admin') : 'QCitizen Beneficiary');
+  // Dynamically resolve citizen name & initials from localStorage or props
+  const [currentUserData, setCurrentUserData] = useState<any>(() => {
+    try {
+      const saved = localStorage.getItem('currentUser');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    const updateUser = () => {
+      try {
+        const saved = localStorage.getItem('currentUser');
+        setCurrentUserData(saved ? JSON.parse(saved) : null);
+      } catch {
+        setCurrentUserData(null);
+      }
+    };
+    window.addEventListener('storage', updateUser);
+    window.addEventListener('focus', updateUser);
+    return () => {
+      window.removeEventListener('storage', updateUser);
+      window.removeEventListener('focus', updateUser);
+    };
+  }, []);
+
+  const computedCitizenName = useMemo(() => {
+    if (userName) return userName;
+    if (currentUserData) {
+      const fn = (currentUserData.first_name || '').trim();
+      const ln = (currentUserData.last_name || '').trim();
+      if (fn || ln) {
+        const full = `${fn} ${ln}`.trim();
+        return full
+          .split(/\s+/)
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+          .join(' ');
+      }
+      if (currentUserData.name) return currentUserData.name;
+    }
+    return 'Jefferson Lee';
+  }, [userName, currentUserData]);
+
+  const displayName = userRole === 'admin' ? (userName || t('header.system_admin')) : computedCitizenName;
   const displaySubtitle = userSubtitle || (userRole === 'admin' ? 'Administrator' : t('header.citizen_resident'));
-  const displayInitials = userInitials || (userRole === 'admin' ? 'AD' : 'QC');
+
+  const computedCitizenInitials = useMemo(() => {
+    if (userInitials) return userInitials;
+    if (displayName) {
+      const words = displayName.trim().split(/\s+/).filter(Boolean);
+      if (words.length >= 2) {
+        return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+      } else if (words.length === 1 && words[0].length >= 1) {
+        return words[0].slice(0, 2).toUpperCase();
+      }
+    }
+    return 'JL';
+  }, [userInitials, displayName]);
+
+  const displayInitials = userRole === 'admin' ? (userInitials || 'AD') : computedCitizenInitials;
 
 
   // Generate Notifications derived from application lifecycle (Citizen & Admin)

@@ -26,6 +26,21 @@ export const TrackApplicationsModal: React.FC<TrackApplicationsModalProps> = ({
     };
   }, [isOpen]);
 
+  const citizenName = (() => {
+    try {
+      const saved = localStorage.getItem('currentUser');
+      if (saved) {
+        const u = JSON.parse(saved);
+        const fn = (u.first_name || '').trim();
+        const ln = (u.last_name || '').trim();
+        if (fn || ln) {
+          return `${fn} ${ln}`.split(/\s+/).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        }
+      }
+    } catch {}
+    return 'Jefferson Lee';
+  })();
+
   if (!isOpen) return null;
 
   return (
@@ -45,7 +60,7 @@ export const TrackApplicationsModal: React.FC<TrackApplicationsModalProps> = ({
             </div>
             <div>
               <h3 className={`text-base font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Track My Applications</h3>
-              <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>QCitizen Beneficiary • Real-Time Status Tracker</p>
+              <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{citizenName} • Real-Time Status Tracker</p>
             </div>
           </div>
           <button

@@ -128,17 +128,6 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
   const [monthlyIncome, setMonthlyIncome] = useState<string>('');
   const [otherIncomeSource, setOtherIncomeSource] = useState<string>('');
 
-  // Sync step 1 employment status to step 2 employment status
-  useEffect(() => {
-    if (employmentStatusStep1 === 'Employed') {
-      setEmploymentStatus('Employed');
-    } else if (employmentStatusStep1 === 'Unemployed') {
-      setEmploymentStatus('Unemployed');
-    } else if (employmentStatusStep1 === 'Informal Economy Worker') {
-      setEmploymentStatus('Self-employed/informal worker');
-    }
-  }, [employmentStatusStep1]);
-
   // Sync Solo Parent ID Number from step 1 to step 2
   useEffect(() => {
     setApplicantSpicNumber(soloParentIdNumber);
@@ -1018,27 +1007,29 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-400">Number of Dependents *</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">{isTagalog ? 'Bilang ng mga Umaasa *' : 'Number of Dependents *'}</label>
                     <input
                       type="number"
                       min="1"
+                      placeholder={isTagalog ? 'hal. 2' : 'e.g. 2'}
                       value={numDependents}
                       onChange={(e) => setNumDependents(e.target.value)}
                       className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
-                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        darkMode ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
                       }`}
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-400">Age of Youngest Dependent *</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">{isTagalog ? 'Edad ng Pinakabatang Umaasa *' : 'Age of Youngest Dependent *'}</label>
                     <input
                       type="number"
                       min="0"
+                      placeholder={isTagalog ? 'hal. 5' : 'e.g. 5'}
                       value={ageYoungestDependent}
                       onChange={(e) => setAgeYoungestDependent(e.target.value)}
                       className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
-                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        darkMode ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
                       }`}
                     />
                   </div>
@@ -1049,13 +1040,13 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
               {/* Employment & Income Information */}
               <div className="space-y-4 pt-2">
                 <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-300 border-b border-slate-800 pb-2">
-                  Employment & Income Information
+                  {isTagalog ? 'Impormasyon sa Trabaho at Kita' : 'Employment & Income Information'}
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-400">Employment Status *</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">{isTagalog ? 'Estado ng Trabaho *' : 'Employment Status *'}</label>
                     <select
                       value={employmentStatus}
                       onChange={(e) => setEmploymentStatus(e.target.value)}
@@ -1063,45 +1054,48 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
                         darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
                       }`}
                     >
-                      <option value="">Select...</option>
-                      <option value="Employed">Employed</option>
-                      <option value="Self-employed/informal worker">Self-employed/informal worker</option>
-                      <option value="Unemployed">Unemployed</option>
+                      <option value="">{isTagalog ? 'Pumili ng Estado ng Trabaho' : 'Select Employment Status'}</option>
+                      <option value="Employed">{isTagalog ? 'May Trabaho (Employed)' : 'Employed'}</option>
+                      <option value="Self-employed/informal worker">{isTagalog ? 'Nasa Informal Economy (Self-employed)' : 'Self-employed/informal worker'}</option>
+                      <option value="Unemployed">{isTagalog ? 'Walang Trabaho (Unemployed)' : 'Unemployed'}</option>
                     </select>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-400">Occupation</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">{isTagalog ? 'Trabaho / Propesyon' : 'Occupation'}</label>
                     <input
                       type="text"
+                      placeholder={isTagalog ? 'hal. Guro, Call Center Agent, Tindero/a' : 'e.g. Teacher, Call Center Agent, Vendor'}
                       value={occupation}
                       onChange={(e) => setOccupation(e.target.value)}
                       className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
-                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        darkMode ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
                       }`}
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-400">Employer / Source of Income</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">{isTagalog ? 'Pinapasukan / Pinagmumulan ng Kita' : 'Employer / Source of Income'}</label>
                     <input
                       type="text"
+                      placeholder={isTagalog ? 'hal. ABC Company / Sari-sari Store' : 'e.g. ABC Company / Sari-sari Store'}
                       value={employerOrIncomeSource}
                       onChange={(e) => setEmployerOrIncomeSource(e.target.value)}
                       className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
-                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        darkMode ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
                       }`}
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase text-slate-400">Monthly Income (PHP)</label>
+                    <label className="text-xs font-bold uppercase text-slate-400">{isTagalog ? 'Buwanang Kita (PHP)' : 'Monthly Income (PHP)'}</label>
                     <input
                       type="number"
+                      placeholder={isTagalog ? 'hal. 15000' : 'e.g. 15000'}
                       value={monthlyIncome}
                       onChange={(e) => setMonthlyIncome(e.target.value)}
                       className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold ${
-                        darkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        darkMode ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'
                       }`}
                     />
                   </div>
