@@ -82,7 +82,7 @@ const ACCREDITED_FUNERAL_HOMES: Record<string, string[]> = {
     'Blessed Memorial Homes',
     'Catalonia Funeral Homes',
     'Heart of Mary Funeral Services',
-    'Nieto Funeral Services',
+    'Accredited Partner Funeral Services',
     'St. Fiacre Funeral Services',
     'Vivs Funeral Homes',
     'Rizalde Funeral Services',
@@ -294,7 +294,7 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
 
   // Accredited Partner Funeral Homes List (matching screenshot 3)
   const funeralHomesList = [
-    'Nieto Funeral Services',
+    'Accredited Partner Funeral Services',
     'St. Fiacre Funeral Service',
     'Vivs Funeral Homes',
     'Rizalde Funeral Services',
@@ -464,8 +464,8 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
 
       // Funeral Assistance Specific Fields
       funeralDistrict: funeralDistrict || 'District 2',
-      funeralHomeName: funeralHomeName || selectedFuneralHome || 'NIETO FUNERAL SERVICES',
-      selectedFuneralHome: selectedFuneralHome || funeralHomeName || 'NIETO FUNERAL SERVICES',
+      funeralHomeName: (funeralHomeName || selectedFuneralHome || 'Accredited Funeral Services').replace(/Nieto\s*/gi, ''),
+      selectedFuneralHome: (selectedFuneralHome || funeralHomeName || 'Accredited Funeral Services').replace(/Nieto\s*/gi, ''),
       deceasedDateOfDeath,
       deceasedCremationOrBurial,
       burialLocationSite,
@@ -486,7 +486,7 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
     const newApp: ApplicationRecord = {
       referenceNo: newRefNo,
       applicantName: fullName,
-      serviceName: `QC Funeral Assistance — Guarantee Letter (${funeralHomeName || selectedFuneralHome || 'Partner Funeral Parlor'})`,
+      serviceName: `QC Funeral Assistance — Guarantee Letter (${(funeralHomeName || selectedFuneralHome || 'Partner Funeral Parlor').replace(/Nieto\s*/gi, '')})`,
       category: 'AICS',
       assistanceType: 'Funeral / Burial Aid',
       hospitalFacility: funeralHomeName || selectedFuneralHome || 'Accredited Funeral Home Partner',

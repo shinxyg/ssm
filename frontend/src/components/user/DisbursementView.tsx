@@ -256,9 +256,20 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               const statusText = (app.status as string) || 'Pending';
               const name = (app as any).applicantName || app.details?.applicantName || 'Juan Dela Cruz';
               const isCwProtection = app.referenceNo.startsWith('QC-CW-') || app.referenceNo.startsWith('CW-PROT-') || (app.serviceName || '').toLowerCase() === 'child welfare services' || (app.serviceName || '').toLowerCase().includes('child protection');
-              const isSoloParentEdu = (app.referenceNo.startsWith('QC-SP-EDU') || (app.serviceName || '').toLowerCase().includes('educational assistance')) && !isCwProtection;
-              const isSoloParent = ((app.category || '').toLowerCase().includes('solo') || (app.serviceName || '').toLowerCase().includes('solo') || app.referenceNo.startsWith('SP-')) && !isSoloParentEdu && !isCwProtection;
+              const isChildEdu = (app.referenceNo.startsWith('QC-EDU-') || (app.serviceName || '').toLowerCase().includes('indigent children') || (app.serviceName || '').toLowerCase().includes('children & youth') || (app.serviceName || '').toLowerCase().includes('children and youth')) && !isCwProtection;
+              const isSoloParentEdu = (app.referenceNo.startsWith('QC-SP-EDU') || ((app.serviceName || '').toLowerCase().includes('solo parent') && (app.serviceName || '').toLowerCase().includes('educational'))) && !isCwProtection && !isChildEdu;
+              const isSoloParent = ((app.category || '').toLowerCase().includes('solo') || (app.serviceName || '').toLowerCase().includes('solo') || app.referenceNo.startsWith('SP-')) && !isSoloParentEdu && !isCwProtection && !isChildEdu;
               const isTrn = (app.category || '').toLowerCase() === 'training' || (app.serviceName || '').toLowerCase().includes('training') || app.referenceNo.startsWith('TRN-');
+              const isLivelihood = app.referenceNo.startsWith('LVH-') || (app.category || '').toLowerCase().includes('livelihood') || (app.serviceName || '').toLowerCase().includes('livelihood');
+              const isPwd = app.referenceNo.startsWith('QC-PWD-') || app.referenceNo.startsWith('PWD-') || (app.category || '').toLowerCase().includes('pwd') || (app.serviceName || '').toLowerCase().includes('pwd');
+              const isSenior = app.referenceNo.startsWith('SENIOR-') || (app.category || '').toLowerCase().includes('senior') || (app.serviceName || '').toLowerCase().includes('senior');
+              const isAics = app.referenceNo.startsWith('QC-AICS-') || 
+                app.referenceNo.startsWith('AICS-') || 
+                (app.serviceName || '').toLowerCase().includes('guarantee letter') || 
+                (app.serviceName || '').toLowerCase().includes('funeral') || 
+                (app.serviceName || '').toLowerCase().includes('burial') || 
+                (app.serviceName || '').toLowerCase().includes('medical') || 
+                (app.category || '').toLowerCase().includes('aics');
 
               const appt = (app as any).appointmentDetails;
               const dbAppt = dbAppointments.find((a) => (a.reference_no || a.referenceNo) === app.referenceNo);
@@ -315,6 +326,16 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
 
               let processExplanation = isTrn
                 ? "Sinusuri ng Admin ang Barangay Clearance, Valid ID, at Qualification Form."
+                : isAics
+                ? "Sinusuri ng Social Worker ang mga isinumiteng dokumento at Certificate of Indigency para sa Guarantee Letter (GL)."
+                : isLivelihood
+                ? "Sinusuri ng Livelihood Division ang inyong Business Proposal, Barangay Endorsement, at mga dokumento. Hintayin ang aksyon."
+                : isPwd
+                ? "Sinusuri ng PDAO / Social Services ang PWD ID, Medical Certificate, at mga dokumento. Hintayin ang aksyon."
+                : isSenior
+                ? "Sinusuri ng OSCA / Social Services ang Senior Citizen ID, Indigency Certificate, at mga dokumento. Hintayin ang aksyon."
+                : isChildEdu
+                ? "Sinusuri ng Social Services ang Certificate of Enrollment, Indigency, at mga dokumento ng bata/kabataan. Hintayin ang aksyon."
                 : "Sinusuri ng Admin ang Solo Parent Booklet / ID / Affidavit. Hintayin ang aksyon.";
 
               if (isTrn && isTrnUnqualified) {
@@ -365,25 +386,59 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                     APPROVED
                   </span>
                 );
-                processExplanation = isSoloParentEdu
+                processExplanation = isAics
+                  ? "Aprubado na ang inyong aplikasyon para sa Guarantee Letter (GL). Inihahanda na ang official documentation."
+                  : isLivelihood
+                  ? "Nakalipas sa Assessment! Inaprubahan ang inyong ₱15,000 Livelihood Capital Assistance Grant. Awtomatikong pumasok sa Financial Aid Masterlist."
+                  : isPwd
+                  ? "Nakalipas sa Verification! Inaprubahan ang inyong PWD Social Assistance Program. Awtomatikong pumasok sa PWD Pension Masterlist na may Fixed Amount: ₱1,500.00."
+                  : isSenior
+                  ? "Nakalipas sa Verification! Inaprubahan ang inyong Senior Citizen Financial Assistance. Awtomatikong pumasok sa Senior Cash Grant Masterlist na may Fixed Amount: ₱3,000.00."
+                  : isChildEdu
+                  ? "Nakalipas sa Assessment! Inaprubahan ang ₱5,000 Educational Grant para sa Bata at Kabataan. Awtomatikong pumasok sa Financial Aid Masterlist na may Fixed Amount: ₱5,000.00."
+                  : isSoloParentEdu
                   ? "Nakalipas sa Physical Interview! Inisyu na ang Official Solo Parent ID Card at ₱5,000 Educational Grant Certificate. Awtomatikong pumasok sa Financial Aid Masterlist na may Fixed Amount: ₱5,000.00."
                   : "Nakalipas sa Physical Interview! Inisyu na ang Official Solo Parent ID Card at ₱3,000 Cash Subsidy Certificate. Awtomatikong pumasok sa Financial Aid Masterlist na may Fixed Amount: ₱3,000.00.";
               } else if (isPayoutScheduled) {
                 statusBadge = (
                   <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/10 border border-purple-500/30 text-purple-400 inline-block">
-                    PAYOUT SCHEDULED
+                    {isAics ? 'GL READY FOR RELEASE' : 'PAYOUT SCHEDULED'}
                   </span>
                 );
-                processExplanation = isSoloParentEdu
+                processExplanation = isAics
+                  ? `Naitakda ang release ng inyong Guarantee Letter (GL) sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`
+                  : isLivelihood
+                  ? `Naitakda ang release ng inyong ₱15,000 Livelihood Capital Assistance Grant sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`
+                  : isPwd
+                  ? `Naitakda ang ₱1,500 PWD Quarterly Cash Pension payout release date sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`
+                  : isSenior
+                  ? `Naitakda ang ₱3,000 Senior Citizen Cash Grant payout release date sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`
+                  : isChildEdu
+                  ? `Naitakda ang ₱5,000 Educational Grant (Children & Youth) payout release date sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`
+                  : isSoloParentEdu
                   ? `Naitakda ang ₱5,000 Solo Parent Educational Grant payout release date sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`
                   : `Naitakda ang ₱3,000 Solo Parent Payout release date sa ${payoutDateFormatted} sa ${payoutTimeFormatted}.`;
               } else if (isReleased) {
                 statusBadge = (
                   <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 inline-block">
-                    COMPLETED ({isCwProtection ? 'Child Protection / Case Services Completed' : isSoloParentEdu ? '₱5,000 Educational Grant Release Completed' : isTrn ? 'Training Completed' : '₱3,000 Cash Subsidy Release Completed'})
+                    COMPLETED ({isAics ? 'GL Released' : isCwProtection ? 'Child Protection / Case Services Completed' : (isSoloParentEdu || isChildEdu) ? '₱5,000 Educational Grant Release Completed' : isLivelihood ? '₱15,000 Livelihood Grant Released' : isPwd ? '₱1,500 PWD Pension Released' : isSenior ? '₱3,000 Senior Cash Grant Released' : isTrn ? 'Training Completed' : '₱3,000 Cash Subsidy Release Completed'})
                   </span>
                 );
-                processExplanation = isCwProtection
+                processExplanation = isAics
+                  ? ((app.serviceName || '').toLowerCase().includes('funeral') || (app.serviceName || '').toLowerCase().includes('burial')
+                    ? "Nailabas na ang inyong Official Funeral Guarantee Letter (GL). Maaari na po itong i-presenta sa accredited partner funeral home. Maraming salamat!"
+                    : (app.serviceName || '').toLowerCase().includes('medical')
+                    ? "Nailabas na ang inyong Official Medical Guarantee Letter (GL). Maaari na po itong i-presenta sa accredited partner hospital / healthcare facility. Maraming salamat!"
+                    : "Nailabas na ang inyong Official Guarantee Letter (GL). Maraming salamat!")
+                  : isLivelihood
+                  ? "Nailabas na ang inyong ₱15,000.00 Livelihood Capital Assistance Grant. Maraming salamat at hangad ng Lungsod Quezon ang tagumpay ng inyong kabuhayan!"
+                  : isPwd
+                  ? "Nailabas na ang inyong ₱1,500.00 PWD Quarterly Cash Pension. Maraming salamat!"
+                  : isSenior
+                  ? "Nailabas na ang inyong ₱3,000.00 Senior Citizen Financial Assistance / Cash Grant. Maraming salamat!"
+                  : isChildEdu
+                  ? "Nailabas na ang inyong ₱5,000.00 Educational Assistance Grant para sa mga Bata at Kabataan. Maraming salamat!"
+                  : isCwProtection
                   ? "Binabati kita! Aprubado at nakalipas sa Case Assessment ang inyong Child Protection / Case Intake Services. (Non-Financial Program — Walang Financial Payout)."
                   : isSoloParentEdu
                   ? "Nailabas na ang inyong ₱5,000 Solo Parent Educational Grant. Maraming salamat!"
@@ -411,7 +466,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                       <span className="text-[10px] font-mono font-bold text-blue-400 tracking-wider uppercase block">
                         REF NO: {app.referenceNo}
                       </span>
-                      <h4 className="text-base font-extrabold text-white mt-0.5">{app.serviceName}</h4>
+                      <h4 className="text-base font-extrabold text-white mt-0.5">{(app.serviceName || '').replace(/\bNieto\s*/gi, '')}</h4>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -426,19 +481,16 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                       <div className="font-bold text-white">{name}</div>
                       <div className="text-slate-400 text-[11px] font-mono space-y-0.5">
                         <div>Filed: {app.dateSubmitted}</div>
-                        {(isSoloParent || isSoloParentEdu) && (
-                          <div className="text-blue-400 font-bold">SPIC: SP-2026-88492</div>
-                        )}
                       </div>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#080f1e] border border-slate-800 space-y-1">
-                      <span className="text-slate-400 text-[10px] font-semibold uppercase block">Assigned Unit / Worker</span>
+                      <span className="text-slate-400 text-[10px] font-semibold uppercase block">Processing Office</span>
                       <div className="font-bold text-slate-200">
-                        {app.assignedSocialWorker || (isTrn ? 'Vocational Training Officer, SSDD' : app.referenceNo.startsWith('LVH-') ? 'Social Worker Officer (Livelihood Division)' : 'Ms. Jocelyn Reyes, RSW')}
+                        Quezon City Social Services Development Department
                       </div>
                       <div className="text-slate-400 text-[11px]">
-                        {isTrn ? 'QC Skills Development Center (SSDD)' : app.referenceNo.startsWith('LVH-') ? 'QC Hall SSDD Livelihood Division' : (isSoloParent || isSoloParentEdu) ? 'QC Hall SSDD Solo Parent Welfare' : 'QC Hall Social Services Department'}
+                        QC Hall Building
                       </div>
                     </div>
 
@@ -447,27 +499,35 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                       <div className="font-bold text-amber-400">
                         {isCwProtection
                           ? 'Child Protection & Case Intake Services (Non-Financial)'
+                          : isChildEdu
+                          ? '₱5,000.00 Educational Grant (Children & Youth)'
                           : isSoloParentEdu
-                          ? '₱5,000.00 FIXED SOLO PARENT EDUCATIONAL GRANT'
+                          ? '₱5,000.00 Fixed Solo Parent Educational Grant'
+                          : isSoloParent 
+                          ? '₱3,000.00 Fixed Solo Parent Cash Subsidy' 
+                          : isPwd
+                          ? '₱1,500.00 Quarterly Cash Pension'
+                          : isSenior
+                          ? '₱3,000.00 Cash Grant'
+                          : isLivelihood
+                          ? (app.assistanceType === 'Materials / Supplies' ? 'Materials & Starter Kit' : '₱15,000.00 Livelihood Capital Grant')
                           : isTrn
                           ? 'Free Vocational Training & Orientation'
-                          : isSoloParent 
-                          ? '₱3,000.00 FIXED SOLO PARENT CASH SUBSIDY' 
-                          : app.referenceNo.startsWith('LVH-') 
-                          ? (app.assistanceType === 'Materials / Supplies' ? 'Materials & Starter Kit' : '₱15,000.00 Livelihood Capital Grant')
                           : (app.amountOrType || 'Financial Assistance Grant')}
                       </div>
-                      <div className="text-slate-400 text-[11px]">Quezon City Social Services Department</div>
+                      <div className="text-slate-400 text-[11px]">
+                        {isAics ? 'Official Guarantee Letter (Non-Cash)' : 'Official City Welfare Assistance'}
+                      </div>
                     </div>
                   </div>
 
                   {/* ACTIVE PAYOUT CARD (STEP 5) */}
-                  {isPayoutScheduled && (isSoloParent || isSoloParentEdu) && (
+                  {isPayoutScheduled && (isSoloParent || isSoloParentEdu || isChildEdu || isLivelihood || isPwd || isSenior) && (
                     <div className="p-5 rounded-2xl bg-purple-950/40 border border-purple-500/50 space-y-3 shadow-lg">
                       <div className="flex items-center justify-between border-b border-purple-800/60 pb-2">
                         <span className="text-xs font-black uppercase text-purple-300 tracking-wider flex items-center gap-1.5">
                           <Award className="w-4 h-4 text-purple-400" />
-                          <span>ACTIVE PAYOUT CARD ({isSoloParentEdu ? 'FIXED SOLO PARENT EDUCATIONAL GRANT' : 'FIXED SOLO PARENT CASH SUBSIDY'})</span>
+                          <span>ACTIVE PAYOUT CARD ({isChildEdu ? 'FIXED ₱5,000 EDUCATIONAL GRANT (CHILDREN & YOUTH)' : isSoloParentEdu ? 'FIXED SOLO PARENT EDUCATIONAL GRANT' : isLivelihood ? '₱15,000 LIVELIHOOD CAPITAL GRANT' : isPwd ? '₱1,500 PWD QUARTERLY CASH PENSION' : isSenior ? '₱3,000 SENIOR CITIZEN CASH GRANT' : 'FIXED SOLO PARENT CASH SUBSIDY'})</span>
                         </span>
                         <span className="font-mono text-xs font-bold text-purple-400 bg-purple-900/60 px-2.5 py-0.5 rounded-lg">
                           STATUS: PAYOUT SCHEDULED
@@ -477,7 +537,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                         <div>
                           <span className="text-slate-400 text-[10px] uppercase font-bold block">MATATANGGAP:</span>
-                          <span className="text-base font-extrabold text-emerald-400">{isSoloParentEdu ? '₱5,000.00 FIXED' : '₱3,000.00 FIXED'}</span>
+                          <span className="text-base font-extrabold text-emerald-400">{(isSoloParentEdu || isChildEdu) ? '₱5,000.00 FIXED' : isLivelihood ? '₱15,000.00 FIXED' : isPwd ? '₱1,500.00 FIXED' : isSenior ? '₱3,000.00 FIXED' : '₱3,000.00 FIXED'}</span>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] uppercase font-bold block">PETSA & ORAS:</span>
@@ -485,11 +545,23 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] uppercase font-bold block">LUGAR NG CLAIM:</span>
-                          <span className="font-bold text-slate-200">Quezon City Hall Cashier / SSDD Area</span>
+                          <span className="font-bold text-slate-200">
+                            {isSenior ? 'OSCA Desk / QC Hall Cashier' : isPwd ? 'PDAO Desk / QC Hall Cashier' : 'Quezon City Hall Cashier / SSDD Area'}
+                          </span>
                         </div>
                         <div>
                           <span className="text-slate-400 text-[10px] uppercase font-bold block">DADALHIN:</span>
-                          <span className="font-bold text-amber-300">Solo Parent ID Card & Valid ID</span>
+                          <span className="font-bold text-amber-300">
+                            {isChildEdu
+                              ? 'School ID / Enrollment Certificate & Parent Valid ID'
+                              : isPwd 
+                              ? 'PWD ID Card & Valid ID'
+                              : isSenior
+                              ? 'Senior Citizen ID Card & Valid ID'
+                              : isLivelihood
+                              ? 'Valid ID & Business Documents'
+                              : 'Solo Parent ID Card & Valid ID'}
+                          </span>
                         </div>
                       </div>
                     </div>

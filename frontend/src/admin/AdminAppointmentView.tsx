@@ -1100,7 +1100,7 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                 <div className="py-2 text-xs space-y-1">
                   <p className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">TO THE MANAGEMENT OF:</p>
                   <div className="pl-4 border-l-2 border-blue-600 space-y-0.5">
-                    <p><span className="font-bold text-slate-600">Partner Funeral Home :</span> <span className="font-extrabold text-slate-900 uppercase">{(printingGL.details as any)?.funeralHomeName || (printingGL.details as any)?.hospital || printingGL.hospitalFacility || 'NIETO FUNERAL SERVICES'}</span></p>
+                    <p><span className="font-bold text-slate-600">Partner Funeral Home :</span> <span className="font-extrabold text-slate-900 uppercase">{(((printingGL.details as any)?.funeralHomeName || (printingGL.details as any)?.hospital || printingGL.hospitalFacility || 'ACCREDITED PARTNER FUNERAL SERVICES') as string).replace(/Nieto\s*/gi, '')}</span></p>
                     <p><span className="font-bold text-slate-600">Address              :</span> <span className="font-medium text-slate-800">{(printingGL.details as any)?.funeralDistrict ? `${(printingGL.details as any)?.funeralDistrict}, Quezon City` : 'Novaliches, Quezon City, Metro Manila'}</span></p>
                   </div>
                 </div>

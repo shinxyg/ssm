@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage, Language } from '../../context/LanguageContext';
 import { 
   User, 
@@ -72,7 +72,48 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
   const [mobileNumber, setMobileNumber] = useState<string>('09155582122');
 
   const [showQcidModal, setShowQcidModal] = useState<boolean>(false);
-  const [savePersonalMsg, setSavePersonalMsg] = useState<string | null>(null);
+
+  // Load user profile from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedUserStr = localStorage.getItem('currentUser');
+      if (savedUserStr) {
+        const u = JSON.parse(savedUserStr);
+        if (u.first_name) setFirstName(u.first_name);
+        if (u.middle_name) setMiddleName(u.middle_name);
+        if (u.last_name) setLastName(u.last_name);
+        if (u.suffix !== undefined) setSuffix(u.suffix || '');
+        if (u.dob) {
+          const parts = String(u.dob).split('-');
+          if (parts.length === 3) {
+            setBirthYear(parts[0]);
+            const monthNames = [
+              'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+              'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+            ];
+            const mIdx = parseInt(parts[1], 10) - 1;
+            if (mIdx >= 0 && mIdx < 12) {
+              setBirthMonth(monthNames[mIdx]);
+            }
+            setBirthDay(String(parseInt(parts[2], 10)));
+          }
+        }
+        if (u.blood_type) setBloodType(u.blood_type);
+        if (u.city) setCity(u.city);
+        if (u.house_no) setHouseNo(u.house_no);
+        if (u.street_name || u.street) setStreet(u.street_name || u.street);
+        if (u.barangay) setBarangay(u.barangay);
+        if (u.occupation) setOccupation(u.occupation);
+        if (u.civil_status) setCivilStatus(u.civil_status);
+        if (u.sex) setSex(u.sex);
+        if (u.phone_number || u.mobileNumber) setMobileNumber(u.phone_number || u.mobileNumber);
+        if (u.working_in_qc !== undefined) setWorkingInQC(u.working_in_qc);
+        if (u.email) setEmail(u.email);
+      }
+    } catch (err) {
+      console.warn('Error reading currentUser from localStorage:', err);
+    }
+  }, []);
 
   const handlePasswordSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,12 +122,6 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
-  };
-
-  const handlePersonalSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavePersonalMsg('Personal information updated successfully!');
-    setTimeout(() => setSavePersonalMsg(null), 3000);
   };
 
   const isSystemAdmin = userRole === 'admin';
@@ -114,7 +149,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 </div>
                 <div>
                   <h4 className={`text-base font-extrabold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                    {isSystemAdmin ? 'SYSTEM ADMINISTRATOR' : 'JEFFERSON FERNANDO LEE'}
+                    {isSystemAdmin ? 'SYSTEM ADMINISTRATOR' : `${firstName} ${middleName} ${lastName} ${suffix}`.replace(/\s+/g, ' ').trim() || 'JEFFERSON FERNANDO LEE'}
                   </h4>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-xs font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Status:</span>
@@ -428,14 +463,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 </div>
               </div>
             ) : (
-              <form onSubmit={handlePersonalSave} className="space-y-8 max-w-4xl mx-auto">
-              
-              {savePersonalMsg && (
-                <div className="p-3.5 bg-emerald-950/80 border border-emerald-500/50 rounded-xl text-xs text-emerald-300 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>{savePersonalMsg}</span>
-                </div>
-              )}
+              <div className="space-y-8 max-w-4xl mx-auto">
 
               {/* Section 1: Full Name */}
               <div className="space-y-3">
@@ -676,16 +704,6 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 </div>
               </div>
 
-              {/* Centered Edit Profile Button */}
-              <div className="text-center pt-4">
-                <button
-                  type="submit"
-                  className="px-10 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl uppercase tracking-wider transition-all"
-                >
-                  Edit Profile
-                </button>
-              </div>
-
               {/* Danger Zone Box at Bottom */}
               <div className={`p-6 rounded-2xl space-y-4 shadow-lg ${
                 darkMode ? 'bg-red-950/20 border border-red-900/60' : 'bg-red-50/60 border border-red-200'
@@ -716,7 +734,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </button>
                 </div>
               </div>
-            </form>
+              </div>
             )
           ) : activeTab === 'devices' ? (
             /* TAB 3: DEVICES & HISTORY */

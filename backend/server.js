@@ -2442,6 +2442,80 @@ app.get('/api/user/profile', async (req, res) => {
   }
 });
 
+// PUT /api/user/profile - Update user personal and contact profile info
+app.put('/api/user/profile', async (req, res) => {
+  const {
+    email,
+    firstName,
+    middleName,
+    lastName,
+    suffix,
+    dob,
+    bloodType,
+    city,
+    houseNo,
+    street,
+    barangay,
+    occupation,
+    civilStatus,
+    sex,
+    mobileNumber
+  } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'User email is required' });
+  }
+
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const result = await pool.query(`
+      UPDATE users SET
+        first_name = COALESCE($1, first_name),
+        middle_name = COALESCE($2, middle_name),
+        last_name = COALESCE($3, last_name),
+        suffix = COALESCE($4, suffix),
+        dob = COALESCE($5, dob),
+        blood_type = COALESCE($6, blood_type),
+        city = COALESCE($7, city),
+        house_no = COALESCE($8, house_no),
+        street_name = COALESCE($9, street_name),
+        barangay = COALESCE($10, barangay),
+        occupation = COALESCE($11, occupation),
+        civil_status = COALESCE($12, civil_status),
+        sex = COALESCE($13, sex),
+        phone_number = COALESCE($14, phone_number),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE LOWER(email) = $15
+      RETURNING id, email, role, first_name, middle_name, last_name, suffix, dob, blood_type, civil_status, sex, occupation, phone_number, house_no, street_name, barangay, city;
+    `, [
+      firstName,
+      middleName,
+      lastName,
+      suffix,
+      dob,
+      bloodType,
+      city,
+      houseNo,
+      street,
+      barangay,
+      occupation,
+      civilStatus,
+      sex,
+      mobileNumber,
+      cleanEmail
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, message: 'Profile updated successfully', user: result.rows[0] });
+  } catch (err) {
+    console.error('Error updating user profile:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // GET /api/users - Fetch all users for Admin User Management
 app.get('/api/users', async (req, res) => {
   try {

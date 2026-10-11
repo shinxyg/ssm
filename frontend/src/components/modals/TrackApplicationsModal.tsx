@@ -90,7 +90,7 @@ export const TrackApplicationsModal: React.FC<TrackApplicationsModalProps> = ({
                   }`}>
                     Ref: {app.referenceNo}
                   </span>
-                  <h4 className={`text-sm font-bold mt-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{app.serviceName}</h4>
+                  <h4 className={`text-sm font-bold mt-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{(app.serviceName || '').replace(/\bNieto\s*/gi, '')}</h4>
                   <span className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Category: {app.category}</span>
                 </div>
 

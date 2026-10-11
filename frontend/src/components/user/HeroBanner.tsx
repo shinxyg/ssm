@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, FileText, Sparkles, HeartHandshake } from 'lucide-react';
+import { Search, Sparkles, HeartHandshake } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface HeroBannerProps {
@@ -7,7 +7,7 @@ interface HeroBannerProps {
   setSearchQuery: (query: string) => void;
   activeFilter: string;
   setActiveFilter: (filter: string) => void;
-  onOpenTrackModal: () => void;
+  onOpenTrackModal?: () => void;
   onOpenEligibilityModal: () => void;
   darkMode?: boolean;
 }
@@ -17,7 +17,6 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   setSearchQuery,
   activeFilter,
   setActiveFilter,
-  onOpenTrackModal,
   onOpenEligibilityModal,
   darkMode = true,
 }) => {
@@ -47,22 +46,13 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         />
       </div>
 
-      {/* Top Flex Row: Badge & Track Applications Button */}
-      <div className="relative z-10 flex flex-wrap justify-between items-center gap-4 mb-4">
+      {/* Top Flex Row: Badge */}
+      <div className="relative z-10 flex items-center mb-4">
         {/* Badge Pill */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/80 border border-blue-400/30 text-blue-200 text-xs font-semibold">
           <Sparkles className="w-3.5 h-3.5 text-blue-400" />
           <span>{isTagalog ? 'GovServe Portal ng Mamamayan • Gabay sa Serbisyo at Tulong' : 'Gov Serves Social Services Portal • Help & Service Guide'}</span>
         </div>
-
-        {/* Track My Applications Button */}
-        <button
-          onClick={onOpenTrackModal}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-white font-medium text-xs border border-slate-600/60 shadow-lg transition-colors cursor-pointer"
-        >
-          <FileText className="w-4 h-4 text-blue-400" />
-          <span>{isTagalog ? 'Suriin ang Aking Aplikasyon' : 'Track My Applications'}</span>
-        </button>
       </div>
 
       {/* Headline & Subtitle */}
@@ -87,9 +77,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
           }}
-          className="relative max-w-3xl flex items-center gap-2"
+          className="relative max-w-3xl"
         >
-          <div className="relative flex-1">
+          <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
               <Search className="w-4 h-4 text-slate-400" />
             </div>
@@ -104,21 +94,12 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-bold text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
                 Clear
               </button>
             )}
           </div>
-
-          <button
-            type="submit"
-            className="px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md border border-blue-400/40 transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
-            title="Search Services"
-          >
-            <Search className="w-4 h-4" />
-            <span className="hidden sm:inline">{isTagalog ? 'Hanapin' : 'Search'}</span>
-          </button>
         </form>
       </div>
 
