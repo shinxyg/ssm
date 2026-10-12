@@ -1008,6 +1008,8 @@ app.post('/api/child-welfare/applications', async (req, res) => {
     incidentDate,
     incidentLocation,
     assistanceType,
+    serviceName,
+    category,
     numChildrenInFamily,
     numChildrenStudying,
     monthlyFamilyIncome,
@@ -1024,13 +1026,15 @@ app.post('/api/child-welfare/applications', async (req, res) => {
     const name = applicantName || details?.applicantName || `${firstName || 'JEFFERSON'} ${lastName || 'LEE'}`.trim();
     const savedDetails = JSON.stringify(details || {});
     const savedDocs = JSON.stringify(uploadedDocuments || {});
+    const resolvedServiceName = serviceName || (refNo.startsWith('QC-CW-') ? 'Child Welfare Services' : 'Child Welfare Services Aid');
+    const resolvedCategory = category || 'child_welfare';
 
     const query = `
       INSERT INTO child_welfare_applications (
         reference_no, applicant_name, first_name, middle_name, last_name, suffix, qcitizen_id, nationality, dob, age, gender, civil_status,
         house_no, street_name, barangay, phone_number, email_address, solo_parent_id_no, relationship_to_child,
         child_full_name, child_dob, child_age, child_sex, child_address, school_name, grade_level, lrn_number, type_of_school, other_enrollment_info,
-        selected_sectors, selected_services, concern_description, incident_date, incident_location, assistance_type,
+        selected_sectors, selected_services, concern_description, incident_date, incident_location, assistance_type, service_name, category,
         num_children_in_family, num_children_studying, monthly_family_income, is_4ps_beneficiary, is_solo_educational_beneficiary, is_pwd_educational_beneficiary,
         status, uploaded_documents, details
       )
@@ -1038,12 +1042,14 @@ app.post('/api/child-welfare/applications', async (req, res) => {
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
         $13, $14, $15, $16, $17, $18, $19,
         $20, $21, $22, $23, $24, $25, $26, $27, $28, $29,
-        $30, $31, $32, $33, $34, $35,
-        $36, $37, $38, $39, $40, $41,
-        $42, $43, $44
+        $30, $31, $32, $33, $34, $35, $36, $37,
+        $38, $39, $40, $41, $42, $43,
+        $44, $45, $46
       )
       ON CONFLICT (reference_no) DO UPDATE SET
         applicant_name = EXCLUDED.applicant_name,
+        service_name = EXCLUDED.service_name,
+        category = EXCLUDED.category,
         status = EXCLUDED.status,
         uploaded_documents = EXCLUDED.uploaded_documents,
         details = EXCLUDED.details,
@@ -1058,6 +1064,7 @@ app.post('/api/child-welfare/applications', async (req, res) => {
       soloParentIdNo || '', relationshipToChild || 'Parent',
       childFullName || '', childDob || '', childAge || '', childSex || '', childAddress || '', schoolName || '', gradeLevel || '', lrnNumber || '', typeOfSchool || '', otherEnrollmentInfo || '',
       JSON.stringify(selectedSectors || []), JSON.stringify(selectedServices || []), concernDescription || '', incidentDate || '', incidentLocation || '', assistanceType || 'Child Welfare Aid',
+      resolvedServiceName, resolvedCategory,
       numChildrenInFamily || '', numChildrenStudying || '', monthlyFamilyIncome || '', is4psBeneficiary || 'No', isSoloEducationalBeneficiary || 'No', isPwdEducationalBeneficiary || 'No',
       status || 'Pending Document Validation', savedDocs, savedDetails
     ];

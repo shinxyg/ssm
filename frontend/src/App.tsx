@@ -464,26 +464,78 @@ export default function App() {
   const handleNavigateToFormDirect = (title: string, description?: string) => {
     const titleLower = title.toLowerCase();
 
-    // Prioritize exact Title matches so description keywords like "solo parents' children" don't misroute
+    // 1. Check PWD first
+    if (titleLower.includes('pwd') || titleLower.includes('disabilit') || titleLower.includes('kapansanan')) {
+      setActiveTab('pwd-form');
+      return;
+    }
+
+    // 2. Check Senior Citizen next
+    if (titleLower.includes('senior') || titleLower.includes('nakatatanda') || titleLower.includes('elderly') || titleLower.includes('osca')) {
+      setActiveTab('senior-form');
+      return;
+    }
+
+    // 3. Check Solo Parent
+    if (titleLower.includes('solo parent') || titleLower.includes('soloparent')) {
+      if (titleLower.includes('educational') || titleLower.includes('edu') || titleLower.includes('edukasyon') || titleLower.includes('anak')) {
+        setActiveTab('soloparent-edu-form');
+      } else {
+        setActiveTab('soloparent-financial-form');
+      }
+      return;
+    }
+
+    // 4. Check Child Welfare Services (non-cash)
+    if (titleLower.includes('child welfare services') || titleLower.includes('kalinga at proteksyon') || titleLower.includes('proteksyon ng bata')) {
+      setActiveTab('childwelfare-form');
+      return;
+    }
+
+    // 5. Check Educational Assistance
     if (
-      titleLower.includes('indigent') ||
       titleLower.includes('educational assistance for indigent') ||
-      titleLower.includes('tulong sa edukasyon para sa mga bata')
+      titleLower.includes('tulong sa edukasyon para sa mga bata') ||
+      titleLower.includes('educational') ||
+      titleLower.includes('education') ||
+      titleLower.includes('edukasyon')
     ) {
       setActiveTab('aics-educational');
       return;
     }
 
-    if (titleLower.includes('solo parent') || titleLower.includes('soloparent')) {
-      if (titleLower.includes('educational') || titleLower.includes('edu') || titleLower.includes('edukasyon') || titleLower.includes('anak')) {
-        setActiveTab('soloparent-edu-form');
-      } else {
-        setActiveTab('soloparent-form');
-      }
+    // 6. Check Medical
+    if (titleLower.includes('medical') || titleLower.includes('medikal') || titleLower.includes('hospital')) {
+      setActiveTab('aics-medical');
       return;
     }
 
+    // 7. Check Funeral / Burial
+    if (titleLower.includes('burial') || titleLower.includes('funeral') || titleLower.includes('pagpapalibing')) {
+      setActiveTab('aics-funeral');
+      return;
+    }
+
+    // 8. Check Livelihood / Skills
+    if (titleLower.includes('livelihood') || titleLower.includes('pangkabuhayan') || titleLower.includes('puhunan')) {
+      setActiveTab('livelihood');
+      return;
+    }
+    if (titleLower.includes('training') || titleLower.includes('skills') || titleLower.includes('pagsasanay') || titleLower.includes('bokasyonal')) {
+      setActiveTab('skills-training');
+      return;
+    }
+
+    // Fallback using description
     const t = (title + ' ' + (description || '')).toLowerCase();
+    if (t.includes('pwd') || t.includes('disabilit') || t.includes('kapansanan')) {
+      setActiveTab('pwd-form');
+      return;
+    }
+    if (t.includes('senior') || t.includes('nakatatanda') || t.includes('elderly')) {
+      setActiveTab('senior-form');
+      return;
+    }
     if (t.includes('medical') || t.includes('medikal') || t.includes('hospital')) {
       setActiveTab('aics-medical');
       return;
@@ -492,34 +544,53 @@ export default function App() {
       setActiveTab('aics-funeral');
       return;
     }
-    if (t.includes('educational') || t.includes('education') || t.includes('edukasyon') || t.includes('indigent')) {
-      setActiveTab('aics-educational');
-      return;
-    }
     if (t.includes('child welfare') || t.includes('childwelfare') || t.includes('kalinga') || t.includes('proteksyon')) {
       setActiveTab('childwelfare-form');
       return;
     }
-    if (t.includes('pwd')) {
-      setActiveTab('pwd-form');
-      return;
-    }
-    if (t.includes('senior')) {
-      setActiveTab('senior-form');
+    if (t.includes('educational') || t.includes('education') || t.includes('edukasyon')) {
+      setActiveTab('aics-educational');
       return;
     }
     if (t.includes('livelihood') || t.includes('pangkabuhayan') || t.includes('puhunan')) {
       setActiveTab('livelihood');
       return;
     }
-    if (t.includes('training') || t.includes('skills') || t.includes('pagsasanay') || t.includes('bokasyonal')) {
+    if (t.includes('training') || t.includes('skills') || t.includes('pagsasanay')) {
       setActiveTab('skills-training');
       return;
     }
+
     setActiveTab('aics-educational');
   };
 
   const handleApplyFromModule = (title: string, description: string) => {
+    if (activeTab === 'pwd') {
+      setActiveTab('pwd-form');
+      return;
+    }
+    if (activeTab === 'senior') {
+      setActiveTab('senior-form');
+      return;
+    }
+    if (activeTab === 'soloparent') {
+      const lower = title.toLowerCase();
+      if (lower.includes('educational') || lower.includes('edu') || lower.includes('edukasyon') || lower.includes('anak')) {
+        setActiveTab('soloparent-edu-form');
+      } else {
+        setActiveTab('soloparent-financial-form');
+      }
+      return;
+    }
+    if (activeTab === 'childwelfare') {
+      const lower = title.toLowerCase();
+      if (lower.includes('educational') || lower.includes('edu') || lower.includes('edukasyon')) {
+        setActiveTab('aics-educational');
+      } else {
+        setActiveTab('childwelfare-form');
+      }
+      return;
+    }
     handleNavigateToFormDirect(title, description);
   };
 

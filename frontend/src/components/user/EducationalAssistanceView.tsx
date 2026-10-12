@@ -271,6 +271,12 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
 
     const payload = {
       referenceNo: newRef,
+      serviceName: mode === 'childwelfare'
+        ? 'Child Welfare Services'
+        : mode === 'soloparent'
+        ? 'Solo Parent Educational Assistance Program'
+        : 'Educational Assistance for Indigent Children & Youth',
+      category: mode === 'childwelfare' ? 'child_welfare' : (mode === 'soloparent' ? 'solo_parent' : 'educational'),
       applicantName: `${applicantFirstName} ${applicantMiddleName} ${applicantLastName} ${applicantSuffix}`.trim(),
       firstName: applicantFirstName,
       middleName: applicantMiddleName,

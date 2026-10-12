@@ -233,8 +233,8 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       const ref = edu.reference_no || `QC-EDU-${edu.id}`;
       if (!seenRefs.has(ref)) {
         seenRefs.add(ref);
-        const isSoloEdu = (edu.category || '').toLowerCase().includes('solo') || (edu.service_name || '').toLowerCase().includes('solo') || ref.startsWith('QC-SP-EDU-');
-        const prog: 'cw_edu' | 'solo_parent' = isSoloEdu ? 'solo_parent' : 'cw_edu';
+        const isSoloSubsidy = ref.startsWith('SP-') || ref.startsWith('SP-SUBSIDY-');
+        const prog: 'cw_edu' | 'solo_parent' = isSoloSubsidy ? 'solo_parent' : 'cw_edu';
         list.push({
           id: `edu-${edu.id}`,
           referenceNo: ref,
@@ -253,16 +253,17 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       const ref = cw.reference_no || `CW-${cw.id}`;
       if (!seenRefs.has(ref)) {
         seenRefs.add(ref);
-        const isEduAid = (cw.service_name || '').toLowerCase().includes('educ') || ref.includes('EDUC') || (cw.category || '').toLowerCase().includes('educ') || ref.startsWith('QC-EDU-');
+        const isChildWelfareService = ref.startsWith('QC-CW-') || ref.startsWith('CW-') || (cw.service_name || '').toLowerCase() === 'child welfare services';
+        const prog: 'cw_edu' | 'cw_services' = isChildWelfareService ? 'cw_services' : 'cw_edu';
         list.push({
           id: `cw-${cw.id}`,
           referenceNo: ref,
           applicantName: `${cw.first_name || ''} ${cw.last_name || ''}`.trim() || cw.applicant_name || 'Child Welfare Beneficiary',
-          programId: isEduAid ? 'cw_edu' : 'cw_services',
+          programId: prog,
           status: cw.status || 'Pending Assessment',
           date: parseAppDate(cw.date_submitted || cw.created_at),
           dateSubmittedString: cw.created_at ? new Date(cw.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
-          disbursedAmount: (isEduAid && isApprovedStatus(cw.status)) ? 5000 : 0
+          disbursedAmount: (prog === 'cw_edu' && isApprovedStatus(cw.status)) ? 5000 : 0
         });
       }
     });

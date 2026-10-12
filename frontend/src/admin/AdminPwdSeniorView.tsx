@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, FileText, CheckCircle2, XCircle, Eye, Info, Clock, Check, X, User, Phone, MapPin, Calendar, Briefcase, Users, DollarSign, Home, HelpCircle } from 'lucide-react';
 import type { ApplicationRecord } from '../types';
 
@@ -48,6 +49,17 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
     const interval = setInterval(fetchDbApps, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (selectedApp || viewingDoc || rejectModalApp) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => {
+      document.body.classList.remove('modal-open');
+    };
+  }, [selectedApp, viewingDoc, rejectModalApp]);
 
   // Merge DB senior & PWD records with applications from prop
   const combinedApps = useMemo(() => {
@@ -464,8 +476,8 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
 
         const activeDocsList = isPwdApp ? pwdDocsList : seniorDocsList;
 
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+        return createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
             <div className="bg-[#0e172a] border border-slate-700 rounded-2xl max-w-3xl w-full p-6 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-modal-scroll">
               
               {/* Header Bar */}
@@ -773,13 +785,14 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                 </div>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         );
       })()}
 
       {/* REJECT CONFIRMATION MODAL */}
-      {rejectModalApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+      {rejectModalApp && createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
           <div className="bg-[#0e172a] border border-rose-800/80 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
             <div className="flex items-center gap-3 text-rose-400 border-b border-slate-800 pb-3">
               <XCircle className="w-6 h-6" />
@@ -817,12 +830,13 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* DOCUMENT INSPECTOR MODAL (EXACT AICS SCREENSHOT MATCH) */}
-      {viewingDoc && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
+      {viewingDoc && createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
           <div className="bg-[#0e172a] border border-slate-700 rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl relative">
             
             {/* Header Bar */}
@@ -904,7 +918,8 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
