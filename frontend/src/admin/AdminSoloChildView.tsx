@@ -615,7 +615,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                     {/* SECTION A: APPLICANT / PARENT / GUARDIAN INFORMATION */}
                     <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-4">
                       <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                        <span>A. APPLICANT / PARENT / GUARDIAN INFORMATION</span>
+                        <span>APPLICANT / PARENT / GUARDIAN INFORMATION</span>
                         <span className="text-[9px] font-mono text-slate-400">VERIFIED QCITIZEN PROFILE</span>
                       </span>
 
@@ -709,7 +709,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                       <>
                         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                           <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                            <span>B. CHILD INFORMATION</span>
+                            <span>CHILD INFORMATION</span>
                             <span className="text-[9px] font-mono text-slate-400">CHILD PROFILE</span>
                           </span>
                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -746,7 +746,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
 
                         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                           <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                            <span>C. REASON FOR REQUEST & INCIDENT DETAILS</span>
+                            <span>REASON FOR REQUEST & INCIDENT DETAILS</span>
                             <span className="text-[9px] font-mono text-slate-400 font-bold">CASE DETAILS</span>
                           </span>
                           <div className="space-y-3">
@@ -773,7 +773,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                       <>
                         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                           <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                            <span>SECTION B: STUDENT / DEPENDENT CHILD INFORMATION</span>
+                            <span>STUDENT / DEPENDENT CHILD INFORMATION</span>
                             <span className="text-[9px] font-mono text-slate-400">STUDENT BENEFICIARY</span>
                           </span>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -800,7 +800,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
 
                         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                           <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                            <span>SECTION C: SCHOOL & ACADEMIC DETAILS</span>
+                            <span>SCHOOL & ACADEMIC DETAILS</span>
                             <span className="text-[9px] font-mono text-slate-400 font-bold">ACADEMIC INFO</span>
                           </span>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -828,7 +828,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                         {/* INDIGENT CHILDREN & YOUTH EDUCATIONAL ASSISTANCE FORM STRUCTURE */}
                         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                           <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                            <span>B. CHILD / BENEFICIARY INFORMATION</span>
+                            <span>CHILD / BENEFICIARY INFORMATION</span>
                             <span className="text-[9px] font-mono text-slate-400">STUDENT BENEFICIARY</span>
                           </span>
                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -875,7 +875,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
 
                         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                           <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                            <span>C. FAMILY INFORMATION & FINANCIAL ASSESSMENT</span>
+                            <span>FAMILY INFORMATION & FINANCIAL ASSESSMENT</span>
                             <span className="text-[9px] font-mono text-slate-400 font-bold">ELIGIBILITY ASSESS</span>
                           </span>
                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">

@@ -380,8 +380,10 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
   // Check if there is an active pending (ongoing) application for this mode
   const activePendingApp = applications?.find(app => {
     const isTarget = mode === 'soloparent' 
-      ? (app.category === 'soloparent' || app.category === 'Solo Parent Services' || (app.serviceName || '').includes('Solo Parent Educational'))
-      : (app.category === 'educational' || (app.serviceName || '').includes('Educational'));
+      ? ((app.referenceNo || '').startsWith('QC-SP-EDU-') || (app.serviceName || '').toLowerCase().includes('solo parent educational'))
+      : mode === 'childwelfare'
+      ? ((app.referenceNo || '').startsWith('QC-CW-') || (app.serviceName || '').toLowerCase() === 'child welfare services' || (app.serviceName || '').toLowerCase().includes('child protection'))
+      : ((app.referenceNo || '').startsWith('QC-EDU-') || ((app.serviceName || '').toLowerCase().includes('educational') && !(app.referenceNo || '').startsWith('QC-SP-EDU-')));
     if (!isTarget) return false;
     const st = (app.status || '').toUpperCase();
     const isFinished = 
@@ -456,7 +458,7 @@ export const EducationalAssistanceView: React.FC<EducationalAssistanceViewProps>
             }}
             className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
           >
-            <span>{mode === 'childwelfare' ? 'VIEW IN APPLICATION HISTORY' : 'VIEW IN FINANCIAL AID / APPLICATION HISTORY'}</span>
+            <span>{mode === 'childwelfare' ? 'VIEW IN APPLICATION HISTORY' : 'VIEW IN FINANCIAL AID DISBURSEMENTS'}</span>
           </button>
         </div>
       </div>

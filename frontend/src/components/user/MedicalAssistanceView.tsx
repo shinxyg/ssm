@@ -26,6 +26,7 @@ interface MedicalAssistanceViewProps {
   onAddApplication: (app: ApplicationRecord) => void;
   darkMode?: boolean;
   applications?: ApplicationRecord[];
+  onNavigateToModule?: (tab: string) => void;
 }
 
 // Utility to calculate age from Date of Birth string
@@ -47,6 +48,7 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
   onAddApplication,
   darkMode = true,
   applications = [],
+  onNavigateToModule,
 }) => {
   const { language, t } = useLanguage();
   const isTagalog = language === 'Tagalog';
@@ -59,9 +61,14 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
   // Check if citizen has an active pending application
   const activePendingApp = useMemo(() => {
     return applications.find((app) => {
-      const isAICS = app.category === 'AICS' || app.serviceName.toLowerCase().includes('medical') || app.serviceName.toLowerCase().includes('aics') || app.serviceName.toLowerCase().includes('medicine');
+      const isMedical = ((app.serviceName || '').toLowerCase().includes('medical') || 
+        (app.serviceName || '').toLowerCase().includes('medicine') || 
+        (app.serviceName || '').toLowerCase().includes('hospital') ||
+        (app.referenceNo || '').startsWith('QC-MED-')) &&
+        !(app.serviceName || '').toLowerCase().includes('funeral') && 
+        !(app.serviceName || '').toLowerCase().includes('burial');
       const isNotFinished = app.status !== 'RELEASED / COMPLETED' && (app.status as string) !== 'Completed' && (app.status as string) !== 'Rejected' && (app.status as string) !== 'Disqualified';
-      return isAICS && isNotFinished;
+      return isMedical && isNotFinished;
     });
   }, [applications]);
 
@@ -422,10 +429,16 @@ export const MedicalAssistanceView: React.FC<MedicalAssistanceViewProps> = ({
 
           <button
             type="button"
-            onClick={onBack}
+            onClick={() => {
+              if (onNavigateToModule) {
+                onNavigateToModule('payout');
+              } else {
+                onBack();
+              }
+            }}
             className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs tracking-wider uppercase rounded-xl transition-colors cursor-pointer"
           >
-            VIEW FINANCIAL AID
+            VIEW IN FINANCIAL AID DISBURSEMENTS
           </button>
         </div>
       </div>

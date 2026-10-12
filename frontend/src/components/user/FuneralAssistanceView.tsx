@@ -21,6 +21,8 @@ interface FuneralAssistanceViewProps {
   onBack: () => void;
   onAddApplication: (app: ApplicationRecord) => void;
   darkMode?: boolean;
+  applications?: ApplicationRecord[];
+  onNavigateToModule?: (tab: string) => void;
 }
 
 // Utility to calculate age from Date of Birth and optional Date of Death string
@@ -174,6 +176,8 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
   onBack,
   onAddApplication,
   darkMode = true,
+  applications,
+  onNavigateToModule,
 }) => {
   const { language } = useLanguage();
   const isTagalog = language === 'Tagalog';
@@ -540,10 +544,16 @@ export const FuneralAssistanceView: React.FC<FuneralAssistanceViewProps> = ({
 
           <button
             type="button"
-            onClick={onBack}
+            onClick={() => {
+              if (onNavigateToModule) {
+                onNavigateToModule('payout');
+              } else {
+                onBack();
+              }
+            }}
             className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs tracking-wider uppercase rounded-xl transition-colors cursor-pointer"
           >
-            VIEW FINANCIAL AID
+            VIEW IN FINANCIAL AID DISBURSEMENTS
           </button>
         </div>
       </div>

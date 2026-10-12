@@ -63,6 +63,8 @@ interface TrainingProgramViewProps {
   onApplyCourse?: (courseTitle: string) => void;
   onAddApplication?: (app: ApplicationRecord) => void;
   darkMode?: boolean;
+  onNavigateToModule?: (tab: string) => void;
+  applications?: ApplicationRecord[];
 }
 
 export const getBatchTimelineInfo = (durationStr?: string, customDate?: Date) => {
@@ -145,8 +147,11 @@ export const getBatchTimelineInfo = (durationStr?: string, customDate?: Date) =>
 export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({ 
   onApplyCourse, 
   onAddApplication,
-  darkMode = true 
+  darkMode = true,
+  onNavigateToModule,
+  applications
 }) => {
+  const [submittedApp, setSubmittedApp] = useState<ApplicationRecord | null>(null);
   // Active Applications Tracking State
   const [existingApplications, setExistingApplications] = useState<any[]>([]);
 
@@ -446,28 +451,30 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
       console.warn("API post warning:", e);
     }
 
+    const newRecord: ApplicationRecord = {
+      referenceNo: refNo,
+      applicantName: 'JEFFERSON FERNANDO LEE',
+      serviceName: selectedCourseTitle || 'Bread and Pastry Making',
+      category: 'training',
+      assistanceType: 'Skills Training Program',
+      status: 'Pending Document Validation',
+      dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      amountOrType: 'Free Vocational Training & Orientation',
+      assignedSocialWorker: 'Vocational Training Officer, SSDD',
+      details: {
+        courseTitle: selectedCourseTitle,
+        highestEdu,
+        trainingPurpose
+      }
+    };
+
     if (onAddApplication) {
-      onAddApplication({
-        referenceNo: refNo,
-        applicantName: 'JEFFERSON FERNANDO LEE',
-        serviceName: selectedCourseTitle || 'Bread and Pastry Making',
-        category: 'training',
-        assistanceType: 'Skills Training Program',
-        status: 'Pending Document Validation',
-        dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        amountOrType: 'Free Vocational Training & Orientation',
-        assignedSocialWorker: 'Vocational Training Officer, SSDD',
-        details: {
-          courseTitle: selectedCourseTitle,
-          highestEdu,
-          trainingPurpose
-        }
-      });
+      onAddApplication(newRecord);
     }
 
+    setSubmittedApp(newRecord);
     setApplyStep(1);
     setIsEditingFromStep4(false);
-    setActiveTab(1);
   };
 
   const labelClass = `text-[10px] font-extrabold uppercase tracking-wider block mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`;
@@ -476,6 +483,80 @@ export const TrainingProgramView: React.FC<TrainingProgramViewProps> = ({
       ? 'bg-slate-900/80 border-slate-800 text-slate-200' 
       : 'bg-slate-100 border-slate-300 text-slate-800'
   }`;
+
+  if (submittedApp) {
+    return (
+      <div className="max-w-md mx-auto my-12 animate-in fade-in zoom-in-95 duration-300 font-['Plus_Jakarta_Sans',sans-serif]">
+        <div className={`p-6 sm:p-8 rounded-3xl border text-center space-y-6 shadow-2xl ${
+          darkMode ? 'bg-[#0b1426] border-slate-800/90 text-white' : 'bg-white border-slate-200 text-slate-900'
+        }`}>
+          {/* Top Info Icon */}
+          <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
+            <Info className="w-7 h-7" />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-xl font-extrabold tracking-tight text-white">
+              Application Successfully Submitted
+            </h3>
+            <p className={`text-xs max-w-sm mx-auto leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              Your application for {submittedApp.serviceName || 'Skills Training Program'} has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment.
+            </p>
+          </div>
+
+          {/* Details Container with Ref No & Date Filed */}
+          <div className={`p-4 rounded-2xl border text-left space-y-3 font-mono text-xs ${
+            darkMode ? 'bg-[#060c18] border-slate-800/80' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+              <span className={`text-[11px] font-sans font-semibold uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Application Reference No.:
+              </span>
+              <span className="font-bold text-blue-400 text-xs sm:text-sm">{submittedApp.referenceNo}</span>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 pt-2.5 border-t border-slate-800/60">
+              <span className={`text-[11px] font-sans font-semibold uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Date Filed:
+              </span>
+              <span className={`font-bold text-xs ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                {submittedApp.dateSubmitted || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => {
+                if (onNavigateToModule) {
+                  onNavigateToModule('history');
+                } else {
+                  setSubmittedApp(null);
+                  setActiveTab(1);
+                }
+              }}
+              className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <span>VIEW IN APPLICATION HISTORY</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSubmittedApp(null);
+                setActiveTab(1);
+              }}
+              className="w-full py-2.5 bg-transparent hover:bg-slate-800/40 text-slate-400 hover:text-white font-semibold text-xs rounded-xl transition-all"
+            >
+              Back to Training Courses
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

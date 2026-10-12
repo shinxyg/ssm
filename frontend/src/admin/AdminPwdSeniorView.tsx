@@ -522,9 +522,8 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
                 
                 {/* 1. PERSONAL INFORMATION */}
                 <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
-                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
-                    <User className="w-4 h-4" />
-                    <span>1. Personal Information (Verified Citizen Profile)</span>
+                  <h4 className="font-extrabold text-white uppercase tracking-wider text-xs border-b border-slate-800 pb-2">
+                    Personal Information (Verified Citizen Profile)
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-4">
                     <div>
@@ -582,9 +581,8 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
 
                 {/* 2. OCCUPATION & FINANCIAL INFORMATION */}
                 <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
-                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
-                    <Briefcase className="w-4 h-4" />
-                    <span>2. Occupation / Financial Information</span>
+                  <h4 className="font-extrabold text-white uppercase tracking-wider text-xs border-b border-slate-800 pb-2">
+                    Occupation / Financial Information
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4">
                     <div>
@@ -614,9 +612,8 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
 
                 {/* 3. EDUCATIONAL BACKGROUND */}
                 <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
-                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
-                    <FileText className="w-4 h-4" />
-                    <span>3. Educational Background</span>
+                  <h4 className="font-extrabold text-white uppercase tracking-wider text-xs border-b border-slate-800 pb-2">
+                    Educational Background
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4">
                     <div>
@@ -632,9 +629,8 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
 
                 {/* 4. FAMILY COMPOSITION */}
                 <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
-                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
-                    <Users className="w-4 h-4" />
-                    <span>4. Family Composition & Dependents</span>
+                  <h4 className="font-extrabold text-white uppercase tracking-wider text-xs border-b border-slate-800 pb-2">
+                    Family Composition & Dependents
                   </h4>
                   {famMembers.length === 0 ? (
                     <span className="text-slate-400 italic">No family members listed.</span>
@@ -666,9 +662,8 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
 
                 {/* 5. MONTHLY HOUSEHOLD EXPENSES */}
                 <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-2">
-                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
-                    <DollarSign className="w-4 h-4" />
-                    <span>5. Monthly Household Expenses</span>
+                  <h4 className="font-extrabold text-white uppercase tracking-wider text-xs border-b border-slate-800 pb-2">
+                    Monthly Household Expenses
                   </h4>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 block uppercase">Total Monthly Household Expenses</span>
@@ -680,9 +675,8 @@ export const AdminPwdSeniorView: React.FC<AdminPwdSeniorViewProps> = ({
 
                 {/* 6. QUALIFYING CATEGORY & ASSESSMENT DETAILS */}
                 <div className="p-4 rounded-xl bg-[#091122] border border-slate-800/90 space-y-3">
-                  <h4 className="font-extrabold text-blue-400 uppercase tracking-wider text-xs flex items-center gap-2 border-b border-slate-800 pb-2">
-                    <Home className="w-4 h-4" />
-                    <span>6. {isPwdApp ? 'Qualifying Category & Assessment Details' : 'Living Situation & Additional Information'}</span>
+                  <h4 className="font-extrabold text-white uppercase tracking-wider text-xs border-b border-slate-800 pb-2">
+                    {isPwdApp ? 'Qualifying Category & Assessment Details' : 'Living Situation & Additional Information'}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4">
                     {isPwdApp ? (

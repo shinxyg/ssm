@@ -381,9 +381,12 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
 
   const proofLabel = getProofOfIncomeLabel();
 
-  // Check if there is an active pending (ongoing) Solo Parent application
+  // Check if there is an active pending (ongoing) Solo Parent Financial Subsidy application
   const activePendingApp = applications?.find(app => {
-    if (app.category !== 'soloparent') return false;
+    const isSubsidy = (app.referenceNo || '').startsWith('SP-SUBSIDY-') || 
+      (app.referenceNo || '').startsWith('SP-') || 
+      (app.serviceName || '').toLowerCase().includes('subsidy');
+    if (!isSubsidy) return false;
     const st = (app.status || '').toUpperCase();
     const isFinished = 
       st.includes('RELEASED') || 
@@ -457,7 +460,7 @@ export const SoloParentAssistanceView: React.FC<SoloParentAssistanceViewProps> =
             }}
             className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
           >
-            <span>VIEW IN FINANCIAL AID / APPLICATION HISTORY</span>
+            <span>VIEW IN FINANCIAL AID DISBURSEMENTS</span>
           </button>
         </div>
       </div>

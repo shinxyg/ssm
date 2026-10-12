@@ -972,6 +972,7 @@ export default function App() {
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
               applications={applications}
+              onNavigateToModule={(tab) => setActiveTab(tab)}
             />
           ) : activeTab === 'aics-funeral' ? (
             /* Dedicated QC Funeral Assistance 4-Step Form View */
@@ -979,6 +980,8 @@ export default function App() {
               onBack={() => setActiveTab('aics')}
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
+              applications={applications}
+              onNavigateToModule={(tab) => setActiveTab(tab)}
             />
           ) : activeTab === 'aics-educational' ? (
             /* Dedicated QC Educational Assistance 4-Step Form View */
@@ -1006,6 +1009,8 @@ export default function App() {
               onBack={() => setActiveTab('pwd')}
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
+              onNavigateToModule={(tab) => setActiveTab(tab)}
+              applications={applications}
             />
           ) : activeTab === 'senior-form' ? (
             /* Dedicated Senior Citizen Social Welfare Assistance 4-Step Form View */
@@ -1044,6 +1049,8 @@ export default function App() {
               onBack={() => setActiveTab('help-guide')}
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
+              onNavigateToModule={(tab) => setActiveTab(tab)}
+              applications={applications}
             />
           ) : activeTab === 'skills-training' ? (
             /* Training Program View */
@@ -1051,8 +1058,10 @@ export default function App() {
               onApplyCourse={(courseTitle) => handleApplyFromModule(courseTitle, `Free skills and vocational training course for ${courseTitle}.`)}
               onAddApplication={handleAddApplication}
               darkMode={darkMode}
+              onNavigateToModule={(tab) => setActiveTab(tab)}
+              applications={applications}
             />
-          ) : activeTab === 'payout' ? (
+          ) : activeTab === 'payout' || activeTab === 'disbursements' ? (
             /* Dedicated Financial Aid Disbursement View connecting all 4 Modules */
             <DisbursementView
               darkMode={darkMode}

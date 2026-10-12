@@ -439,7 +439,7 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                           {app.applicant_name}
                         </td>
                         <td className="py-4 px-6 font-bold">
-                          <span className={app.sector === 'Skills Training' || app.reference_no.startsWith('TRN-') ? 'text-blue-500 font-extrabold' : app.assistance_type === 'Materials / Supplies' ? (darkMode ? 'text-slate-200' : 'text-slate-700') : 'text-emerald-500'}>
+                          <span className={app.sector === 'Skills Training' || app.reference_no.startsWith('TRN-') ? 'text-blue-500 font-extrabold' : app.assistance_type === 'Materials / Supplies' ? (darkMode ? 'text-slate-200' : 'text-slate-700') : (darkMode ? 'text-white' : 'text-slate-900')}>
                             {app.assistance_type || 'Financial / Capital Assistance'}
                           </span>
                           {(app.reference_no.startsWith('TRN-') || app.sector === 'Skills Training') ? (
@@ -513,7 +513,7 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                   {/* STEP 1: SELECTED COURSE DETAILS (MATCHING PIC 2) */}
                   <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                     <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                      <span>STEP 1 — SELECTED COURSE DETAILS</span>
+                      <span>SELECTED COURSE DETAILS</span>
                       <span className="text-[9px] font-mono text-slate-400">INPUTTED BY USER</span>
                     </span>
 
@@ -547,7 +547,7 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                   {/* STEP 2: APPLICANT PERSONAL INFO, EDUCATION & TRAINING PURPOSE (MATCHING PIC 3 & 4) */}
                   <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-4">
                     <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                      <span>STEP 2 — APPLICANT PERSONAL INFORMATION & TRAINING DETAILS</span>
+                      <span>APPLICANT PERSONAL INFORMATION & TRAINING DETAILS</span>
                       <span className="text-[9px] font-mono text-slate-400">VERIFIED QCITIZEN PROFILE</span>
                     </span>
 
@@ -656,7 +656,7 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                   <div className="p-4 rounded-xl bg-[#091124] border border-slate-800 space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
                       <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider">
-                        STEP 3 — REQUIREMENTS / SUPPORTING DOCUMENTS (CLICK TO INSPECT)
+                        REQUIREMENTS / SUPPORTING DOCUMENTS (CLICK TO INSPECT)
                       </span>
                     </div>
 
@@ -758,13 +758,13 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                   {/* STEP 1: SECTOR / COURSE VERIFICATION (LIVELIHOOD) */}
                   <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-3">
                     <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                      <span>STEP 1 — LIVELIHOOD SECTOR & BUSINESS VERIFICATION</span>
+                      <span>LIVELIHOOD SECTOR & BUSINESS VERIFICATION</span>
                       <span className="text-[9px] font-mono text-slate-400">INPUTTED BY USER</span>
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <span className="text-slate-400 text-[10px] font-semibold uppercase block">Sector Classification</span>
-                        <div className="font-extrabold text-blue-400 mt-0.5 text-xs">{selectedApp.sector || 'N/A'}</div>
+                        <div className="font-extrabold text-white mt-0.5 text-xs">{selectedApp.sector || 'N/A'}</div>
                       </div>
                       <div>
                         <span className="text-slate-400 text-[10px] font-semibold uppercase block">Employment Status</span>
@@ -772,13 +772,13 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                       </div>
                       <div>
                         <span className="text-slate-400 text-[10px] font-semibold uppercase block">Has Existing Business?</span>
-                        <div className="font-bold text-emerald-400 mt-0.5 text-xs">{selectedApp.has_existing_business || 'No'}</div>
+                        <div className="font-bold text-white mt-0.5 text-xs">{selectedApp.has_existing_business || 'No'}</div>
                       </div>
                       {selectedApp.has_existing_business === 'Yes' && (
                         <>
                           <div>
                             <span className="text-slate-400 text-[10px] font-semibold uppercase block">Type of Business</span>
-                            <div className="font-bold text-blue-400 mt-0.5 text-xs">{selectedApp.type_of_business || 'N/A'}</div>
+                            <div className="font-bold text-white mt-0.5 text-xs">{selectedApp.type_of_business || 'N/A'}</div>
                           </div>
                           {selectedApp.type_of_business === 'Other' && (
                             <div className="sm:col-span-2">
@@ -794,7 +794,7 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                   {/* STEP 2: APPLICANT PERSONAL INFORMATION & ASSISTANCE DETAILS (LIVELIHOOD) */}
                   <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800/90 space-y-4">
                     <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center justify-between">
-                      <span>STEP 2 — APPLICANT PERSONAL INFORMATION & ASSISTANCE TYPE</span>
+                      <span>APPLICANT PERSONAL INFORMATION & ASSISTANCE TYPE</span>
                       <span className="text-[9px] font-mono text-slate-400">VERIFIED QCITIZEN PROFILE</span>
                     </span>
 
@@ -863,12 +863,12 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <span className="text-slate-400 text-[9px] uppercase font-semibold block">Requested Assistance Type:</span>
-                          <div className={`font-bold text-xs mt-0.5 ${selectedApp.assistance_type === 'Materials / Supplies' ? 'text-slate-200' : 'text-emerald-400'}`}>{selectedApp.assistance_type || 'Financial / Capital Assistance'}</div>
+                          <div className="font-bold text-white text-xs mt-0.5">{selectedApp.assistance_type || 'Financial / Capital Assistance'}</div>
                         </div>
                         {selectedApp.assistance_type !== 'Materials / Supplies' && (
                           <div>
                             <span className="text-slate-400 text-[9px] uppercase font-semibold block">Approved Capital Grant:</span>
-                            <div className="font-black text-emerald-400 text-xs mt-0.5">₱{(selectedApp.amount || 15000).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                            <div className="font-black text-white text-xs mt-0.5">₱{(selectedApp.amount || 15000).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
                           </div>
                         )}
                       </div>
@@ -904,7 +904,7 @@ export const AdminLivelihoodView: React.FC<{ darkMode?: boolean }> = ({ darkMode
                   <div className="p-4 rounded-xl bg-[#091124] border border-slate-800 space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
                       <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider">
-                        STEP 3 — UPLOADED REQUIREMENTS (CLICK TO INSPECT)
+                        UPLOADED REQUIREMENTS (CLICK TO INSPECT)
                       </span>
                     </div>
 

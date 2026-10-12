@@ -44,7 +44,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpen, setIsOpen }) => {
-  const [livelihoodOpen, setLivelihoodOpen] = useState<boolean>(true);
+  const [livelihoodOpen, setLivelihoodOpen] = useState<boolean>(false);
   const { t } = useLanguage();
 
   const mainNavItems = [

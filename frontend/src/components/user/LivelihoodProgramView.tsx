@@ -28,12 +28,16 @@ interface LivelihoodProgramViewProps {
   onBack?: () => void;
   onAddApplication?: (app: ApplicationRecord) => void;
   darkMode?: boolean;
+  onNavigateToModule?: (tab: string) => void;
+  applications?: ApplicationRecord[];
 }
 
 export const LivelihoodProgramView: React.FC<LivelihoodProgramViewProps> = ({ 
   onBack, 
   onAddApplication, 
-  darkMode = true 
+  darkMode = true,
+  onNavigateToModule,
+  applications
 }) => {
   // State to toggle between 1 Livelihood Module Card (false) and 4-Step Application Form (true)
   const [isApplying, setIsApplying] = useState<boolean>(false);
@@ -249,25 +253,111 @@ export const LivelihoodProgramView: React.FC<LivelihoodProgramViewProps> = ({
         body: JSON.stringify(payload)
       });
       const savedData = await res.json();
+      const newRecord = {
+        id: savedData.reference_no || refNo,
+        referenceNo: savedData.reference_no || refNo,
+        serviceName: 'Livelihood Capital Assistance Grant',
+        applicantName: `${firstName} ${lastName}`,
+        category: 'livelihood',
+        status: 'Pending Document Validation',
+        dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        details: payload.details
+      } as any;
       if (onAddApplication) {
-        onAddApplication({
-          id: savedData.reference_no || refNo,
-          referenceNo: savedData.reference_no || refNo,
-          serviceName: 'Livelihood Capital Assistance Grant',
-          applicantName: `${firstName} ${lastName}`,
-          category: 'livelihood',
-          status: 'Pending Document Validation',
-          dateSubmitted: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          details: payload.details
-        } as any);
+        onAddApplication(newRecord);
       }
+      setSubmittedApp(newRecord);
     } catch (err) {
       console.error('Error submitting livelihood application:', err);
     }
 
     setIsApplying(false);
-    if (onBack) onBack();
   };
+
+  // Check if there is an active pending Livelihood application in global applications list
+  const activePendingApp = applications?.find(app => {
+    const isThisModule = (app.referenceNo || '').startsWith('LVH-') || 
+      (app.serviceName || '').toLowerCase().includes('livelihood') ||
+      (app.category || '').toLowerCase().includes('livelihood');
+    if (!isThisModule) return false;
+    const st = (app.status || '').toUpperCase();
+    const isFinished = 
+      st.includes('RELEASED') || 
+      st.includes('COMPLETED') || 
+      st.includes('REJECTED') || 
+      st.includes('DISAPPROVED');
+    return !isFinished;
+  });
+
+  const submittedAppInList = applications?.find(app => app.referenceNo === submittedApp?.referenceNo);
+  const isSubmittedAppFinished = submittedAppInList ? (
+    (submittedAppInList.status || '').toUpperCase().includes('RELEASED') ||
+    (submittedAppInList.status || '').toUpperCase().includes('COMPLETED') ||
+    (submittedAppInList.status || '').toUpperCase().includes('REJECTED') ||
+    (submittedAppInList.status || '').toUpperCase().includes('DISAPPROVED')
+  ) : false;
+
+  const targetApp = isSubmittedAppFinished ? null : (submittedApp || activePendingApp || null);
+
+  if (targetApp) {
+    return (
+      <div className="max-w-md mx-auto my-12 animate-in fade-in zoom-in-95 duration-300 font-['Plus_Jakarta_Sans',sans-serif]">
+        <div className={`p-6 sm:p-8 rounded-3xl border text-center space-y-6 shadow-2xl ${
+          darkMode ? 'bg-[#0b1426] border-slate-800/90 text-white' : 'bg-white border-slate-200 text-slate-900'
+        }`}>
+          {/* Top Info Icon */}
+          <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
+            <Info className="w-7 h-7" />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-xl font-extrabold tracking-tight text-white">
+              Application Successfully Submitted
+            </h3>
+            <p className={`text-xs max-w-sm mx-auto leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              Your application for Livelihood Capital Assistance Grant has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment.
+            </p>
+          </div>
+
+          {/* Details Container with Ref No & Date Filed */}
+          <div className={`p-4 rounded-2xl border text-left space-y-3 font-mono text-xs ${
+            darkMode ? 'bg-[#060c18] border-slate-800/80' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+              <span className={`text-[11px] font-sans font-semibold uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Application Reference No.:
+              </span>
+              <span className="font-bold text-blue-400 text-xs sm:text-sm">{targetApp.referenceNo}</span>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 pt-2.5 border-t border-slate-800/60">
+              <span className={`text-[11px] font-sans font-semibold uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Date Filed:
+              </span>
+              <span className={`font-bold text-xs ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                {targetApp.dateSubmitted || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+          </div>
+
+          {/* Full Width Primary Blue Action Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onNavigateToModule) {
+                onNavigateToModule('payout');
+              } else if (onBack) {
+                onBack();
+              }
+            }}
+            className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+          >
+            <span>VIEW IN FINANCIAL AID DISBURSEMENTS</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">

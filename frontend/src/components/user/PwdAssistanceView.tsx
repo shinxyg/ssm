@@ -22,6 +22,8 @@ interface PwdAssistanceViewProps {
   onBack: () => void;
   onAddApplication: (app: ApplicationRecord) => void;
   darkMode?: boolean;
+  onNavigateToModule?: (tab: string) => void;
+  applications?: ApplicationRecord[];
 }
 
 // Utility to calculate age from Date of Birth string
@@ -42,9 +44,13 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
   onBack,
   onAddApplication,
   darkMode = true,
+  onNavigateToModule,
+  applications,
 }) => {
   const { language, t } = useLanguage();
   const isTagalog = language === 'Tagalog';
+
+  const [submittedApp, setSubmittedApp] = useState<ApplicationRecord | null>(null);
 
   // Stepper state (1: COMPLETE CHECKLIST, 2: PERSONAL INFORMATION, 3: UPLOAD DOCUMENTS, 4: REVIEW & SUBMIT)
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -270,7 +276,7 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
     };
 
     onAddApplication(newAppRecord);
-    onBack();
+    setSubmittedApp(newAppRecord);
   };
 
   // Shared Theme Styling Tokens for High-Contrast Readability
@@ -305,6 +311,91 @@ export const PwdAssistanceView: React.FC<PwdAssistanceViewProps> = ({
   const backBtnClass = darkMode 
     ? 'px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-extrabold tracking-wider uppercase border border-slate-700 transition-all' 
     : 'px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl text-xs font-extrabold tracking-wider uppercase border border-slate-300 transition-all';
+
+  // Check if there is an active pending PWD application in global applications list
+  const activePendingApp = applications?.find(app => {
+    const isThisModule = (app.referenceNo || '').startsWith('QC-PWD-') || 
+      (app.referenceNo || '').startsWith('PWD-') || 
+      (app.serviceName || '').toLowerCase().includes('pwd');
+    if (!isThisModule) return false;
+    const st = (app.status || '').toUpperCase();
+    const isFinished = 
+      st.includes('RELEASED') || 
+      st.includes('COMPLETED') || 
+      st.includes('REJECTED') || 
+      st.includes('DISAPPROVED');
+    return !isFinished;
+  });
+
+  const submittedAppInList = applications?.find(app => app.referenceNo === submittedApp?.referenceNo);
+  const isSubmittedAppFinished = submittedAppInList ? (
+    (submittedAppInList.status || '').toUpperCase().includes('RELEASED') ||
+    (submittedAppInList.status || '').toUpperCase().includes('COMPLETED') ||
+    (submittedAppInList.status || '').toUpperCase().includes('REJECTED') ||
+    (submittedAppInList.status || '').toUpperCase().includes('DISAPPROVED')
+  ) : false;
+
+  const targetApp = isSubmittedAppFinished ? null : (submittedApp || activePendingApp || null);
+
+  if (targetApp) {
+    return (
+      <div className="max-w-md mx-auto my-12 animate-in fade-in zoom-in-95 duration-300 font-['Plus_Jakarta_Sans',sans-serif]">
+        <div className={`p-6 sm:p-8 rounded-3xl border text-center space-y-6 shadow-2xl ${
+          darkMode ? 'bg-[#0b1426] border-slate-800/90 text-white' : 'bg-white border-slate-200 text-slate-900'
+        }`}>
+          {/* Top Info Icon */}
+          <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
+            <Info className="w-7 h-7" />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-xl font-extrabold tracking-tight text-white">
+              Application Successfully Submitted
+            </h3>
+            <p className={`text-xs max-w-sm mx-auto leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+              Your application for PWD Social Assistance Program has been successfully submitted and is currently pending review. Please wait for a Social Worker's assessment.
+            </p>
+          </div>
+
+          {/* Details Container with Ref No & Date Filed */}
+          <div className={`p-4 rounded-2xl border text-left space-y-3 font-mono text-xs ${
+            darkMode ? 'bg-[#060c18] border-slate-800/80' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+              <span className={`text-[11px] font-sans font-semibold uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Application Reference No.:
+              </span>
+              <span className="font-bold text-blue-400 text-xs sm:text-sm">{targetApp.referenceNo}</span>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 pt-2.5 border-t border-slate-800/60">
+              <span className={`text-[11px] font-sans font-semibold uppercase tracking-wider ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                Date Filed:
+              </span>
+              <span className={`font-bold text-xs ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                {targetApp.dateSubmitted || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+          </div>
+
+          {/* Full Width Primary Blue Action Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onNavigateToModule) {
+                onNavigateToModule('payout');
+              } else {
+                onBack();
+              }
+            }}
+            className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+          >
+            <span>VIEW IN FINANCIAL AID DISBURSEMENTS</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">

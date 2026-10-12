@@ -151,33 +151,12 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
         </div>
       </div>
 
-      {/* VIEW TABS: ACTIVE VS HISTORY */}
+      {/* VIEW TABS: ACTIVE FINANCIAL AID */}
       <div className="flex items-center gap-3 border-b border-slate-800 pb-2">
-        <button
-          type="button"
-          onClick={() => setActiveViewTab('ACTIVE')}
-          className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
-            activeViewTab === 'ACTIVE'
-              ? 'bg-blue-600 text-white shadow-xl border border-blue-400/40'
-              : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
-          }`}
-        >
+        <div className="px-5 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2 bg-blue-600 text-white shadow-xl border border-blue-400/40">
           <Clock className="w-4 h-4" />
           <span>Active Financial Aid ({activeApplications.length})</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveViewTab('HISTORY')}
-          className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
-            activeViewTab === 'HISTORY'
-              ? 'bg-purple-600 text-white shadow-xl border border-purple-400/40'
-              : 'bg-[#0e1726] text-slate-400 hover:text-slate-200 border border-slate-800'
-          }`}
-        >
-          <History className="w-4 h-4" />
-          <span>Application History ({historyApplications.length})</span>
-        </button>
+        </div>
       </div>
 
       {/* MODULE FILTER PILLS */}
@@ -286,7 +265,7 @@ export const DisbursementView: React.FC<DisbursementViewProps> = ({
               const isApprovedByAdmin = statusText === 'APPROVED BY ADMIN' || statusText === 'Approved by Admin';
               const isInterviewScheduled = statusText === 'INTERVIEW SCHEDULED' || statusText === 'Interview Scheduled' || statusText === 'Approved for Orientation';
               const isApproved = statusText === 'APPROVED' || statusText === 'Approved' || statusText === 'Approved by Social Worker';
-              const isReleased = statusText === 'RELEASED / COMPLETED' || statusText === 'COMPLETED' || statusText === 'Completed' || statusText === 'Released';
+              const isReleased = statusText === 'RELEASED / COMPLETED' || statusText === 'COMPLETED' || statusText === 'Completed' || statusText === 'Released' || (isCwProtection && (statusText.includes('APPROVED') || statusText.includes('COMPLETED')));
               const isRejected = statusText === 'REJECTED' || statusText === 'Rejected' || statusText === 'Disapproved' || statusText === 'DISAPPROVED';
 
               const formatScheduleDate = (dStr?: string) => {
