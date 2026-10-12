@@ -38,7 +38,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
 
   // Account Information States
   const [email, setEmail] = useState<string>(
-    userRole === 'admin' ? 'admin@quezoncity.gov.ph' : 'jeffersonlee1234@gmail.com'
+    userRole === 'admin' ? 'admin@gmail.com' : 'jeffersonlee1234@gmail.com'
   );
   const [currentPassword, setCurrentPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
@@ -48,6 +48,8 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
   const [showNewPass, setShowNewPass] = useState<boolean>(false);
   const [showConfirmPass, setShowConfirmPass] = useState<boolean>(false);
   const [passSaveMsg, setPassSaveMsg] = useState<string | null>(null);
+  const [passErrorMsg, setPassErrorMsg] = useState<string | null>(null);
+  const [isSavingPass, setIsSavingPass] = useState<boolean>(false);
 
   // Personal Information States
   const [firstName, setFirstName] = useState<string>('JEFFERSON');
@@ -115,13 +117,85 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
     }
   }, []);
 
-  const handlePasswordSave = (e: React.FormEvent) => {
+  const handlePasswordSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPassSaveMsg('Password successfully updated!');
-    setTimeout(() => setPassSaveMsg(null), 3000);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+    setPassSaveMsg(null);
+    setPassErrorMsg(null);
+
+    const cleanCurrent = currentPassword.trim();
+    const cleanNew = newPassword.trim();
+    const cleanConfirm = confirmPassword.trim();
+
+    if (!cleanCurrent) {
+      setPassErrorMsg('Please enter your current password.');
+      return;
+    }
+
+    if (!cleanNew) {
+      setPassErrorMsg('Please enter a new password.');
+      return;
+    }
+
+    const hasMinLength = cleanNew.length >= 8;
+    const hasUppercase = /[A-Z]/.test(cleanNew);
+    const hasNumber = /[0-9]/.test(cleanNew);
+    const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(cleanNew);
+
+    if (!hasMinLength) {
+      setPassErrorMsg('New password must be at least 8 characters long.');
+      return;
+    }
+
+    if (!hasUppercase) {
+      setPassErrorMsg('New password must contain at least one uppercase letter (A-Z).');
+      return;
+    }
+
+    if (!hasNumber) {
+      setPassErrorMsg('New password must contain at least one number (0-9).');
+      return;
+    }
+
+    if (!hasSpecial) {
+      setPassErrorMsg('New password must contain at least one special character (!@#$%^&* etc.).');
+      return;
+    }
+
+    if (cleanNew !== cleanConfirm) {
+      setPassErrorMsg('New password and confirm password do not match.');
+      return;
+    }
+
+    setIsSavingPass(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email || (userRole === 'admin' ? 'admin@gmail.com' : 'jeffersonlee1234@gmail.com'),
+          currentPassword: cleanCurrent,
+          newPassword: cleanNew,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setPassSaveMsg(data.message || 'Password successfully updated! You can now use your new password when logging in.');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => setPassSaveMsg(null), 5000);
+      } else {
+        setPassErrorMsg(data.message || 'Failed to update password. Please check your current password.');
+      }
+    } catch (err) {
+      console.error('Change password error:', err);
+      setPassErrorMsg('Unable to connect to the server. Please ensure the backend is running and try again.');
+    } finally {
+      setIsSavingPass(false);
+    }
   };
 
   const isSystemAdmin = userRole === 'admin';
@@ -238,14 +312,22 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </div>
                 )}
 
+                {passErrorMsg && (
+                  <div className="p-3 bg-rose-950/80 border border-rose-500/50 rounded-xl text-xs text-rose-300 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>{passErrorMsg}</span>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <label className={`text-xs font-bold block ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Current Password</label>
                   <div className="relative">
                     <input
                       type={showCurrentPass ? 'text' : 'password'}
                       value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      onChange={(e) => { setCurrentPassword(e.target.value); if (passErrorMsg) setPassErrorMsg(null); }}
                       placeholder="Enter current password"
+                      disabled={isSavingPass}
                       className={`w-full px-4 py-3 border rounded-xl text-xs pr-10 ${
                         darkMode ? 'bg-[#091122] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
                       }`}
@@ -267,8 +349,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                       <input
                         type={showNewPass ? 'text' : 'password'}
                         value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
+                        onChange={(e) => { setNewPassword(e.target.value); if (passErrorMsg) setPassErrorMsg(null); }}
                         placeholder="Min. 8 characters"
+                        disabled={isSavingPass}
                         className={`w-full px-4 py-3 border rounded-xl text-xs pr-10 ${
                           darkMode ? 'bg-[#091122] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
                         }`}
@@ -289,8 +372,9 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                       <input
                         type={showConfirmPass ? 'text' : 'password'}
                         value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        onChange={(e) => { setConfirmPassword(e.target.value); if (passErrorMsg) setPassErrorMsg(null); }}
                         placeholder="Repeat new password"
+                        disabled={isSavingPass}
                         className={`w-full px-4 py-3 border rounded-xl text-xs pr-10 ${
                           darkMode ? 'bg-[#091122] border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
                         }`}
@@ -306,13 +390,80 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </div>
                 </div>
 
+                {/* Password Requirements Live Checklist */}
+                <div className={`p-3.5 rounded-xl border text-xs space-y-2.5 transition-all ${
+                  darkMode ? 'bg-[#091122]/90 border-slate-800' : 'bg-slate-100/90 border-slate-200'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[11px] font-extrabold uppercase tracking-wider ${
+                      darkMode ? 'text-slate-400' : 'text-slate-600'
+                    }`}>
+                      Password Requirements
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword)
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                        : darkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                      {newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword) ? 'All Met' : 'Required'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                    <div className={`flex items-center gap-2 transition-all ${
+                      newPassword.length >= 8 ? 'text-emerald-400 font-semibold' : darkMode ? 'text-slate-400' : 'text-slate-500'
+                    }`}>
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${
+                        newPassword.length >= 8 ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : darkMode ? 'border-slate-700 bg-slate-800/60 text-slate-600' : 'border-slate-300 bg-white text-slate-400'
+                      }`}>
+                        <Check className="w-2.5 h-2.5" />
+                      </div>
+                      <span>At least 8 characters</span>
+                    </div>
+
+                    <div className={`flex items-center gap-2 transition-all ${
+                      /[A-Z]/.test(newPassword) ? 'text-emerald-400 font-semibold' : darkMode ? 'text-slate-400' : 'text-slate-500'
+                    }`}>
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${
+                        /[A-Z]/.test(newPassword) ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : darkMode ? 'border-slate-700 bg-slate-800/60 text-slate-600' : 'border-slate-300 bg-white text-slate-400'
+                      }`}>
+                        <Check className="w-2.5 h-2.5" />
+                      </div>
+                      <span>At least 1 uppercase letter (A-Z)</span>
+                    </div>
+
+                    <div className={`flex items-center gap-2 transition-all ${
+                      /[0-9]/.test(newPassword) ? 'text-emerald-400 font-semibold' : darkMode ? 'text-slate-400' : 'text-slate-500'
+                    }`}>
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${
+                        /[0-9]/.test(newPassword) ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : darkMode ? 'border-slate-700 bg-slate-800/60 text-slate-600' : 'border-slate-300 bg-white text-slate-400'
+                      }`}>
+                        <Check className="w-2.5 h-2.5" />
+                      </div>
+                      <span>At least 1 number (0-9)</span>
+                    </div>
+
+                    <div className={`flex items-center gap-2 transition-all ${
+                      /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword) ? 'text-emerald-400 font-semibold' : darkMode ? 'text-slate-400' : 'text-slate-500'
+                    }`}>
+                      <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 border ${
+                        /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword) ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : darkMode ? 'border-slate-700 bg-slate-800/60 text-slate-600' : 'border-slate-300 bg-white text-slate-400'
+                      }`}>
+                        <Check className="w-2.5 h-2.5" />
+                      </div>
+                      <span>At least 1 special char (!@#$%^&*)</span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="pt-2 flex justify-end">
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl border border-blue-400/30 flex items-center gap-2"
+                    disabled={isSavingPass}
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl border border-blue-400/30 flex items-center gap-2 cursor-pointer transition-all"
                   >
                     <Key className="w-3.5 h-3.5" />
-                    <span>Save New Password</span>
+                    <span>{isSavingPass ? 'Saving...' : 'Save New Password'}</span>
                   </button>
                 </div>
               </form>

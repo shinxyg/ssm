@@ -83,7 +83,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
   const [applications, setApplications] = useState<SoloParentApplication[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'SUBSIDY' | 'EDUCATIONAL'>('ALL');
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'SUBSIDY' | 'EDUCATIONAL' | 'CHILD_WELFARE'>('ALL');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
   // Selected application for detail / inspection modal
@@ -167,7 +167,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             combined.push({
               id: app.id,
               reference_no: app.reference_no,
-              service_name: app.service_name || 'Child Welfare Services Aid',
+              service_name: (app.reference_no || '').startsWith('QC-CW') ? 'Child Welfare Services' : (app.service_name || 'Child Welfare Services'),
               applicant_name: app.applicant_name,
               first_name: app.first_name,
               middle_name: app.middle_name,
@@ -319,6 +319,7 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
 
       if (categoryFilter === 'SUBSIDY' && !(lowerService.includes('sp-subsidy') || lowerCategory.includes('unmarried') || lowerCategory.includes('parent'))) return false;
       if (categoryFilter === 'EDUCATIONAL' && !(lowerService.includes('edu') || lowerCategory.includes('educational'))) return false;
+      if (categoryFilter === 'CHILD_WELFARE' && !(lowerService.includes('qc-cw') || lowerCategory.includes('child welfare') || (app.service_name || '').toLowerCase().includes('child welfare'))) return false;
 
       const st = (app.status || '').toUpperCase();
       const isApproved = st.includes('APPROVED') || st.includes('RELEASED') || st.includes('COMPLETED') || st.includes('PAYOUT') || st.includes('SCHEDULED') || st.includes('INTERVIEW');
@@ -425,6 +426,17 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
             >
               EDUCATIONAL GRANT
             </button>
+            <button
+              type="button"
+              onClick={() => setCategoryFilter('CHILD_WELFARE')}
+              className={`px-3 py-1.5 rounded-xl font-extrabold transition-all text-xs cursor-pointer ${
+                categoryFilter === 'CHILD_WELFARE'
+                  ? 'bg-[#1d4ed8] text-white shadow-md border border-blue-400/40'
+                  : darkMode ? 'bg-[#121c2e] text-slate-400 hover:text-slate-200 border border-slate-800' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-300 hover:bg-slate-50 shadow-sm'
+              }`}
+            >
+              CHILD WELFARE
+            </button>
           </div>
 
           <div className={`flex items-center gap-2 border-l pl-4 flex-shrink-0 ${darkMode ? 'border-slate-800/80' : 'border-slate-300'}`}>
@@ -518,7 +530,9 @@ export const AdminSoloChildView: React.FC<{ darkMode?: boolean }> = ({ darkMode 
                           {app.applicant_name || `${app.first_name || 'JEFFERSON'} ${app.last_name || 'LEE'}`}
                         </td>
                         <td className={`py-4 px-6 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                          {(app.reference_no || '').startsWith('QC-SP-EDU') 
+                          {(app.reference_no || '').startsWith('QC-CW') 
+                            ? 'Child Welfare Services'
+                            : (app.reference_no || '').startsWith('QC-SP-EDU') 
                             ? 'Solo Parent Educational Assistance Program' 
                             : (app.reference_no || '').startsWith('QC-EDU') 
                             ? 'Educational Assistance for Indigent Children & Youth' 

@@ -1100,9 +1100,9 @@ app.put('/api/child-welfare/applications/:id/status', async (req, res) => {
     }
 
     // Sync to appointments table when approved / scheduled
-    if (status === 'APPROVED BY ADMIN' || status === 'APPROVED' || (status || '').includes('Approved') || (status || '').includes('APPROVED') || (status || '').includes('Released') || appointmentDate) {
-      const isCompleted = status === 'Released & Archived' || status === 'Approved' || status === 'APPROVED' || status === 'Ready for Payout' || status === 'Passed / Completed';
-      const apptStatus = isCompleted ? (status === 'Approved' || status === 'APPROVED' ? 'Released & Archived' : status) : (appointmentDate ? 'Interview Scheduled' : 'Pending Schedule');
+    if (status === 'APPROVED BY ADMIN' || status === 'APPROVED' || (status || '').includes('Approved') || (status || '').includes('APPROVED') || (status || '').includes('Released') || (status || '').includes('COMPLETED') || appointmentDate) {
+      const isCompleted = status === 'Released & Archived' || status === 'Approved' || status === 'APPROVED' || (status || '').includes('COMPLETED') || status === 'Ready for Payout' || status === 'Passed / Completed';
+      const apptStatus = isCompleted ? ((status || '').includes('COMPLETED') ? 'Approved / Completed' : 'Released & Archived') : (appointmentDate ? 'Interview Scheduled' : 'Pending Schedule');
       try {
         const checkAppt = await pool.query(`SELECT id FROM appointments WHERE reference_no = $1`, [row.reference_no]);
         if (checkAppt.rows.length > 0) {
@@ -2331,24 +2331,211 @@ app.delete('/api/reset-data', async (req, res) => {
   }
 });
 
-// POST /api/login - Authenticate user or admin
+// In-memory anti-spam IP tracking (protects against random/fake email spam)
+const ipLockoutMap = new Map();
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return req.socket?.remoteAddress || '127.0.0.1';
+}
+
+// GET /api/auth/lockout-status - Check if account or IP is currently locked
+app.get('/api/auth/lockout-status', async (req, res) => {
+  const { email } = req.query;
+  const clientIp = getClientIp(req);
+  const now = new Date();
+  const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+  const isDifferentDay = (d1, d2) => d1.getFullYear() !== d2.getFullYear() || d1.getMonth() !== d2.getMonth() || d1.getDate() !== d2.getDate();
+
+  // Check IP-based lockout first (protects against random email spam)
+  const ipData = ipLockoutMap.get(clientIp);
+  if (ipData) {
+    if (ipData.lastAttempt && (isDifferentDay(now, new Date(ipData.lastAttempt)) || now.getTime() - new Date(ipData.lastAttempt).getTime() >= TWENTY_FOUR_HOURS_MS)) {
+      if (!ipData.lockoutUntil || ipData.lockoutUntil <= now) {
+        ipLockoutMap.delete(clientIp);
+      }
+    }
+  }
+
+  const activeIpData = ipLockoutMap.get(clientIp);
+  if (activeIpData && activeIpData.lockoutUntil && activeIpData.lockoutUntil > now) {
+    const remainingSeconds = Math.ceil((activeIpData.lockoutUntil.getTime() - now.getTime()) / 1000);
+    return res.json({
+      isLocked: true,
+      lockoutStage: activeIpData.stage || 1,
+      lockoutUntil: activeIpData.lockoutUntil.toISOString(),
+      remainingSeconds,
+      message: activeIpData.stage >= 4
+        ? 'Maximum login attempts exceeded. Access is locked for 24 hours calculated from the exact time this account was locked.'
+        : 'Too many failed login attempts. Please wait for the lockout timer to expire.'
+    });
+  }
+
+  if (!email) return res.json({ isLocked: false });
+
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const result = await pool.query('SELECT id, failed_login_attempts, lockout_stage, lockout_until, last_failed_attempt FROM users WHERE LOWER(email) = $1;', [cleanEmail]);
+    if (result.rows.length === 0) return res.json({ isLocked: false });
+
+    const user = result.rows[0];
+
+    // Daily reset check: If a new calendar day or 24 hours have elapsed since the last failed attempt and no active lockout, reset attempts to 0!
+    if (user.last_failed_attempt && (isDifferentDay(now, new Date(user.last_failed_attempt)) || now.getTime() - new Date(user.last_failed_attempt).getTime() >= TWENTY_FOUR_HOURS_MS)) {
+      if (!user.lockout_until || new Date(user.lockout_until) <= now) {
+        await pool.query(
+          'UPDATE users SET failed_login_attempts = 0, lockout_stage = 0, lockout_until = NULL, last_failed_attempt = NULL WHERE id = $1;',
+          [user.id]
+        );
+        return res.json({ isLocked: false, remainingAttempts: 3 });
+      }
+    }
+
+    if (user.lockout_until && new Date(user.lockout_until) > now) {
+      const remainingSeconds = Math.ceil((new Date(user.lockout_until).getTime() - now.getTime()) / 1000);
+      return res.json({
+        isLocked: true,
+        lockoutStage: user.lockout_stage || 1,
+        lockoutUntil: user.lockout_until,
+        remainingSeconds,
+        message: user.lockout_stage >= 4
+          ? 'Maximum login attempts exceeded. Access is locked for 24 hours calculated from the exact time this account was locked.'
+          : 'Too many failed login attempts. Please wait for the lockout timer to expire.'
+      });
+    }
+    res.json({ isLocked: false, remainingAttempts: Math.max(0, 3 - (user.failed_login_attempts || 0)) });
+  } catch (err) {
+    res.json({ isLocked: false });
+  }
+});
+
+// POST /api/login - Authenticate user or admin with 4-Stage Progressive Lockout & Daily Reset
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ success: false, message: 'Email and password are required' });
   }
 
+  const clientIp = getClientIp(req);
+  const now = new Date();
+  const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+  const isDifferentDay = (d1, d2) => d1.getFullYear() !== d2.getFullYear() || d1.getMonth() !== d2.getMonth() || d1.getDate() !== d2.getDate();
+
+  // 1. Check IP-based lockout (protects against random/fake email spam) with daily reset
+  const rawIpData = ipLockoutMap.get(clientIp);
+  if (rawIpData) {
+    if (rawIpData.lastAttempt && (isDifferentDay(now, new Date(rawIpData.lastAttempt)) || now.getTime() - new Date(rawIpData.lastAttempt).getTime() >= TWENTY_FOUR_HOURS_MS)) {
+      if (!rawIpData.lockoutUntil || rawIpData.lockoutUntil <= now) {
+        ipLockoutMap.delete(clientIp);
+      }
+    }
+  }
+
+  const ipData = ipLockoutMap.get(clientIp);
+  if (ipData && ipData.lockoutUntil && ipData.lockoutUntil > now) {
+    const remainingSeconds = Math.ceil((ipData.lockoutUntil.getTime() - now.getTime()) / 1000);
+    const stage = ipData.stage || 1;
+    return res.status(403).json({
+      success: false,
+      isLocked: true,
+      lockoutStage: stage,
+      lockoutUntil: ipData.lockoutUntil.toISOString(),
+      remainingSeconds,
+      message: stage >= 4
+        ? 'Maximum login attempts exceeded. Access is locked for 24 hours calculated from the exact time this account was locked.'
+        : 'Too many failed login attempts. Please wait for the lockout timer to expire.'
+    });
+  }
+
   try {
-    const cleanEmail = email.trim().toLowerCase();
+    let cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail === 'admin@quezoncity.gov.ph') {
+      cleanEmail = 'admin@gmail.com';
+    }
+
     const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = $1;', [cleanEmail]);
 
+    // Handle non-existent / random email spam
     if (result.rows.length === 0) {
-      return res.status(401).json({ success: false, message: 'Invalid email address or password' });
+      const currentIpData = ipLockoutMap.get(clientIp) || { attempts: 0, lockoutUntil: null, stage: 0, lastAttempt: null };
+
+      if (currentIpData.lockoutUntil && currentIpData.lockoutUntil <= now) {
+        currentIpData.attempts = 0;
+      }
+      if (currentIpData.lastAttempt && (isDifferentDay(now, new Date(currentIpData.lastAttempt)) || now.getTime() - new Date(currentIpData.lastAttempt).getTime() >= TWENTY_FOUR_HOURS_MS)) {
+        currentIpData.attempts = 0;
+        currentIpData.stage = 0;
+      }
+
+      const newAttempts = currentIpData.attempts + 1;
+
+      if (newAttempts >= 3) {
+        let nextStage = (currentIpData.stage || 0) + 1;
+        if (nextStage > 4) nextStage = 4;
+
+        let lockDurationMinutes = 1;
+        if (nextStage === 2) lockDurationMinutes = 5;
+        else if (nextStage === 3) lockDurationMinutes = 15;
+        else if (nextStage >= 4) lockDurationMinutes = 24 * 60;
+
+        const lockoutUntilDate = new Date(Date.now() + lockDurationMinutes * 60 * 1000);
+        ipLockoutMap.set(clientIp, {
+          attempts: 3,
+          stage: nextStage,
+          lockoutUntil: lockoutUntilDate,
+          lastAttempt: now
+        });
+
+        const remainingSeconds = lockDurationMinutes * 60;
+        return res.status(403).json({
+          success: false,
+          isLocked: true,
+          lockoutStage: nextStage,
+          lockoutUntil: lockoutUntilDate.toISOString(),
+          remainingSeconds,
+          message: nextStage >= 4
+            ? 'Maximum login attempts exceeded. Access is locked for 24 hours calculated from the exact time this account was locked.'
+            : `Too many failed login attempts. Account locked for ${lockDurationMinutes} minute(s).`
+        });
+      } else {
+        ipLockoutMap.set(clientIp, {
+          attempts: newAttempts,
+          stage: currentIpData.stage || 0,
+          lockoutUntil: null,
+          lastAttempt: now
+        });
+
+        const remainingAttempts = 3 - newAttempts;
+        return res.status(401).json({
+          success: false,
+          isLocked: false,
+          remainingAttempts,
+          message: `Invalid email address or password. ${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining.`
+        });
+      }
     }
 
     const user = result.rows[0];
-    let isMatch = false;
 
+    // 2. Check if user account is currently locked
+    if (user.lockout_until && new Date(user.lockout_until) > now) {
+      const remainingSeconds = Math.ceil((new Date(user.lockout_until).getTime() - now.getTime()) / 1000);
+      const stage = user.lockout_stage || 1;
+      return res.status(403).json({
+        success: false,
+        isLocked: true,
+        lockoutStage: stage,
+        lockoutUntil: user.lockout_until,
+        remainingSeconds,
+        message: stage >= 4
+          ? 'Maximum login attempts exceeded. Access is locked for 24 hours calculated from the exact time this account was locked.'
+          : 'Too many failed login attempts. Please wait for the lockout timer to expire.'
+      });
+    }
+
+    // 3. Validate password
+    let isMatch = false;
     try {
       isMatch = await bcrypt.compare(password, user.password);
     } catch (err) {
@@ -2359,23 +2546,203 @@ app.post('/api/login', async (req, res) => {
       isMatch = true;
     }
 
-    if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid email address or password' });
+    // 4. Handle successful login
+    if (isMatch) {
+      ipLockoutMap.delete(clientIp);
+
+      await pool.query(
+        'UPDATE users SET failed_login_attempts = 0, lockout_stage = 0, lockout_until = NULL, unlock_otp = NULL, unlock_otp_expires = NULL, last_failed_attempt = NULL, is_online = TRUE, last_active = CURRENT_TIMESTAMP WHERE id = $1;',
+        [user.id]
+      );
+
+      const { password: _, unlock_otp: __, unlock_otp_expires: ___, ...userData } = user;
+      userData.is_online = true;
+      userData.presence = 'Online';
+      return res.json({ success: true, user: userData });
     }
 
-    // Mark user as online upon successful login
-    await pool.query(
-      'UPDATE users SET is_online = TRUE, last_active = CURRENT_TIMESTAMP WHERE id = $1;',
-      [user.id]
-    );
+    // 5. Handle failed login attempt
+    let currentStage = user.lockout_stage || 0;
+    let currentAttempts = user.failed_login_attempts || 0;
 
-    const { password: _, ...userData } = user;
-    userData.is_online = true;
-    userData.presence = 'Online';
-    res.json({ success: true, user: userData });
+    // Daily reset check: If a new calendar day or 24 hours have elapsed since the last failed attempt, reset back to 0!
+    if (user.last_failed_attempt) {
+      const timeSinceLastFailed = now.getTime() - new Date(user.last_failed_attempt).getTime();
+      if (isDifferentDay(now, new Date(user.last_failed_attempt)) || timeSinceLastFailed >= TWENTY_FOUR_HOURS_MS) {
+        currentAttempts = 0;
+        currentStage = 0;
+      }
+    }
+
+    // If a previous timed lockout has expired, reset failed attempts counter for this new round
+    if (user.lockout_until && new Date(user.lockout_until) <= now) {
+      currentAttempts = 0;
+    }
+
+    const newAttempts = currentAttempts + 1;
+
+    if (newAttempts >= 3) {
+      // 3 attempts reached in this stage -> Trigger next lockout tier
+      let nextStage = currentStage + 1;
+      if (nextStage > 4) nextStage = 4;
+
+      let lockDurationMinutes = 1; // Stage 1 default: 1 min
+      if (nextStage === 2) lockDurationMinutes = 5;       // Stage 2: 5 mins
+      else if (nextStage === 3) lockDurationMinutes = 15; // Stage 3: 15 mins
+      else if (nextStage >= 4) lockDurationMinutes = 24 * 60; // Stage 4: 24 hours (1440 mins)
+
+      const lockoutUntilDate = new Date(Date.now() + lockDurationMinutes * 60 * 1000);
+
+      await pool.query(
+        'UPDATE users SET failed_login_attempts = 3, lockout_stage = $1, lockout_until = $2, last_failed_attempt = CURRENT_TIMESTAMP WHERE id = $3;',
+        [nextStage, lockoutUntilDate, user.id]
+      );
+
+      const remainingSeconds = lockDurationMinutes * 60;
+
+      return res.status(403).json({
+        success: false,
+        isLocked: true,
+        lockoutStage: nextStage,
+        lockoutUntil: lockoutUntilDate.toISOString(),
+        remainingSeconds,
+        message: nextStage >= 4
+          ? 'Maximum login attempts exceeded. Access is locked for 24 hours calculated from the exact time this account was locked.'
+          : `Too many failed login attempts. Account locked for ${lockDurationMinutes} minute(s).`
+      });
+    } else {
+      // Still has attempts left (Attempt 1 or 2 of 3)
+      await pool.query(
+        'UPDATE users SET failed_login_attempts = $1, last_failed_attempt = CURRENT_TIMESTAMP WHERE id = $2;',
+        [newAttempts, user.id]
+      );
+
+      const remainingAttempts = 3 - newAttempts;
+      return res.status(401).json({
+        success: false,
+        isLocked: false,
+        remainingAttempts,
+        message: `Incorrect password. ${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining.`
+      });
+    }
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/auth/send-unlock-otp - Send 6-digit OTP to user's registered email to unlock account
+app.post('/api/auth/send-unlock-otp', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'Email address is required.' });
+  }
+
+  try {
+    let cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail === 'admin@quezoncity.gov.ph') {
+      cleanEmail = 'admin@gmail.com';
+    }
+
+    const result = await pool.query('SELECT id, email, first_name, last_name FROM users WHERE LOWER(email) = $1;', [cleanEmail]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User account not found.' });
+    }
+
+    const user = result.rows[0];
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await pool.query(
+      'UPDATE users SET unlock_otp = $1, unlock_otp_expires = $2 WHERE id = $3;',
+      [otpCode, expiresAt, user.id]
+    );
+
+    const mailOptions = {
+      from: `"GovServe Security Portal" <${process.env.EMAIL_USER || 'no-reply@quezoncity.gov.ph'}>`,
+      to: cleanEmail,
+      subject: 'GovServe Account Unlock Verification Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+          <h2 style="color: #1e3a8a; margin-top: 0;">GovServe Security Alert</h2>
+          <p>Hello <strong>${user.first_name || 'Resident'}</strong>,</p>
+          <p>You requested an instant unlock for your GovServe account due to temporary login lockout.</p>
+          <p>Your 6-digit verification code is:</p>
+          <div style="background-color: #f1f5f9; padding: 16px; border-radius: 8px; text-align: center; margin: 20px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2563eb;">${otpCode}</span>
+          </div>
+          <p style="color: #64748b; font-size: 13px;">This code will expire in 10 minutes. If you did not request this, please contact support immediately.</p>
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+          <p style="color: #94a3b8; font-size: 11px; text-align: center;">Quezon City Social Services & Development Department (SSDD)</p>
+        </div>
+      `,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ Unlock OTP sent to ${cleanEmail}: ${otpCode}`);
+    } catch (mailErr) {
+      console.warn('Nodemailer notice (simulated OTP):', mailErr.message);
+    }
+
+    res.json({
+      success: true,
+      message: 'Verification code sent to your registered email address.',
+      debugOtp: process.env.NODE_ENV === 'production' ? undefined : otpCode
+    });
+  } catch (err) {
+    console.error('Send unlock OTP error:', err);
+    res.status(500).json({ success: false, message: 'Failed to send verification code. Please try again.' });
+  }
+});
+
+// POST /api/auth/verify-unlock-otp - Verify 6-digit OTP and reset lockout
+app.post('/api/auth/verify-unlock-otp', async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, message: 'Email and verification code are required.' });
+  }
+
+  try {
+    let cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail === 'admin@quezoncity.gov.ph') {
+      cleanEmail = 'admin@gmail.com';
+    }
+
+    const result = await pool.query('SELECT id, unlock_otp, unlock_otp_expires FROM users WHERE LOWER(email) = $1;', [cleanEmail]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User account not found.' });
+    }
+
+    const user = result.rows[0];
+    const now = new Date();
+
+    if (!user.unlock_otp || user.unlock_otp !== otp.trim()) {
+      return res.status(400).json({ success: false, message: 'Invalid verification code. Please check and try again.' });
+    }
+
+    if (!user.unlock_otp_expires || new Date(user.unlock_otp_expires) < now) {
+      return res.status(400).json({ success: false, message: 'Verification code has expired. Please request a new code.' });
+    }
+
+    // Reset lockout state completely
+    const clientIp = getClientIp(req);
+    ipLockoutMap.delete(clientIp);
+
+    await pool.query(
+      'UPDATE users SET failed_login_attempts = 0, lockout_stage = 0, lockout_until = NULL, unlock_otp = NULL, unlock_otp_expires = NULL, last_failed_attempt = NULL WHERE id = $1;',
+      [user.id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Account successfully unlocked! You may now sign in with your password.'
+    });
+  } catch (err) {
+    console.error('Verify unlock OTP error:', err);
+    res.status(500).json({ success: false, message: 'An error occurred while verifying the code.' });
   }
 });
 
@@ -2418,6 +2785,69 @@ app.post('/api/reset-password', async (req, res) => {
   } catch (err) {
     console.error('Password reset DB error:', err);
     res.json({ success: true, message: 'Password reset completed.' });
+  }
+});
+
+// POST /api/change-password - Change user password with current password verification
+app.post('/api/change-password', async (req, res) => {
+  const { email, currentPassword, newPassword } = req.body;
+  if (!email || !currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Email, current password, and new password are required.' });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ success: false, message: 'New password must be at least 8 characters long.' });
+  }
+
+  if (!/[A-Z]/.test(newPassword)) {
+    return res.status(400).json({ success: false, message: 'New password must contain at least one uppercase letter (A-Z).' });
+  }
+
+  if (!/[0-9]/.test(newPassword)) {
+    return res.status(400).json({ success: false, message: 'New password must contain at least one number (0-9).' });
+  }
+
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword)) {
+    return res.status(400).json({ success: false, message: 'New password must contain at least one special character (!@#$%^&* etc.).' });
+  }
+
+  try {
+    let cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail === 'admin@quezoncity.gov.ph') {
+      cleanEmail = 'admin@gmail.com';
+    }
+
+    const result = await pool.query('SELECT * FROM users WHERE LOWER(email) = $1;', [cleanEmail]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User account not found.' });
+    }
+
+    const user = result.rows[0];
+    let isMatch = false;
+
+    try {
+      isMatch = await bcrypt.compare(currentPassword, user.password);
+    } catch (err) {
+      isMatch = false;
+    }
+
+    // Fallback for unhashed plain text passwords (e.g. initial seed)
+    if (!isMatch && currentPassword === user.password) {
+      isMatch = true;
+    }
+
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Incorrect current password. Please try again.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password = $1 WHERE LOWER(email) = $2;', [hashedPassword, cleanEmail]);
+
+    res.json({ success: true, message: 'Password changed successfully! You can now log in with your new password.' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ success: false, message: 'An error occurred while updating the password.' });
   }
 });
 

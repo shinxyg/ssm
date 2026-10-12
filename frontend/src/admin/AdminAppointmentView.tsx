@@ -561,7 +561,8 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                     const schedDate = formatDateDisplay(rawDate);
                     const schedTime = formatTo12Hour(rawTime);
 
-                    const isScheduled = Boolean(schedDate && schedDate !== 'Awaiting Schedule' && appt?.status !== 'Pending Schedule');
+                    const isAppCompletedOrApproved = (app.status || '').toUpperCase().includes('APPROV') || (app.status || '').toUpperCase().includes('COMPLET') || (app.status || '').toUpperCase().includes('RELEASED');
+                    const isScheduled = Boolean(schedDate && schedDate !== 'Awaiting Schedule' && (appt?.status !== 'Pending Schedule' || isAppCompletedOrApproved));
                     const isGLPrintable = (app.serviceName.toLowerCase().includes('medical bill') || app.serviceName.toLowerCase().includes('hospital') || app.assistanceType?.toLowerCase().includes('medical bill') || app.serviceName.toLowerCase().includes('funeral') || app.serviceName.toLowerCase().includes('burial') || app.referenceNo.includes('FUN')) && !app.serviceName.toLowerCase().includes('medicine') && !(app.assistanceType || '').toLowerCase().includes('medicine');
 
                     return (
@@ -571,7 +572,11 @@ export const AdminAppointmentView: React.FC<AdminAppointmentViewProps> = ({
                         <td className="py-4 px-6 font-mono font-bold text-blue-400">{app.referenceNo}</td>
                         <td className={`py-4 px-6 font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>{name}</td>
                         <td className={`py-4 px-6 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                          <span className="font-semibold">{app.serviceName}</span>
+                          <span className="font-semibold">
+                            {(app.referenceNo || '').startsWith('QC-CW') 
+                              ? 'Child Welfare Services' 
+                              : app.serviceName}
+                          </span>
                         </td>
                         <td className={`py-4 px-6 font-mono text-[11px] ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                           {isScheduled ? (
